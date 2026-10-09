@@ -1,0 +1,7 @@
+{
+  "name": "blackbox",
+  "version": "0.1.0",
+  "description": "KOZMOS Blackbox: a flight recorder above the prompt. A live Gantt of the current turn: the main loop and each subagent on its own lane, every tool call a bar in its family color, model requests as ticks, a moving now cursor on an auto-scaling time axis; the last turn stays dimmed until the next. /blackbox toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

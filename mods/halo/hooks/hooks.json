@@ -1,0 +1,1 @@
+{ "description": "Halo band: turn.start/turn.step/turn.complete and tool.call set the mood, a Spinner render hook reads the spinner mode into a module variable that a light timer publishes; an AbovePrompt drawing (a Client gradient line on the terminal, one animated SVG on the desktop) and /halo", "modules": ["./register.tsx"] }

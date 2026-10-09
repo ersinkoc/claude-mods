@@ -1,0 +1,1 @@
+{ "description": "Blackbox band: turn.start/turn.complete frame the recording, tool.call adds bars, turn.step adds ticks, agent.spawn names the lanes; an AbovePrompt drawing (a Raster repainted with $.ui.blit on the terminal, one animated SVG on the desktop) and /blackbox", "modules": ["./register.tsx"] }

@@ -1,0 +1,7 @@
+{
+  "name": "halo",
+  "version": "0.1.0",
+  "description": "KOZMOS Halo: a one-row mood line above the prompt whose color and motion tell what Claude is doing: calm blue breathing when idle, a violet flow while it requests and writes, a magenta shimmer while it thinks, the running tool's color racing across, a red flash when a tool fails, an amber blink when it waits for you. /halo toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

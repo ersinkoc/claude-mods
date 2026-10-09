@@ -1,0 +1,1 @@
+{ "description": "Questline band: tool.call on TodoWrite, TaskCreate and TaskUpdate in the main loop keeps the quest list; an AbovePrompt drawing (a pulsing Client bar on the terminal, one animated SVG on the desktop) and /questline", "modules": ["./register.tsx"] }

@@ -1,0 +1,7 @@
+{
+  "name": "skies",
+  "version": "0.1.0",
+  "description": "KOZMOS Skies: the session's weather above the prompt. Tool failures, context and rate-limit pressure, stalls and the local hour make clear skies, clouds, rain, storms with lightning, fog, a starry night, or a rainbow after a storm clears; an animated scene and a forecast line. /skies toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

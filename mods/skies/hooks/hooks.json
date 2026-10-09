@@ -1,0 +1,1 @@
+{ "description": "Skies band: tool.call outcomes, $.session.usage and turn.start/turn.complete feed a climate function; an AbovePrompt drawing (a 3-row Client scene plus a forecast line on the terminal, one animated SVG on the desktop) and /skies", "modules": ["./register.tsx"] }

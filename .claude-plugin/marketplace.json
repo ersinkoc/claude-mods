@@ -156,9 +156,23 @@
       "category": "band"
     },
     {
+      "name": "blackbox",
+      "source": "./mods/blackbox",
+      "description": "KOZMOS Blackbox: a flight recorder above the prompt. A live Gantt of the current turn: the main loop and each subagent on its own lane, every tool call a bar in its family color, model requests as ticks, a moving now cursor on an auto-scaling time axis; the last turn stays dimmed until the next. /blackbox toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
       "name": "glyphfall",
       "source": "./mods/glyphfall",
       "description": "KOZMOS Glyphfall: matrix rain of tool activity above the prompt while Claude works. Every tool call drops its name and detail as a wave of letters, colored by tool family, with bright heads and fading tails, over a sparse rain of katakana; the last five tools sit below as colored chips. /glyphfall toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "halo",
+      "source": "./mods/halo",
+      "description": "KOZMOS Halo: a one-row mood line above the prompt whose color and motion tell what Claude is doing: calm blue breathing when idle, a violet flow while it requests and writes, a magenta shimmer while it thinks, the running tool's color racing across, a red flash when a tool fails, an amber blink when it waits for you. /halo toggles it.",
       "version": "0.1.0",
       "category": "band"
     },
@@ -177,9 +191,30 @@
       "category": "band"
     },
     {
+      "name": "questline",
+      "source": "./mods/questline",
+      "description": "KOZMOS Questline: task progress above the prompt. One segmented bar for the session's todos and tasks (done green, running violet and pulsing, waiting gray), the count, what is running now and for how long. Hides itself two minutes after everything is done. /questline toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "skies",
+      "source": "./mods/skies",
+      "description": "KOZMOS Skies: the session's weather above the prompt. Tool failures, context and rate-limit pressure, stalls and the local hour make clear skies, clouds, rain, storms with lightning, fog, a starry night, or a rainbow after a storm clears; an animated scene and a forecast line. /skies toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
       "name": "storyboard",
       "source": "./mods/storyboard",
       "description": "KOZMOS Storyboard: Claude narrates its own progress. A chapter tool the model calls at each phase change drives a band above the prompt: the chapter title, a five-stage rail (explore, plan, build, verify, ship) with the active stage glowing, step 3/5 and a note. /storyboard toggles the band, /storyboard log opens the chapter history.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "throttle",
+      "source": "./mods/throttle",
+      "description": "KOZMOS Throttle: a car dashboard above the prompt. Speedometer of output tokens per second, fuel gauge of the 5-hour limit, temperature of the context, an odometer of session dollars, and check-engine, fuel and overheat lamps. /throttle toggles it.",
       "version": "0.1.0",
       "category": "band"
     },

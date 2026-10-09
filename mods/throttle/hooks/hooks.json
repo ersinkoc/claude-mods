@@ -1,0 +1,1 @@
+{ "description": "Throttle band: turn.step streams measured into a tokens/sec speedometer, tool.call failures into a check-engine lamp, $.session.usage into fuel, temperature and odometer; an AbovePrompt drawing (Client dials on the terminal, one animated SVG on the desktop) and /throttle", "modules": ["./register.tsx"] }

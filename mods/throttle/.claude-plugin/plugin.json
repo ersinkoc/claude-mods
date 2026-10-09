@@ -1,0 +1,7 @@
+{
+  "name": "throttle",
+  "version": "0.1.0",
+  "description": "KOZMOS Throttle: a car dashboard above the prompt. Speedometer of output tokens per second, fuel gauge of the 5-hour limit, temperature of the context, an odometer of session dollars, and check-engine, fuel and overheat lamps. /throttle toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

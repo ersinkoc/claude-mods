@@ -1,0 +1,7 @@
+{
+  "name": "questline",
+  "version": "0.1.0",
+  "description": "KOZMOS Questline: task progress above the prompt. One segmented bar for the session's todos and tasks (done green, running violet and pulsing, waiting gray), the count, what is running now and for how long. Hides itself two minutes after everything is done. /questline toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}
