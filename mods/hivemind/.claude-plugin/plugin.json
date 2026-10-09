@@ -1,0 +1,16 @@
+{
+  "name": "hivemind",
+  "version": "0.1.0",
+  "description": "KOZMOS Hivemind: the agent swarm as a live tree. The main loop at the root and every subagent beneath its parent, each with a status glyph, type and task, model and effort, elapsed time, requests, tokens, estimated spend, context fill and the tool it runs now. /hivemind toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Hivemind sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

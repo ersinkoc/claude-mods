@@ -1,0 +1,16 @@
+{
+  "name": "chronicle",
+  "version": "0.1.0",
+  "description": "KOZMOS Chronicle: the session as a timeline. Prompts, turn ends with duration, tool count and spend, subagents spawned and finished, commits and pushes, failed tools, compactions, and rate-limit and context milestones, each stamped HH:MM:SS, newest first, with filters. /chronicle toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Chronicle sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

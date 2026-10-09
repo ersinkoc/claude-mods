@@ -1,0 +1,16 @@
+{
+  "name": "gearbox",
+  "version": "0.1.0",
+  "description": "KOZMOS Gearbox: tool analytics for the session. Per tool its calls, errors and error rate, average, p95 and max duration and total time as a sorted bar chart, the five slowest calls, calls per minute, and the main loop against subagents. /gearbox toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Gearbox sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

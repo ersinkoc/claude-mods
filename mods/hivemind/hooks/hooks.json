@@ -1,0 +1,1 @@
+{ "description": "Hivemind sidebar: agent.spawn, turn.step, turn.complete and tool.call hooks build the agent tree, $.agent.list reconciles it, a Pane drawing for terminal and desktop, and /hivemind", "modules": ["./register.tsx"] }

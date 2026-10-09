@@ -1,0 +1,1 @@
+{ "description": "Gearbox sidebar: a tool.call hook times every call and keeps per-tool statistics in $.state, a Pane drawing with a sort button for terminal and desktop, and /gearbox", "modules": ["./register.tsx"] }

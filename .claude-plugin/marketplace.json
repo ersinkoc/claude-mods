@@ -23,9 +23,30 @@
       "category": "pane"
     },
     {
+      "name": "chronicle",
+      "source": "./mods/chronicle",
+      "description": "KOZMOS Chronicle: the session as a timeline. Prompts, turn ends with duration, tool count and spend, subagents spawned and finished, commits and pushes, failed tools, compactions, and rate-limit and context milestones, each stamped HH:MM:SS, newest first, with filters. /chronicle toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "gearbox",
+      "source": "./mods/gearbox",
+      "description": "KOZMOS Gearbox: tool analytics for the session. Per tool its calls, errors and error rate, average, p95 and max duration and total time as a sorted bar chart, the five slowest calls, calls per minute, and the main loop against subagents. /gearbox toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
       "name": "gitscope",
       "source": "./mods/gitscope",
       "description": "KOZMOS Gitscope: a git radar sidebar. Branch, upstream and ahead/behind, staged/changed/new/conflict counts and stashes, the last 8 commits on a graph rail, per-file +/- histograms from git diff, and a marker on every file this session edited. /gitscope toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "hivemind",
+      "source": "./mods/hivemind",
+      "description": "KOZMOS Hivemind: the agent swarm as a live tree. The main loop at the root and every subagent beneath its parent, each with a status glyph, type and task, model and effort, elapsed time, requests, tokens, estimated spend, context fill and the tool it runs now. /hivemind toggles the sidebar.",
       "version": "0.1.0",
       "category": "pane"
     },
@@ -47,6 +68,13 @@
       "name": "spectra",
       "source": "./mods/spectra",
       "description": "KOZMOS Spectra: the context X-ray. The context window broken down by category as a heat grid with a ranked legend, context growth per turn, and an estimate of how many turns remain before auto-compact. /spectra toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "taskforge",
+      "source": "./mods/taskforge",
+      "description": "KOZMOS Taskforge: a live kanban of the session's tasks. TodoWrite lists and TaskCreate/TaskUpdate tasks fall into Pending, In progress and Done columns with the active form, time in the column and the owning agent, under a progress bar. /taskforge toggles the sidebar.",
       "version": "0.1.0",
       "category": "pane"
     },

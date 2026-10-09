@@ -1,0 +1,16 @@
+{
+  "name": "taskforge",
+  "version": "0.1.0",
+  "description": "KOZMOS Taskforge: a live kanban of the session's tasks. TodoWrite lists and TaskCreate/TaskUpdate tasks fall into Pending, In progress and Done columns with the active form, time in the column and the owning agent, under a progress bar. /taskforge toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Taskforge sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

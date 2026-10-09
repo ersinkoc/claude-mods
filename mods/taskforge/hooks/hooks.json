@@ -1,0 +1,1 @@
+{ "description": "Taskforge sidebar: tool.call hooks on TodoWrite, TaskCreate and TaskUpdate build a kanban board in $.state, a Pane drawing for terminal and desktop, and /taskforge", "modules": ["./register.tsx"] }
