@@ -1,0 +1,1 @@
+{ "description": "ballast: session.measure and turn.complete watch the context fill; a toast at warnAt, a band with Compact now / Not now at actAt (queued to turn.complete while a turn runs), optional auto-compaction, and before→after toasts for every compaction", "modules": ["./register.tsx"] }

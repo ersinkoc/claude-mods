@@ -15,6 +15,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "mosaic", title: "Mosaic", category: "pane", blurb: "a GitHub-style activity calendar across sessions." },
   { name: "relay", title: "Relay", category: "pane", blurb: "the API latency lab in a sidebar." },
   { name: "spectra", title: "Spectra", category: "pane", blurb: "the context X-ray." },
+  { name: "switchboard", title: "Switchboard", category: "pane", blurb: "an MCP observatory sidebar." },
   { name: "taskforge", title: "Taskforge", category: "pane", blurb: "a live kanban of the session's tasks." },
   { name: "terminus", title: "Terminus", category: "pane", blurb: "the session's shell history in a sidebar." },
   { name: "thermal", title: "Thermal", category: "pane", blurb: "a heatmap of the files this session touches." },
@@ -29,4 +30,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "stamp", title: "Stamp", category: "transcript", blurb: "a receipt on every finished turn." },
   { name: "toolmarks", title: "Toolmarks", category: "transcript", blurb: "badges on tool rows." },
   { name: "marquee", title: "Marquee", category: "status", blurb: "a status-line ticker." },
+  { name: "ballast", title: "Ballast", category: "guard", blurb: "a context coach." },
+  { name: "thrift", title: "Thrift", category: "guard", blurb: "a frugal mode." },
+  { name: "warden", title: "Warden", category: "guard", blurb: "a guard for destructive shell commands." },
 ]

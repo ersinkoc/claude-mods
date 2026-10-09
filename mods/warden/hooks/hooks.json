@@ -1,0 +1,1 @@
+{ "description": "warden: a gating tool.call hook on Bash and PowerShell that asks before destructive commands (fails closed), an 8-second band after a block, and /warden for the rules and the session log", "modules": ["./register.tsx"] }

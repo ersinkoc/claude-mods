@@ -93,6 +93,13 @@
       "category": "pane"
     },
     {
+      "name": "switchboard",
+      "source": "./mods/switchboard",
+      "description": "KOZMOS Switchboard: an MCP observatory sidebar. Every MCP server in the session with its tools, calls, errors, average and p95 latency, last call and a status lamp (healthy, erroring, idle, busy); servers with no calls yet too, and per-tool rows on expand. On the desktop a patch bay with glowing cables to the active servers. /switchboard toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
       "name": "taskforge",
       "source": "./mods/taskforge",
       "description": "KOZMOS Taskforge: a live kanban of the session's tasks. TodoWrite lists and TaskCreate/TaskUpdate tasks fall into Pending, In progress and Done columns with the active form, time in the column and the owning agent, under a progress bar. /taskforge toggles the sidebar.",
@@ -189,6 +196,27 @@
       "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
       "version": "0.1.0",
       "category": "status"
+    },
+    {
+      "name": "ballast",
+      "source": "./mods/ballast",
+      "description": "KOZMOS Ballast: a context coach. A toast when the context window passes warnAt, then a band with an anchor and a water-level gauge at actAt: \"⚓ ctx 89% — compact before the next big task\" with Compact now (queued to the end of a running turn) and Not now. Optional auto-compaction between turns, and a before→after toast for every compaction. /ballast toggles the band.",
+      "version": "0.1.0",
+      "category": "guard"
+    },
+    {
+      "name": "thrift",
+      "source": "./mods/thrift",
+      "description": "KOZMOS Thrift: a frugal mode. /thrift on|off|auto; while on, every prompt carries a short note asking Claude to be economical (targeted reads, no broad searches or subagents unless needed, concise answers). Auto turns it on when the 5-hour or weekly limit passes autoAt and off after the window resets. A band with a spinning coin, and /thrift compares the average cost of thrift turns with normal ones.",
+      "version": "0.1.0",
+      "category": "guard"
+    },
+    {
+      "name": "warden",
+      "source": "./mods/warden",
+      "description": "KOZMOS Warden: a guard for destructive shell commands. Before Claude or a subagent runs rm -rf on a broad path, git push --force, reset --hard, clean -fd, DROP TABLE, mkfs, format, curl | sh and their kin, warden asks you (Allow once / Deny) and refuses when no one can answer. A band flashes for 8 s after a block; /warden lists the rules and this session's log.",
+      "version": "0.1.0",
+      "category": "guard"
     }
   ]
 }

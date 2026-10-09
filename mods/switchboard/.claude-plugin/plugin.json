@@ -1,0 +1,16 @@
+{
+  "name": "switchboard",
+  "version": "0.1.0",
+  "description": "KOZMOS Switchboard: an MCP observatory sidebar. Every MCP server in the session with its tools, calls, errors, average and p95 latency, last call and a status lamp (healthy, erroring, idle, busy); servers with no calls yet too, and per-tool rows on expand. On the desktop a patch bay with glowing cables to the active servers. /switchboard toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Switchboard sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

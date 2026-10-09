@@ -1,0 +1,1 @@
+{ "description": "thrift: /thrift on|off|auto; prompt.submit adds a short economy note to the model's context while on (auto: when the 5h or 7d limit passes autoAt); turn.step usage tallies thrift vs normal turn cost; a band with a spinning coin", "modules": ["./register.tsx"] }

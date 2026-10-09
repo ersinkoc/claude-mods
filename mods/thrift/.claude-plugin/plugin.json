@@ -1,0 +1,16 @@
+{
+  "name": "thrift",
+  "version": "0.1.0",
+  "description": "KOZMOS Thrift: a frugal mode. /thrift on|off|auto; while on, every prompt carries a short note asking Claude to be economical (targeted reads, no broad searches or subagents unless needed, concise answers). Auto turns it on when the 5-hour or weekly limit passes autoAt and off after the window resets. A band with a spinning coin, and /thrift compares the average cost of thrift turns with normal ones.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoAt": {
+      "type": "number",
+      "title": "Auto at (%)",
+      "description": "In auto mode, thrift turns on when the 5-hour or weekly limit passes this percent.",
+      "required": false,
+      "default": 90
+    }
+  }
+}

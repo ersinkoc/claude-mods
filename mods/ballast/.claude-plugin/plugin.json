@@ -1,0 +1,30 @@
+{
+  "name": "ballast",
+  "version": "0.1.0",
+  "description": "KOZMOS Ballast: a context coach. A toast when the context window passes warnAt, then a band with an anchor and a water-level gauge at actAt: \"⚓ ctx 89% — compact before the next big task\" with Compact now (queued to the end of a running turn) and Not now. Optional auto-compaction between turns, and a before→after toast for every compaction. /ballast toggles the band.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "warnAt": {
+      "type": "number",
+      "title": "Warn at (%)",
+      "description": "Context fill, in percent, that shows a one-time toast.",
+      "required": false,
+      "default": 75
+    },
+    "actAt": {
+      "type": "number",
+      "title": "Act at (%)",
+      "description": "Context fill, in percent, that shows the Compact now band (and compacts by itself when autoCompact is on).",
+      "required": false,
+      "default": 88
+    },
+    "autoCompact": {
+      "type": "boolean",
+      "title": "Compact automatically",
+      "description": "At actAt, compact between turns without asking.",
+      "required": false,
+      "default": false
+    }
+  }
+}

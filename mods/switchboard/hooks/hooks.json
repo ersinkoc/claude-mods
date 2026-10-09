@@ -1,0 +1,1 @@
+{ "description": "switchboard: an MCP observatory pane fed by $.tool.list() and an observer tool.call hook on mcp__ tools (calls, errors, latency, status lamps, per-tool rows), toggled by /switchboard", "modules": ["./register.tsx"] }

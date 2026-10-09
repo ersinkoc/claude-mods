@@ -1,0 +1,24 @@
+{
+  "name": "warden",
+  "version": "0.1.0",
+  "description": "KOZMOS Warden: a guard for destructive shell commands. Before Claude or a subagent runs rm -rf on a broad path, git push --force, reset --hard, clean -fd, DROP TABLE, mkfs, format, curl | sh and their kin, warden asks you (Allow once / Deny) and refuses when no one can answer. A band flashes for 8 s after a block; /warden lists the rules and this session's log.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "mode": {
+      "type": "string",
+      "title": "Mode",
+      "description": "ask: ask you before a risky command (deny when no one can answer); deny: refuse every risky command; warn: let it run and only flash a warning.",
+      "options": ["ask", "deny", "warn"],
+      "required": false,
+      "default": "ask"
+    },
+    "extraPatterns": {
+      "type": "string",
+      "title": "Extra patterns",
+      "description": "Your own risky-command regexes (case-insensitive), separated by ;; — for example: kubectl delete ;; terraform destroy",
+      "required": false,
+      "default": ""
+    }
+  }
+}
