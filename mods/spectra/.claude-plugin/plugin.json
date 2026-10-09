@@ -1,0 +1,16 @@
+{
+  "name": "spectra",
+  "version": "0.1.0",
+  "description": "KOZMOS Spectra: the context X-ray. The context window broken down by category as a heat grid with a ranked legend, context growth per turn, and an estimate of how many turns remain before auto-compact. /spectra toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Spectra sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

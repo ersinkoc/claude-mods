@@ -1,0 +1,1 @@
+{ "description": "Gitscope sidebar: git status, log and numstat probed every 5 s while the pane is open and after Bash/Edit/Write calls, tool.call tracking of files the session edited, a Pane drawing for terminal and desktop, and /gitscope", "modules": ["./register.tsx"] }

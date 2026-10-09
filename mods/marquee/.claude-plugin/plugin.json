@@ -1,0 +1,23 @@
+{
+  "name": "marquee",
+  "version": "0.1.0",
+  "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "width": {
+      "type": "number",
+      "title": "Width",
+      "description": "Characters the status line may take; a longer line scrolls.",
+      "required": false,
+      "default": 110
+    },
+    "segments": {
+      "type": "string",
+      "title": "Segments",
+      "description": "Which segments to show and in what order, comma-separated: model, ctx, limits, cost, git, tool.",
+      "required": false,
+      "default": "model,ctx,limits,cost,git,tool"
+    }
+  }
+}

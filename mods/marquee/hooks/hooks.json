@@ -1,0 +1,1 @@
+{ "description": "Marquee status line: a 1 s ticker over $.session.usage, the model and effort from turn.step, the running tool from tool.call and the git branch every 10 s, shown with $.ui.status and scrolled when wider than the configured width; /marquee toggles it", "modules": ["./register.tsx"] }

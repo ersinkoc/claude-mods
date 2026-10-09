@@ -1,0 +1,1 @@
+{ "description": "Vitals sidebar: CPU, RAM, disk, GPU and process probes every 2 s while the pane is open, a tool.call counter and agent list for the Claude footer, a Pane drawing (braille Rasters on the terminal, SVG area charts on the desktop), and /vitals", "modules": ["./register.tsx"] }

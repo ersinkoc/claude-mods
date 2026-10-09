@@ -1,0 +1,16 @@
+{
+  "name": "thermal",
+  "version": "0.1.0",
+  "description": "KOZMOS Thermal: a heatmap of the files this session touches. Reads, edits, writes and searches per file, a heat score that cools over time, grouped as a directory tree under the session folder: an indented heat tree on the terminal, a squarified treemap on the desktop, switchable by heat, reads or edits. /thermal toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Thermal sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

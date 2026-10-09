@@ -21,6 +21,62 @@
       "description": "KOZMOS Bridge: a mission-control sidebar. Model and effort, context fill, 5-hour and weekly limits with reset countdowns, session cost and burn rate, git branch and tree state, CPU/RAM/GPU, live subagents and the tool running now. /bridge toggles it.",
       "version": "0.1.0",
       "category": "pane"
+    },
+    {
+      "name": "gitscope",
+      "source": "./mods/gitscope",
+      "description": "KOZMOS Gitscope: a git radar sidebar. Branch, upstream and ahead/behind, staged/changed/new/conflict counts and stashes, the last 8 commits on a graph rail, per-file +/- histograms from git diff, and a marker on every file this session edited. /gitscope toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "hourglass",
+      "source": "./mods/hourglass",
+      "description": "KOZMOS Hourglass: the limit oracle. For the 5-hour, weekly and spend windows: percent used, reset countdown, a burn rate learned across sessions, the time to 100 % and a verdict on whether the reset comes first. Toasts at 80 % and 95 %, an optional status line. /hourglass toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "mosaic",
+      "source": "./mods/mosaic",
+      "description": "KOZMOS Mosaic: a GitHub-style activity calendar across sessions. 26 weeks of days colored by turns, tool calls, tokens or dollars, with the current and longest streak, the best day, totals and today's line. /mosaic toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "spectra",
+      "source": "./mods/spectra",
+      "description": "KOZMOS Spectra: the context X-ray. The context window broken down by category as a heat grid with a ranked legend, context growth per turn, and an estimate of how many turns remain before auto-compact. /spectra toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "thermal",
+      "source": "./mods/thermal",
+      "description": "KOZMOS Thermal: a heatmap of the files this session touches. Reads, edits, writes and searches per file, a heat score that cools over time, grouped as a directory tree under the session folder: an indented heat tree on the terminal, a squarified treemap on the desktop, switchable by heat, reads or edits. /thermal toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "tokenomics",
+      "source": "./mods/tokenomics",
+      "description": "KOZMOS Tokenomics: the cost lab. Session cost as the headline, an estimated split by model and by token type, cache hit ratio, burn per hour, cost per turn, a pace forecast and daily and weekly totals across sessions with a 14-day chart. /tokenomics toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "vitals",
+      "source": "./mods/vitals",
+      "description": "KOZMOS Vitals: a btop-style machine monitor sidebar. CPU with a braille history graph, RAM bar and history, disk use, NVIDIA GPU load, memory and temperature, process count, and the Claude side: session time, tool calls, running agents. Samples every 2 s only while open. /vitals toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "marquee",
+      "source": "./mods/marquee",
+      "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
+      "version": "0.1.0",
+      "category": "status"
     }
   ]
 }

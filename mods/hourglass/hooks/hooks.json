@@ -1,0 +1,1 @@
+{ "description": "Hourglass sidebar: rate-limit windows from $.session.usage and session.measure, burn-rate samples kept in $.store across sessions, threshold toasts, an optional status line, a Pane drawing for terminal and desktop, and /hourglass", "modules": ["./register.tsx"] }

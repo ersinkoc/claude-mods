@@ -1,0 +1,1 @@
+{ "description": "Thermal sidebar: tool.call tracking of Read, Edit, Write, NotebookEdit, Grep and Glob per file with decaying heat, a directory tree and squarified treemap drawn in a Pane for terminal and desktop, a metric Button, and /thermal", "modules": ["./register.tsx"] }

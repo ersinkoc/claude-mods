@@ -1,0 +1,16 @@
+{
+  "name": "mosaic",
+  "version": "0.1.0",
+  "description": "KOZMOS Mosaic: a GitHub-style activity calendar across sessions. 26 weeks of days colored by turns, tool calls, tokens or dollars, with the current and longest streak, the best day, totals and today's line. /mosaic toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Mosaic sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

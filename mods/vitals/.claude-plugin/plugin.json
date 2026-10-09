@@ -1,0 +1,16 @@
+{
+  "name": "vitals",
+  "version": "0.1.0",
+  "description": "KOZMOS Vitals: a btop-style machine monitor sidebar. CPU with a braille history graph, RAM bar and history, disk use, NVIDIA GPU load, memory and temperature, process count, and the Claude side: session time, tool calls, running agents. Samples every 2 s only while open. /vitals toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Vitals sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

@@ -5,4 +5,12 @@ export type CatalogEntry = { name: string; title: string; category: Category; bl
 
 export const CATALOG: readonly CatalogEntry[] = [
   { name: "bridge", title: "Bridge", category: "pane", blurb: "a mission-control sidebar." },
+  { name: "gitscope", title: "Gitscope", category: "pane", blurb: "a git radar sidebar." },
+  { name: "hourglass", title: "Hourglass", category: "pane", blurb: "the limit oracle." },
+  { name: "mosaic", title: "Mosaic", category: "pane", blurb: "a GitHub-style activity calendar across sessions." },
+  { name: "spectra", title: "Spectra", category: "pane", blurb: "the context X-ray." },
+  { name: "thermal", title: "Thermal", category: "pane", blurb: "a heatmap of the files this session touches." },
+  { name: "tokenomics", title: "Tokenomics", category: "pane", blurb: "the cost lab." },
+  { name: "vitals", title: "Vitals", category: "pane", blurb: "a btop-style machine monitor sidebar." },
+  { name: "marquee", title: "Marquee", category: "status", blurb: "a status-line ticker." },
 ]

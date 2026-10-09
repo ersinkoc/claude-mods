@@ -1,0 +1,1 @@
+{ "description": "Mosaic sidebar: sessions, turns, tool calls, turn.step tokens, session cost and active minutes counted per local day into $.store, a Pane calendar for terminal and desktop with metric Buttons, and /mosaic", "modules": ["./register.tsx"] }

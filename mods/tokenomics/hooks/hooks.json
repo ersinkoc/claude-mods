@@ -1,0 +1,1 @@
+{ "description": "Tokenomics sidebar: turn.step usage priced per model and token type, $.session.usage cost sampled into a per-day ledger in $.store, a Pane drawing for terminal and desktop, and /tokenomics", "modules": ["./register.tsx"] }

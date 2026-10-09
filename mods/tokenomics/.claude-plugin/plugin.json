@@ -1,0 +1,16 @@
+{
+  "name": "tokenomics",
+  "version": "0.1.0",
+  "description": "KOZMOS Tokenomics: the cost lab. Session cost as the headline, an estimated split by model and by token type, cache hit ratio, burn per hour, cost per turn, a pace forecast and daily and weekly totals across sessions with a 14-day chart. /tokenomics toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Tokenomics sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

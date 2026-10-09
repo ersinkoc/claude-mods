@@ -1,0 +1,23 @@
+{
+  "name": "hourglass",
+  "version": "0.1.0",
+  "description": "KOZMOS Hourglass: the limit oracle. For the 5-hour, weekly and spend windows: percent used, reset countdown, a burn rate learned across sessions, the time to 100 % and a verdict on whether the reset comes first. Toasts at 80 % and 95 %, an optional status line. /hourglass toggles the sidebar.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Hourglass sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    },
+    "statusLine": {
+      "type": "boolean",
+      "title": "Status line",
+      "description": "Pin a short limits line under the prompt, such as: 5h 42% · 7d 18%.",
+      "required": false,
+      "default": false
+    }
+  }
+}

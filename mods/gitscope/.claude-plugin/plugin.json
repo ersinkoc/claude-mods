@@ -1,0 +1,16 @@
+{
+  "name": "gitscope",
+  "version": "0.1.0",
+  "description": "KOZMOS Gitscope: a git radar sidebar. Branch, upstream and ahead/behind, staged/changed/new/conflict counts and stashes, the last 8 commits on a graph rail, per-file +/- histograms from git diff, and a marker on every file this session edited. /gitscope toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Gitscope sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

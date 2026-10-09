@@ -8,6 +8,7 @@
     "validate": "node scripts/validate-all.mjs"
   },
   "devDependencies": {
+    "playwright-core": "^1.64.0",
     "typescript": "~5.9.3"
   }
 }

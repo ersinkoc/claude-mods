@@ -1,0 +1,1 @@
+{ "description": "Spectra sidebar: $.session.usage({ breakdown: 'summary' }) read on turn.complete and when the pane opens, context growth per main turn, a compaction forecast, a Pane drawing for terminal and desktop, and /spectra", "modules": ["./register.tsx"] }
