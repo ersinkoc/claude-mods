@@ -9,3 +9,4 @@ mods/*/tsconfig.json
 
 .dfmt/
 video/
+.claude/
