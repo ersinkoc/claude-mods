@@ -1,0 +1,16 @@
+{
+  "name": "faultline",
+  "version": "0.1.0",
+  "description": "KOZMOS Faultline: the error lens in a sidebar. Every failed or denied tool call, refused or errored turn and API error, grouped by a masked signature with count, first and last seen, the agents that hit it, the full first error (expandable) and a copy button, under a severity strip of the last 10 minutes. /faultline toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Faultline sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

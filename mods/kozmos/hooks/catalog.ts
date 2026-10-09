@@ -4,15 +4,19 @@ export type Category = 'pane' | 'band' | 'transcript' | 'companion' | 'status' |
 export type CatalogEntry = { name: string; title: string; category: Category; blurb: string }
 
 export const CATALOG: readonly CatalogEntry[] = [
+  { name: "breadcrumbs", title: "Breadcrumbs", category: "pane", blurb: "the session's web trail in a sidebar." },
   { name: "bridge", title: "Bridge", category: "pane", blurb: "a mission-control sidebar." },
   { name: "chronicle", title: "Chronicle", category: "pane", blurb: "the session as a timeline." },
+  { name: "faultline", title: "Faultline", category: "pane", blurb: "the error lens in a sidebar." },
   { name: "gearbox", title: "Gearbox", category: "pane", blurb: "tool analytics for the session." },
   { name: "gitscope", title: "Gitscope", category: "pane", blurb: "a git radar sidebar." },
   { name: "hivemind", title: "Hivemind", category: "pane", blurb: "the agent swarm as a live tree." },
   { name: "hourglass", title: "Hourglass", category: "pane", blurb: "the limit oracle." },
   { name: "mosaic", title: "Mosaic", category: "pane", blurb: "a GitHub-style activity calendar across sessions." },
+  { name: "relay", title: "Relay", category: "pane", blurb: "the API latency lab in a sidebar." },
   { name: "spectra", title: "Spectra", category: "pane", blurb: "the context X-ray." },
   { name: "taskforge", title: "Taskforge", category: "pane", blurb: "a live kanban of the session's tasks." },
+  { name: "terminus", title: "Terminus", category: "pane", blurb: "the session's shell history in a sidebar." },
   { name: "thermal", title: "Thermal", category: "pane", blurb: "a heatmap of the files this session touches." },
   { name: "tokenomics", title: "Tokenomics", category: "pane", blurb: "the cost lab." },
   { name: "vitals", title: "Vitals", category: "pane", blurb: "a btop-style machine monitor sidebar." },

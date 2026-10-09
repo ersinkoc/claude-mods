@@ -16,6 +16,13 @@
       "category": "hub"
     },
     {
+      "name": "breadcrumbs",
+      "source": "./mods/breadcrumbs",
+      "description": "KOZMOS Breadcrumbs: the session's web trail in a sidebar. WebSearch queries with result counts and top hits, WebFetch URLs with status and size, and browser-like MCP visits, grouped by domain with a monogram badge, clickable links and a copy-all-as-Markdown button. /breadcrumbs toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
       "name": "bridge",
       "source": "./mods/bridge",
       "description": "KOZMOS Bridge: a mission-control sidebar. Model and effort, context fill, 5-hour and weekly limits with reset countdowns, session cost and burn rate, git branch and tree state, CPU/RAM/GPU, live subagents and the tool running now. /bridge toggles it.",
@@ -26,6 +33,13 @@
       "name": "chronicle",
       "source": "./mods/chronicle",
       "description": "KOZMOS Chronicle: the session as a timeline. Prompts, turn ends with duration, tool count and spend, subagents spawned and finished, commits and pushes, failed tools, compactions, and rate-limit and context milestones, each stamped HH:MM:SS, newest first, with filters. /chronicle toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "faultline",
+      "source": "./mods/faultline",
+      "description": "KOZMOS Faultline: the error lens in a sidebar. Every failed or denied tool call, refused or errored turn and API error, grouped by a masked signature with count, first and last seen, the agents that hit it, the full first error (expandable) and a copy button, under a severity strip of the last 10 minutes. /faultline toggles it.",
       "version": "0.1.0",
       "category": "pane"
     },
@@ -65,6 +79,13 @@
       "category": "pane"
     },
     {
+      "name": "relay",
+      "source": "./mods/relay",
+      "description": "KOZMOS Relay: the API latency lab in a sidebar. Every model request of the main loop and its subagents with latency, time to first token, model, effort, input/output/cache tokens, tokens per second and stop reason; a latency histogram, tokens/sec over time, model mix, p50/p95, the slowest five and cache-read share per request. /relay toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
       "name": "spectra",
       "source": "./mods/spectra",
       "description": "KOZMOS Spectra: the context X-ray. The context window broken down by category as a heat grid with a ranked legend, context growth per turn, and an estimate of how many turns remain before auto-compact. /spectra toggles the sidebar.",
@@ -75,6 +96,13 @@
       "name": "taskforge",
       "source": "./mods/taskforge",
       "description": "KOZMOS Taskforge: a live kanban of the session's tasks. TodoWrite lists and TaskCreate/TaskUpdate tasks fall into Pending, In progress and Done columns with the active form, time in the column and the owning agent, under a progress bar. /taskforge toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "terminus",
+      "source": "./mods/terminus",
+      "description": "KOZMOS Terminus: the session's shell history in a sidebar. Every Bash and PowerShell call of the main loop and its subagents with command, description, cwd, exit status, duration, output size and who ran it; filters for failed and slow runs, copy and re-run buttons. /terminus toggles it.",
       "version": "0.1.0",
       "category": "pane"
     },

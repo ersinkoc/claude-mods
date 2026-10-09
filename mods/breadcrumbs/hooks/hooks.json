@@ -1,0 +1,1 @@
+{ "description": "Breadcrumbs sidebar: a tool.call hook that records WebSearch, WebFetch and browser-like MCP visits (main loop and subagents), agent.spawn for who made them, a Pane drawing for terminal and desktop, and /breadcrumbs", "modules": ["./register.tsx"] }

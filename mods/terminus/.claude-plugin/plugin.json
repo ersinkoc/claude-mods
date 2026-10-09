@@ -1,0 +1,16 @@
+{
+  "name": "terminus",
+  "version": "0.1.0",
+  "description": "KOZMOS Terminus: the session's shell history in a sidebar. Every Bash and PowerShell call of the main loop and its subagents with command, description, cwd, exit status, duration, output size and who ran it; filters for failed and slow runs, copy and re-run buttons. /terminus toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Terminus sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

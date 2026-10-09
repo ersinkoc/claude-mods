@@ -1,0 +1,1 @@
+{ "description": "Relay sidebar: a turn.step hook that times every model request (main loop and subagents) and reads its usage and stop reason, agent.spawn for who made it, a Pane drawing of latency and throughput charts for terminal and desktop, and /relay", "modules": ["./register.tsx"] }

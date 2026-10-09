@@ -1,0 +1,1 @@
+{ "description": "Terminus sidebar: a tool.call hook that records every Bash/PowerShell run (main loop and subagents), agent.spawn for who ran it, a Pane drawing for terminal and desktop, and /terminus", "modules": ["./register.tsx"] }

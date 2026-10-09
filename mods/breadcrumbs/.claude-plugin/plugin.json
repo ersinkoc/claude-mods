@@ -1,0 +1,16 @@
+{
+  "name": "breadcrumbs",
+  "version": "0.1.0",
+  "description": "KOZMOS Breadcrumbs: the session's web trail in a sidebar. WebSearch queries with result counts and top hits, WebFetch URLs with status and size, and browser-like MCP visits, grouped by domain with a monogram badge, clickable links and a copy-all-as-Markdown button. /breadcrumbs toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Breadcrumbs sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": false
+    }
+  }
+}

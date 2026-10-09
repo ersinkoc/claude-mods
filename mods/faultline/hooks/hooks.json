@@ -1,0 +1,1 @@
+{ "description": "Faultline sidebar: tool.call, turn.complete and classic StopFailure hooks that group every failure by a masked signature, agent.spawn for who hit it, a ticker for the severity strip, a Pane drawing for terminal and desktop, and /faultline", "modules": ["./register.tsx"] }
