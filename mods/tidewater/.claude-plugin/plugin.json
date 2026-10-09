@@ -1,0 +1,7 @@
+{
+  "name": "tidewater",
+  "version": "0.1.0",
+  "description": "KOZMOS Tidewater: the live diff of the current turn as tides above the prompt. Every file Claude edits gets its own pool of rolling waves, a green swell for added lines and a red ebb for removed ones, with file chips and totals like '+128 −42 · 6 files'. From the first edit of a turn until the next prompt. /tidewater toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

@@ -1,0 +1,1 @@
+{ "description": "Verdict: tool.call on Bash/PowerShell detects test, type-check, lint and build commands and parses their output into a per-project run history ($.store); an AbovePrompt band draws result chips with sparklines (terminal Client with a red pulse, desktop animated SVG); /verdict opens a Pane of recent runs", "modules": ["./register.tsx"] }

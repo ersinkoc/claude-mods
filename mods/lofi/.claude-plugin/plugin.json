@@ -1,0 +1,31 @@
+{
+  "name": "lofi",
+  "version": "0.1.0",
+  "description": "KOZMOS Lofi: generative lo-fi music while Claude works. Four original synthesized loops (focus, deep, night, sunny: warm chord pads, an electric piano, soft kick and hats with swing, vinyl crackle) loop from the start of a turn until it ends, and stop when Claude is idle. Opt-in: /lofi on. A tiny band shows '♪ lofi · deep' with a dancing equalizer while it plays.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "enabled": {
+      "type": "boolean",
+      "title": "Play music",
+      "description": "Play lo-fi loops while Claude works. Off by default; /lofi on and /lofi off switch it too (remembered).",
+      "required": false,
+      "default": false
+    },
+    "mood": {
+      "type": "string",
+      "title": "Mood",
+      "description": "Which loop plays. auto picks by the local hour: sunny in the morning, focus in the afternoon, deep in the evening, night after 22:00.",
+      "options": ["auto", "focus", "deep", "night", "sunny"],
+      "required": false,
+      "default": "auto"
+    },
+    "volume": {
+      "type": "number",
+      "title": "Volume",
+      "description": "Playback volume from 0 to 100.",
+      "required": false,
+      "default": 40
+    }
+  }
+}

@@ -1,0 +1,7 @@
+{
+  "name": "verdict",
+  "version": "0.1.0",
+  "description": "KOZMOS Verdict: test, build and lint results above the prompt. Spots the test runners, type checkers, linters and builds Claude runs (vitest, jest, pytest, go test, cargo, dotnet, mocha, bun, tsc, eslint, npm run build, maven, gradle…), parses pass/fail/skip and error counts, and shows chips like '✓ vitest 142 · ✗ jest 3 failed · ✓ tsc 0 errors' with a red pulse on failures and a sparkline of the last 10 runs. /verdict opens a pane of recent runs with the failing test names and first error lines.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

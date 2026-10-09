@@ -1,0 +1,1 @@
+{ "description": "Tidewater band: tool.call on Edit/MultiEdit/Write/NotebookEdit counts the lines each edit added and removed (from the tool's structuredPatch, else its input); prompt.submit starts a new tide; an AbovePrompt band draws the waves (terminal Client, desktop animated SVG); /tidewater", "modules": ["./register.tsx"] }

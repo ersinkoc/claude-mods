@@ -1,0 +1,7 @@
+{
+  "name": "warpdrive",
+  "version": "0.1.0",
+  "description": "KOZMOS Warpdrive: a starfield at warp above the prompt. Stars stream out of the center at the speed of Claude's live output token rate: a slow drift while it thinks, hyperspace streaks while it writes. When a turn ends, a jump flash and a line like '⇢ arrived · 42s · 18.4k tok'. /warpdrive toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

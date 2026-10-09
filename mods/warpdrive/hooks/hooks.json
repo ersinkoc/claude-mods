@@ -1,0 +1,1 @@
+{ "description": "Warpdrive band: turn.step streams are metered for output tokens per second, turn.start/turn.complete mark the jump; an AbovePrompt band draws a warp starfield (terminal Client at 30 fps, desktop animated SVG); /warpdrive", "modules": ["./register.tsx"] }

@@ -1,0 +1,1 @@
+{ "description": "Lofi: turn.start and turn.complete gate a looping $.audio.play of the mod's synthesized loops (stopped with an AbortSignal when Claude goes idle), a clock tick reconciles mood and state; an AbovePrompt band shows the mood with an animated equalizer (terminal Client, desktop SVG); /lofi on|off|mood", "modules": ["./register.tsx"] }

@@ -219,6 +219,27 @@
       "category": "band"
     },
     {
+      "name": "tidewater",
+      "source": "./mods/tidewater",
+      "description": "KOZMOS Tidewater: the live diff of the current turn as tides above the prompt. Every file Claude edits gets its own pool of rolling waves, a green swell for added lines and a red ebb for removed ones, with file chips and totals like '+128 −42 · 6 files'. From the first edit of a turn until the next prompt. /tidewater toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "verdict",
+      "source": "./mods/verdict",
+      "description": "KOZMOS Verdict: test, build and lint results above the prompt. Spots the test runners, type checkers, linters and builds Claude runs (vitest, jest, pytest, go test, cargo, dotnet, mocha, bun, tsc, eslint, npm run build, maven, gradle…), parses pass/fail/skip and error counts, and shows chips like '✓ vitest 142 · ✗ jest 3 failed · ✓ tsc 0 errors' with a red pulse on failures and a sparkline of the last 10 runs. /verdict opens a pane of recent runs with the failing test names and first error lines.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "warpdrive",
+      "source": "./mods/warpdrive",
+      "description": "KOZMOS Warpdrive: a starfield at warp above the prompt. Stars stream out of the center at the speed of Claude's live output token rate: a slow drift while it thinks, hyperspace streaks while it writes. When a turn ends, a jump flash and a line like '⇢ arrived · 42s · 18.4k tok'. /warpdrive toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
       "name": "compass",
       "source": "./mods/compass",
       "description": "KOZMOS Compass: the single most useful hint under the prompt. In order: the 5-hour limit near its end with its reset, a context window near full, agents still working, uncommitted changes after edits, a draft left waiting; otherwise the engine's own hint. /compass toggles it.",
@@ -280,6 +301,13 @@
       "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
       "version": "0.1.0",
       "category": "status"
+    },
+    {
+      "name": "lofi",
+      "source": "./mods/lofi",
+      "description": "KOZMOS Lofi: generative lo-fi music while Claude works. Four original synthesized loops (focus, deep, night, sunny: warm chord pads, an electric piano, soft kick and hats with swing, vinyl crackle) loop from the start of a turn until it ends, and stop when Claude is idle. Opt-in: /lofi on. A tiny band shows '♪ lofi · deep' with a dancing equalizer while it plays.",
+      "version": "0.1.0",
+      "category": "sound"
     },
     {
       "name": "resonance",
