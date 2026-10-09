@@ -1,0 +1,7 @@
+{
+  "name": "compass",
+  "version": "0.1.0",
+  "description": "KOZMOS Compass: the single most useful hint under the prompt. In order: the 5-hour limit near its end with its reset, a context window near full, agents still working, uncommitted changes after edits, a draft left waiting; otherwise the engine's own hint. /compass toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

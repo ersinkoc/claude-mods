@@ -1,0 +1,1 @@
+{ "description": "Stamp: turn.start, turn.step, tool.call and turn.complete collect each main turn's figures; a TurnDuration render hook draws them as a receipt; /stamp toggles it", "modules": ["./register.tsx"] }

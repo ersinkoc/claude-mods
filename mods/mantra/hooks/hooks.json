@@ -1,0 +1,1 @@
+{ "description": "Mantra: turn and tool.call hooks track the running tool and the effort, a 1 s ticker while a turn runs, and a Spinner render hook that rewrites the word and suffix props; /mantra", "modules": ["./register.tsx"] }

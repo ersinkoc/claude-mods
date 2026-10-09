@@ -1,0 +1,17 @@
+{
+  "name": "mantra",
+  "version": "0.1.0",
+  "description": "KOZMOS Mantra: a themed spinner. The working line's word rotates through a pack of original gerunds (cosmic, zen, pirate, turkish, hacker) and its tail names the tool running now with its elapsed time, or the effort while the model thinks. /mantra <pack> switches, /mantra off hands the line back.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "pack": {
+      "type": "string",
+      "title": "Word pack",
+      "description": "Which words the spinner rotates through.",
+      "options": ["cosmic", "zen", "pirate", "turkish", "hacker"],
+      "required": false,
+      "default": "cosmic"
+    }
+  }
+}

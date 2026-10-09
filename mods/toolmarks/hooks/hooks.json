@@ -1,0 +1,1 @@
+{ "description": "Toolmarks: a tool.call hook times each call by tool_use_id into a $.state family; ToolUse and ToolGroup render hooks compose the engine's own row with a small badge; /toolmarks", "modules": ["./register.tsx"] }

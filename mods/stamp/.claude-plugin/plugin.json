@@ -1,0 +1,7 @@
+{
+  "name": "stamp",
+  "version": "0.1.0",
+  "description": "KOZMOS Stamp: a receipt on every finished turn. The closing 'Baked for 42s' line becomes a compact row of duration, tool calls by family as colored chips, tokens in and out, the turn's cost and the context fill with its change. /stamp toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

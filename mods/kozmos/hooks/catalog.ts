@@ -16,5 +16,9 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "thermal", title: "Thermal", category: "pane", blurb: "a heatmap of the files this session touches." },
   { name: "tokenomics", title: "Tokenomics", category: "pane", blurb: "the cost lab." },
   { name: "vitals", title: "Vitals", category: "pane", blurb: "a btop-style machine monitor sidebar." },
+  { name: "compass", title: "Compass", category: "transcript", blurb: "the single most useful hint under the prompt." },
+  { name: "mantra", title: "Mantra", category: "transcript", blurb: "a themed spinner." },
+  { name: "stamp", title: "Stamp", category: "transcript", blurb: "a receipt on every finished turn." },
+  { name: "toolmarks", title: "Toolmarks", category: "transcript", blurb: "badges on tool rows." },
   { name: "marquee", title: "Marquee", category: "status", blurb: "a status-line ticker." },
 ]

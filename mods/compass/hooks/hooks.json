@@ -1,0 +1,1 @@
+{ "description": "Compass: a 2 s ticker reading $.session.usage and $.agent.list, a git status probe every 10 s once files were edited, and a PromptHint render hook that adds the top hint as the line's tail; /compass", "modules": ["./register.tsx"] }

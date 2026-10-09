@@ -1,0 +1,7 @@
+{
+  "name": "toolmarks",
+  "version": "0.1.0",
+  "description": "KOZMOS Toolmarks: badges on tool rows. Each finished call gets a family-colored glyph and its duration at the row's end, Bash calls their exit status, failed calls a red mark, and a folded group its total time and failures. /toolmarks toggles them.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

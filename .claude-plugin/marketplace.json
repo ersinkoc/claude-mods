@@ -100,6 +100,34 @@
       "category": "pane"
     },
     {
+      "name": "compass",
+      "source": "./mods/compass",
+      "description": "KOZMOS Compass: the single most useful hint under the prompt. In order: the 5-hour limit near its end with its reset, a context window near full, agents still working, uncommitted changes after edits, a draft left waiting; otherwise the engine's own hint. /compass toggles it.",
+      "version": "0.1.0",
+      "category": "transcript"
+    },
+    {
+      "name": "mantra",
+      "source": "./mods/mantra",
+      "description": "KOZMOS Mantra: a themed spinner. The working line's word rotates through a pack of original gerunds (cosmic, zen, pirate, turkish, hacker) and its tail names the tool running now with its elapsed time, or the effort while the model thinks. /mantra <pack> switches, /mantra off hands the line back.",
+      "version": "0.1.0",
+      "category": "transcript"
+    },
+    {
+      "name": "stamp",
+      "source": "./mods/stamp",
+      "description": "KOZMOS Stamp: a receipt on every finished turn. The closing 'Baked for 42s' line becomes a compact row of duration, tool calls by family as colored chips, tokens in and out, the turn's cost and the context fill with its change. /stamp toggles it.",
+      "version": "0.1.0",
+      "category": "transcript"
+    },
+    {
+      "name": "toolmarks",
+      "source": "./mods/toolmarks",
+      "description": "KOZMOS Toolmarks: badges on tool rows. Each finished call gets a family-colored glyph and its duration at the row's end, Bash calls their exit status, failed calls a red mark, and a folded group its total time and failures. /toolmarks toggles them.",
+      "version": "0.1.0",
+      "category": "transcript"
+    },
+    {
       "name": "marquee",
       "source": "./mods/marquee",
       "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
