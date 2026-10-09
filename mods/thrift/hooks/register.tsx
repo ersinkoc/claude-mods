@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register, RenderSurface } from 'claude-code'
 
 import type { ThriftLimit, ThriftMode, ThriftSnap, ThriftTally } from '../types'
 import type { CoinProps } from './coin.tsx'
@@ -107,11 +107,10 @@ async function loadStored($: EngineInterface): Promise<void> {
   }
 }
 
-async function endTurn($: EngineInterface): Promise<void> {
-  if (!turn) return
-  const tally: ThriftTally = turn.isThrift ? live.thrift : live.normal
+async function endTurn($: EngineInterface, done: { isThrift: boolean; cost: number }): Promise<void> {
+  const tally: ThriftTally = done.isThrift ? live.thrift : live.normal
   tally.turns++
-  tally.cost += turn.cost
+  tally.cost += done.cost
   turn = null
   await readLimits($)
 }
@@ -134,12 +133,16 @@ async function report($: EngineInterface): Promise<string> {
   const top = s.top
   const reset = top?.resetsAt ? Date.parse(top.resetsAt) - now : NaN
   const state = s.isOn ? 'ON' : 'off'
+  const avgOf = (t: ThriftTally) => {
+    const a = avg(t)
+    return a !== undefined ? fmtUsd(a) : '—'
+  }
   const lines = [
     `🪙 KOZMOS thrift · mode ${s.mode}${s.mode === 'auto' ? ` (on at ${s.autoAt}%)` : ''} · now ${state}${top ? ` · ${limitLabel(top.kind)} ${fmtPct(top.percentUsed)}${Number.isFinite(reset) ? `, resets in ${fmtSpan(reset)}` : ''}` : ''}`,
     '',
     'This session:',
-    `  thrift turns  ${String(s.thrift.turns).padStart(3)} · avg ${avg(s.thrift) !== undefined ? fmtUsd(avg(s.thrift) ?? 0) : '—'}`,
-    `  normal turns  ${String(s.normal.turns).padStart(3)} · avg ${avg(s.normal) !== undefined ? fmtUsd(avg(s.normal) ?? 0) : '—'}`,
+    `  thrift turns  ${String(s.thrift.turns).padStart(3)} · avg ${avgOf(s.thrift)}`,
+    `  normal turns  ${String(s.normal.turns).padStart(3)} · avg ${avgOf(s.normal)}`,
   ]
   const cmp = comparison(s)
   lines.push(cmp ? `  → ${cmp}` : '  (the comparison appears once both kinds of turn have run)')
@@ -148,7 +151,8 @@ async function report($: EngineInterface): Promise<string> {
 }
 
 export const register: Register = (on, options) => {
-  const autoAt = Math.max(1, Math.min(100, Number(options.autoAt ?? 90) || 90))
+  // userConfig gives autoAt a number (90 unless set); 0 reads as the default too.
+  const autoAt = Math.max(1, Math.min(100, Number(options.autoAt) || 90))
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -207,7 +211,7 @@ export const register: Register = (on, options) => {
 
   on('turn.complete', async ($, e, next) => {
     const r = await next(e)
-    if (e.agentId === undefined && turn && turn.id === e.turnId) await endTurn($)
+    if (e.agentId === undefined && turn && turn.id === e.turnId) await endTurn($, turn)
     return r
   })
 
@@ -243,9 +247,8 @@ export const register: Register = (on, options) => {
       )
     }
 
-    const ui = $.ui.resolve(e)
-    if (!('Svg' in ui)) return drawn
-    const { Box, Button, Svg } = ui
+    // Every surface but the terminal draws Svg.
+    const { Box, Button, Svg } = $.ui.resolve(e) as Elements[Exclude<RenderSurface, 'terminal'>]
     const W = Math.max(240, pxOf(cols) - 40)
     return (
       <Box flexDirection="column">

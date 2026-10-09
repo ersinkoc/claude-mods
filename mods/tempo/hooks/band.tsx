@@ -16,8 +16,8 @@ type P = {
 type S = { f: number; since: number; seen: number }
 
 const FRAME = 100
-const TOMATO = ['#ef4444', '#f87171', '#fb923c', '#fbbf24']
-const MINT = ['#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1']
+const TOMATO = ['#ef4444', '#f87171', '#fb923c', '#fbbf24'] as const
+const MINT = ['#2dd4bf', '#5eead4', '#99f6e4', '#ccfbf1'] as const
 const STEAM = ['  ', '° ', '°˚', ' ˚', '˚ ', ' °']
 
 function clock(ms: number, blink: boolean): string {
@@ -42,21 +42,23 @@ const TempoBand: ClientModule<P, S> = (props, surface) => {
   const isWork = props.phase === 'work'
   const pal = isWork ? TOMATO : MINT
   const remain = Math.max(0, props.remain - since * FRAME)
-  const ratio = props.total > 0 ? Math.max(0, Math.min(1, 1 - remain / props.total)) : 1
+  // The hooks module never sends a total under 1 ms.
+  const ratio = Math.max(0, Math.min(1, 1 - remain / props.total))
   const f = st.f
 
   const icon = isWork ? (remain < 60_000 && remain > 0 && f % 10 < 5 ? '⏰' : '🍅') : '☕'
-  const steam = isWork ? '' : STEAM[Math.floor(f / 3) % STEAM.length] ?? ''
+  const steam = isWork ? '' : STEAM[Math.floor(f / 3) % STEAM.length]!
   const label = isWork ? `FOCUS ${props.round}` : props.phase === 'long' ? 'LONG BREAK' : 'BREAK'
   const time = clock(remain, f % 10 >= 5 && remain > 0)
   const tally = props.today > 0 ? ` 🍅×${props.today} today` : ''
   const note = !isWork && props.claude ? ` — Claude keeps going${'.'.repeat(1 + (Math.floor(f / 4) % 3))}` : ''
 
   const fixed = 2 + steam.length + 1 + label.length + 2 + 2 + time.length + tally.length + note.length + 1
-  const width = Math.max(6, Math.min(48, (props.cols || 60) - fixed))
+  const width = Math.max(6, Math.min(48, props.cols - fixed))
   const filled = ratio * width
   const full = Math.floor(filled)
-  const glint = full > 2 ? Math.floor((f / 2) % (full + 8)) : -1
+  // No glint on a bar this short: then no cell is near it.
+  const glint = full > 2 ? Math.floor((f / 2) % (full + 8)) : -Infinity
 
   // Runs of one color, so the row stays a handful of Text nodes.
   const runs: { color: string; text: string }[] = []
@@ -68,11 +70,11 @@ const TempoBand: ClientModule<P, S> = (props, surface) => {
   for (let i = 0; i < width; i++) {
     if (i < full) {
       const d = Math.abs(i - glint)
-      push(d === 0 ? pal[3] ?? '#fff' : d === 1 ? pal[2] ?? '#fff' : i % 2 ? pal[0] ?? '#f00' : pal[1] ?? '#f00', '█')
+      push(d === 0 ? pal[3] : d === 1 ? pal[2] : i % 2 ? pal[0] : pal[1], '█')
     } else if (i === full && ratio < 1) {
       const frac = filled - full
-      const sizzle = ['░', '▒', '▓'][(f + i) % 3] ?? '▒'
-      push(pal[1] ?? '#f00', frac > 0.5 ? '▓' : sizzle)
+      const sizzle = '░▒▓'.charAt((f + i) % 3)
+      push(pal[1], frac > 0.5 ? '▓' : sizzle)
     } else {
       push('#4b5563', '·')
     }

@@ -87,17 +87,17 @@ export function crabFrame({ mood, f: frame, acc }: FrameOpts): Frame {
   if (mood === 'sleepy') ox = 4
   if (mood === 'thinking') ox = 3
 
+  // Every pixel drawn below lands on the stage: x + ox stays within 0..29
+  // (the widest reach is the working scuttle's right claw, 15 + 10) and y
+  // within 0..7 (a raised claw goes up to row 0).
   const put = (x: number, y: number, k: string | null) => {
-    const X = x + ox
-    if (y < 0 || y >= STAGE_H || X < 0 || X >= STAGE_W) return
-    const row = px[y]
-    if (row) row[X] = k
+    px[y]![x + ox] = k
   }
 
   // Body.
   BODY.forEach((line, y) => {
     for (let x = 0; x < line.length; x++) {
-      const k = line[x] ?? '.'
+      const k = line.charAt(x)
       if (k !== '.' && k !== 'c' && k !== 'a') put(x, y, k)
     }
   })
@@ -210,16 +210,16 @@ export function crabFrame({ mood, f: frame, acc }: FrameOpts): Frame {
     for (let i = 0; i < 4; i++) {
       if ((f + i * 3) % 6 < 3) continue
       const x = i % 2 === 0 ? ox - 3 + i : ox + 17 + i
-      marks.push({ x: Math.max(0, x), row: i % 3, ch: tw[(i + Math.floor(f / 6)) % tw.length] ?? '✦', color: hues[i] ?? '#facc15' })
+      marks.push({ x: Math.max(0, x), row: i % 3, ch: tw[(i + Math.floor(f / 6)) % tw.length]!, color: hues[i]! })
     }
     marks.push({ x: ox + 20, row: 1 + (Math.floor(f / 4) % 2), ch: f % 12 < 6 ? '♪' : '♫', color: '#f9a8d4' })
   }
   if (mood === 'love') {
-    const hearts = [[ox + 17, 0], [ox + 19, 6], [ox - 2, 3], [ox + 21, 9]]
+    const hearts: [x: number, phase: number][] = [[ox + 17, 0], [ox + 19, 6], [ox - 2, 3], [ox + 21, 9]]
     hearts.forEach(([x, phase], i) => {
-      const t = ((f + (phase ?? 0)) % 12) / 12
-      const row = 3 - Math.floor(t * 4)
-      if (row >= 0) marks.push({ x: Math.max(0, x ?? 0), row, ch: '♥', color: i % 2 ? '#f472b6' : '#ef4444' })
+      const t = ((f + phase) % 12) / 12
+      const row = 3 - Math.floor(t * 4) // 0..3: t is under 1
+      marks.push({ x: Math.max(0, x), row, ch: '♥', color: i % 2 ? '#f472b6' : '#ef4444' })
     })
   }
 

@@ -54,8 +54,9 @@ let wantsStatus = false
 async function publish($: EngineInterface): Promise<void> {
   const key = JSON.stringify({ ...live, now: 0, windows: live.windows.map(w => ({ ...w, resetInMs: Math.round((w.resetInMs ?? 0) / 60_000), etaMs: Math.round((w.etaMs ?? 0) / 60_000), marginMs: Math.round((w.marginMs ?? 0) / 60_000) })) })
   if (key === lastPublished) return
-  lastPublished = key
   await update($, snapAtom, () => JSON.parse(JSON.stringify(live)) as HgSnap)
+  // Noted once written, so a refused write is tried again on the next sample.
+  lastPublished = key
 }
 
 async function readMemory($: EngineInterface): Promise<Record<string, WinMemory>> {
@@ -169,11 +170,9 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const s = (await read($, snapAtom)) ?? blank(await $.clock.now())
-    const ui = $.ui.resolve(e)
-    const { Box, Text } = ui
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Box, Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns, 44)
       const cards = s.windows.length ? s.windows.map(w => windowCard(w, s.isWorking, W)) : [emptyCard(W)]
       return (
@@ -183,11 +182,12 @@ export const register: Register = (on, options) => {
       )
     }
 
+    const { Box, Text, Raster } = $.ui.resolve(e)
     const cols = Math.max(28, e.props.bodyColumns || 40)
     if (s.windows.length === 0) {
       return (
         <Box flexDirection="column">
-          {'Raster' in ui ? <ui.Raster key="hg-empty" columns={7} rows={4} cells={glass(0, false).encode()} /> : null}
+          <Raster key="hg-empty" columns={7} rows={4} cells={glass(0, false).encode()} />
           <Text color={KZ.violet} bold>No rate-limit windows yet.</Text>
           <Text dimColor wrap="wrap">They appear after the first reply on a Claude subscription. With an API key or a gateway without limits there is nothing to watch: spend freely, Tokenomics counts the dollars.</Text>
         </Box>
@@ -201,7 +201,7 @@ export const register: Register = (on, options) => {
           const c = heat(w.pct / 100)
           return (
             <Box key={`w-${w.kind}`} flexDirection="row" marginBottom={1}>
-              {'Raster' in ui ? <ui.Raster key={`hg-${w.kind}`} columns={7} rows={4} cells={glass(w.pct / 100, s.isWorking).encode()} /> : null}
+              <Raster key={`hg-${w.kind}`} columns={7} rows={4} cells={glass(w.pct / 100, s.isWorking).encode()} />
               <Box flexDirection="column" marginLeft={2} width={textW}>
                 <Text wrap="truncate-end">
                   <Text bold color={c}>{label(w.kind).padEnd(5)}</Text>
@@ -227,11 +227,11 @@ export const register: Register = (on, options) => {
 }
 
 function barOf(ratio: number, width: number): string {
-  const EIGHTHS = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']
   const w = Math.max(1, Math.floor(width))
   const exact = clamp01(ratio) * w
   const full = Math.floor(exact)
-  const part = EIGHTHS[Math.floor((exact - full) * 8)] ?? ''
+  // No glyph for a remainder under an eighth: charAt(-1) is ''.
+  const part = '▏▎▍▌▋▊▉'.charAt(Math.floor((exact - full) * 8) - 1)
   return '█'.repeat(full) + part + '░'.repeat(Math.max(0, w - full - (part ? 1 : 0)))
 }
 
@@ -253,7 +253,7 @@ function glass(used: number, isWorking: boolean): Canvas {
   for (const [y, w] of rows) for (let x = 0; x < 7; x++) if (Math.abs(x - 3) <= (w - 1) / 2) c.pixel(x, y, GLASS)
   // Upper bulb fills from the neck up; lower bulb from the floor up.
   const order = (ys: number[]): [number, number][] => ys.flatMap(y => {
-    const w = rows.find(r => r[0] === y)?.[1] ?? 1
+    const w = rows.find(r => r[0] === y)![1]
     const xs = Array.from({ length: w }, (_, i) => 3 - (w - 1) / 2 + i).sort((a, b) => Math.abs(a - 3) - Math.abs(b - 3))
     return xs.map(x => [x, y] as [number, number])
   })

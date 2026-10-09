@@ -4,8 +4,8 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { ShellRun, TerminusFilter, TerminusSnap, TerminusView } from '../types'
 import { KZ, clip, fmtTokens, pxOf, sparkline } from './lib/kz.ts'
 import {
-  MAX_COMMAND, MAX_RUNS, SLOW_MS, altOf, clockOf, cwdOf, durHeat, emptySnap, fmtMs, fmtSize, headerSvg, isFailed, isSlow,
-  matches, outcomeOf, runSvg, statusColor, statusGlyph, statusLine,
+  MAX_COMMAND, MAX_RUNS, SLOW_MS, altOf, clockOf, cwdOf, durHeat, emptySnap, firstLine, fmtMs, fmtSize, headerSvg, isFailed,
+  isSlow, matches, outcomeOf, runSvg, statusColor, statusGlyph, statusLine,
 } from './shell.ts'
 
 const PANE = 'kz-terminus'
@@ -21,29 +21,23 @@ const FILTERS: readonly { id: TerminusFilter; label: string }[] = [
 ]
 
 // ---------------------------------------------------------------------------
-// The collector: module state, published to $.state only when it changed.
+// The collector: module state, published to $.state after each change (a run
+// started, a run ended: every publish follows one).
 
 let live: TerminusSnap = emptySnap()
 let isSeeded = false
-let lastPublished = ''
 let seq = 0
 const agentNames = new Map<string, string>()
 
+/** After a hot reload: carry on from what the last module published. */
 async function seed($: EngineInterface): Promise<void> {
   if (isSeeded) return
   isSeeded = true
-  try {
-    const kept = await read($, snapAtom)
-    if (kept) live = structuredClone(kept)
-  } catch {
-    // Nothing kept: start empty.
-  }
+  const kept = await read($, snapAtom)
+  if (kept) live = structuredClone(kept)
 }
 
 async function publish($: EngineInterface): Promise<void> {
-  const key = JSON.stringify(live)
-  if (key === lastPublished) return
-  lastPublished = key
   const next = structuredClone(live)
   await update($, snapAtom, () => next)
 }
@@ -80,7 +74,6 @@ export const register: Register = (on, options) => {
     const started = await next(e)
     live = emptySnap()
     isSeeded = true
-    lastPublished = ''
     agentNames.clear()
     await $.command.register({ name: 'terminus', description: 'KOZMOS: toggle the Terminus shell-history sidebar (/terminus list prints the last runs)', argumentHint: '[list]', immediate: true })
     await publish($).catch(() => undefined)
@@ -194,6 +187,8 @@ export const register: Register = (on, options) => {
 
     const cols = Math.max(30, e.props.bodyColumns || 44)
     const last = snap.runs.slice(0, Math.max(8, cols - 6)).reverse()
+    // One character per run, oldest left.
+    const spark = sparkline(last.map(r => Math.log10(1 + (r.ms ?? 0) / 100)), last.length)
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" justifyContent="space-between">
@@ -210,10 +205,9 @@ export const register: Register = (on, options) => {
         {last.length > 0 && (
           <Text wrap="truncate-end">
             <Text dimColor>time </Text>
-            {[...sparkline(last.map(r => Math.log10(1 + (r.ms ?? 0) / 100)), last.length)].map((ch, i) => {
-              const r = last[i]
-              return <Text key={`sp${i}`} color={r ? (isFailed(r) ? KZ.red : durHeat(r.ms)) : KZ.mist}>{ch}</Text>
-            })}
+            {last.map((r, i) => (
+              <Text key={`sp${i}`} color={isFailed(r) ? KZ.red : durHeat(r.ms)}>{spark.charAt(i)}</Text>
+            ))}
           </Text>
         )}
         {filterRow}
@@ -225,7 +219,7 @@ export const register: Register = (on, options) => {
               <Text wrap="truncate-end">
                 <Text color={c} bold>{statusGlyph(r.status)} </Text>
                 <Text color={KZ.green}>$ </Text>
-                <Text bold>{r.command.split('\n')[0] ?? ''}</Text>
+                <Text bold>{firstLine(r.command)}</Text>
               </Text>
               {r.description && <Text dimColor wrap="truncate-end">  {r.description}</Text>}
               <Box flexDirection="row" justifyContent="space-between">

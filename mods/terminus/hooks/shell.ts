@@ -46,7 +46,8 @@ export function outcomeOf(ran: Ran): { status: ShellStatus; exit?: number; error
     return {
       status: isDenied ? 'denied' : 'fail',
       exit: code ? Number(code[1]) : undefined,
-      error: tellingLine(text) || (isDenied ? 'denied' : 'failed'),
+      // A denial always leaves its telling line; only a bare exit code falls back.
+      error: tellingLine(text) || 'failed',
       outBytes: text.length,
     }
   }
@@ -59,6 +60,9 @@ export function outcomeOf(ran: Ran): { status: ShellStatus; exit?: number; error
   const note = typeof r.returnCodeInterpretation === 'string' ? r.returnCodeInterpretation : undefined
   return { status: 'ok', exit: 0, error: note ? clip(note, 160) : undefined, outBytes }
 }
+
+/** A command's first line (a heredoc or a script shows its head). */
+export const firstLine = (s: string): string => s.replace(/\n[\s\S]*/, '')
 
 export const isFailed = (r: ShellRun): boolean => r.status === 'fail' || r.status === 'denied'
 export const isSlow = (r: ShellRun): boolean => (r.ms ?? 0) > SLOW_MS
@@ -171,7 +175,7 @@ export function runSvg(r: ShellRun, W: number): { source: string; height: number
   parts.push(svgText(14, 19, statusGlyph(r.status), { size: 12, weight: 800, fill: c }))
   const right = `${fmtMs(r.ms)}`
   parts.push(svgText(W - 10, 19, right, { size: 11.5, weight: 700, anchor: 'end', fill: durHeat(r.ms) }))
-  parts.push(svgText(30, 19, fitText(`$ ${r.command.split('\n')[0] ?? ''}`, 11.5, W - 96), { size: 11.5, weight: 600, mono: true }))
+  parts.push(svgText(30, 19, fitText(`$ ${firstLine(r.command)}`, 11.5, W - 96), { size: 11.5, weight: 600, mono: true }))
   const meta = [clockOf(r.at), fmtSize(r.outBytes), r.who, r.cwd ? `⌂ ${r.cwd}` : ''].filter(Boolean).join(' · ')
   parts.push(svgText(30, 35, fitText(r.description ?? (r.tool === 'PowerShell' ? 'PowerShell' : 'Bash'), 10.5, W - 40), { cls: 's', size: 10.5 }))
   parts.push(svgText(30, 49, fitText(meta, 9.5, W - 40), { cls: 'm', size: 9.5 }))

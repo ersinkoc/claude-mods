@@ -1,6 +1,6 @@
 // Clawdling on the terminal: the pixel crab in half blocks, animated by the
 // surface at 8 fps, with its name, level, XP bar and a typed-out quip beside it.
-import type { ClientModule } from 'claude-code'
+import type { ClientModule, ClientSurface } from 'claude-code'
 
 import { STAGE_W, crabFrame, frameRuns } from './sprite.ts'
 import type { Acc, Mood } from './sprite.ts'
@@ -21,15 +21,19 @@ type S = { f: number; quip: string; typed: number }
 
 const SHELL = '#f05a3c'
 
+/** The first frame: state at 0 and the 8 fps tick (frames and typed characters). */
+function start(surface: ClientSurface<S>, props: P): S {
+  const first = { f: 0, quip: props.quip, typed: 0 }
+  surface.setState(first)
+  surface.every(125, () => {
+    const s = surface.state! // set above, never cleared
+    surface.setState({ f: s.f + 1, quip: s.quip, typed: s.typed + 2 })
+  })
+  return first
+}
+
 const Crab: ClientModule<P, S> = (props, surface) => {
-  if (surface.state === undefined) {
-    surface.setState({ f: 0, quip: props.quip, typed: 0 })
-    surface.every(125, () => {
-      const s = surface.state
-      if (s) surface.setState({ f: s.f + 1, quip: s.quip, typed: s.typed + 2 })
-    })
-  }
-  const st = surface.state ?? { f: 0, quip: props.quip, typed: 0 }
+  const st = surface.state ?? start(surface, props)
   const typed = st.quip === props.quip ? st.typed : 0
   if (st.quip !== props.quip) surface.setState({ f: st.f, quip: props.quip, typed: 0 })
 

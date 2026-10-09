@@ -48,8 +48,9 @@ async function publish($: EngineInterface): Promise<void> {
   // While lit the desktop label counts seconds; otherwise nothing moves.
   const key = JSON.stringify({ ...snap, now: isLit(mode) ? Math.floor(now / 1000) : 0 })
   if (key === lastKey) return
-  lastKey = key
   await update($, snapAtom, () => snap)
+  // Noted once written, so a refused write is tried again on the next tick.
+  lastKey = key
 }
 
 async function tick($: EngineInterface): Promise<void> {
@@ -139,13 +140,12 @@ export const register: Register = on => {
     const snap = await read($, snapAtom)
     if (!snap || !isLit(snap.mode)) return drawn
 
-    const ui = $.ui.resolve(e)
-    const { Box, Button } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const hide = <Button key="aurora-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
     const secs = (snap.now - snap.since) / 1000
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns)
       const H = e.props.maxRows >= 10 ? 72 : 56
       return (
@@ -159,8 +159,7 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    const { Client } = $.ui.resolve(e)
     const cols = Math.max(30, e.props.bodyColumns || 80)
     const rows = e.props.maxRows >= 10 ? 3 : 2
     return (

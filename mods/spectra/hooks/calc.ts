@@ -57,7 +57,7 @@ export function thresholdOf(engine: number | undefined, window: number): { token
  */
 export function recentRun(series: readonly number[], k = 6): number[] {
   let start = 0
-  for (let i = 1; i < series.length; i++) if ((series[i] ?? 0) < (series[i - 1] ?? 0) * 0.9) start = i
+  for (let i = 1; i < series.length; i++) if (series[i]! < series[i - 1]! * 0.9) start = i
   return series.slice(start).slice(-(k + 1))
 }
 
@@ -74,7 +74,8 @@ export function growthSlope(series: readonly number[], k = 6): number | undefine
     num += (x - mx) * (y - my)
     den += (x - mx) * (x - mx)
   })
-  return den > 0 ? num / den : undefined
+  // Two or more distinct x values: den is above zero.
+  return num / den
 }
 
 /** Whole turns until `current` reaches `threshold` at `slope` per turn. */

@@ -164,7 +164,7 @@ export function isTestRun(cmd: string): boolean {
 
 /** `.tsx` from `src/app.tsx`; '' for none (Makefile). */
 export function extOf(path: string): string {
-  const base = path.split(/[\\/]/).pop() ?? ''
+  const base = path.slice(Math.max(path.lastIndexOf('/'), path.lastIndexOf('\\')) + 1)
   const i = base.lastIndexOf('.')
   return i > 0 ? base.slice(i).toLowerCase() : ''
 }

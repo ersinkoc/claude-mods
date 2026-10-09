@@ -48,16 +48,17 @@ async function launch($: EngineInterface, name: string): Promise<void> {
     const { text } = await $.command.run({ command: name, args: '' })
     await update($, hubAtom, prev => ({ ...prev, lastRun: { name, text: text ?? 'done' } }))
   } catch (err) {
-    await update($, hubAtom, prev => ({ ...prev, lastRun: { name, text: err instanceof Error ? err.message : String(err) } }))
+    // The engine rejects a command run with an Error (no hook answered, a hook failed).
+    await update($, hubAtom, prev => ({ ...prev, lastRun: { name, text: (err as Error).message } }))
   }
 }
 
 function listText(installed: readonly string[]): string {
-  const lines = CATEGORIES.filter(c => c.id !== 'all').flatMap(c => {
-    const mods = CATALOG.filter(m => m.category === c.id)
-    if (!mods.length) return []
-    return [`${c.label}:`, ...mods.map(m => `  ${installed.includes(m.name) ? '✓' : '·'} /${m.name} — ${m.blurb}`)]
-  })
+  // Only the categories the catalog has mods in get a heading.
+  const lines = CATEGORIES.filter(c => c.id !== 'all' && CATALOG.some(m => m.category === c.id)).flatMap(c => [
+    `${c.label}:`,
+    ...CATALOG.filter(m => m.category === c.id).map(m => `  ${installed.includes(m.name) ? '✓' : '·'} /${m.name} — ${m.blurb}`),
+  ])
   return [`KOZMOS — ${installed.length}/${CATALOG.length} mods active`, ...lines].join('\n')
 }
 
@@ -191,7 +192,8 @@ ${stars.join('')}
   return svg(W, 92, body, css)
 }
 
-function modCard(W: number, m: CatalogEntry, isOn: boolean): string {
+/** One mod's desktop card; exported so a test can draw an entry the catalog does not hold yet. */
+export function modCard(W: number, m: CatalogEntry, isOn: boolean): string {
   const c = colorOf(m.category)
   const where = CATEGORIES.find(x => x.id === m.category)?.where ?? ''
   const body = `<rect class="p" width="${W}" height="50" rx="10"/>

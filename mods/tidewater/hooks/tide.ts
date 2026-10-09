@@ -29,16 +29,16 @@ export function lineDelta(before: string, after: string): Delta {
   const ma = a.slice(head, a.length - tail)
   const mb = b.slice(head, b.length - tail)
   if (!ma.length || !mb.length || ma.length * mb.length > 250_000) return { added: mb.length, removed: ma.length }
-  // LCS length, one row at a time.
+  // LCS length, one row at a time (every index read is inside the zero-filled rows).
   let prev = new Array<number>(mb.length + 1).fill(0)
   for (let i = 1; i <= ma.length; i++) {
     const cur = new Array<number>(mb.length + 1).fill(0)
     for (let j = 1; j <= mb.length; j++) {
-      cur[j] = ma[i - 1] === mb[j - 1] ? (prev[j - 1] ?? 0) + 1 : Math.max(prev[j] ?? 0, cur[j - 1] ?? 0)
+      cur[j] = ma[i - 1] === mb[j - 1] ? prev[j - 1]! + 1 : Math.max(prev[j]!, cur[j - 1]!)
     }
     prev = cur
   }
-  const common = prev[mb.length] ?? 0
+  const common = prev[mb.length]!
   return { added: mb.length - common, removed: ma.length - common }
 }
 
@@ -133,7 +133,7 @@ export function level(n: number, max: number): number {
 
 const CHIP = [KZ.cyan, KZ.violet, KZ.blue, KZ.magenta, KZ.teal, KZ.yellow, KZ.amber, KZ.lime]
 export function chipColor(path: string): string {
-  return CHIP[hash(path) % CHIP.length] ?? KZ.cyan
+  return CHIP[hash(path) % CHIP.length]!
 }
 
 const SEA = ['#14532d', '#15803d', '#22c55e', '#4ade80', '#86efac', '#dcfce7']
@@ -150,13 +150,13 @@ export function layout(files: readonly TideFile[], cols: number): { file: TideFi
   const widths = weights.map(w => Math.max(4, Math.floor((w / sum) * free)))
   let over = widths.reduce((a, b) => a + b, 0) + shown.length - 1 - cols
   for (let i = widths.length - 1; over > 0 && i >= 0; i--) {
-    const take = Math.min(over, (widths[i] ?? 4) - 4)
-    widths[i] = (widths[i] ?? 4) - take
+    const take = Math.min(over, widths[i]! - 4)
+    widths[i] = widths[i]! - take
     over -= take
   }
   let x = 0
   return shown.map((file, i) => {
-    const w = widths[i] ?? 4
+    const w = widths[i]!
     const out = { file, x, w }
     x += w + 1
     return out
@@ -197,14 +197,14 @@ export function tideFrame(files: readonly TideFile[], cols: number, rows: number
       if (i < split) {
         const h = Math.round(clamp01(la * boost * swell) * 8)
         const crest = h >= 7 && (i + Math.floor(t / 3)) % 4 === 0
-        push(rowSea, RISE[h] ?? ' ', crest ? SEA[5] ?? '#fff' : SEA[Math.min(4, Math.max(0, Math.floor(h / 2)))] ?? '#22c55e')
+        push(rowSea, RISE.charAt(h), crest ? SEA[5]! : SEA[Math.min(4, Math.max(0, Math.floor(h / 2)))]!)
       } else {
         const d = Math.round(clamp01(lr * boost * ebb) * 8)
-        push(rowSea, SINK[d] ?? ' ', EBB[Math.min(4, Math.floor(d / 2))] ?? '#ef4444')
+        push(rowSea, SINK[d]!, EBB[Math.min(4, Math.floor(d / 2))]!)
       }
       if (isTall) {
         const d = Math.round(clamp01(lr * boost * ebb) * 8)
-        push(rowEbb, SINK[d] ?? ' ', EBB[Math.min(4, Math.floor(d / 2))] ?? '#ef4444')
+        push(rowEbb, SINK[d]!, EBB[Math.min(4, Math.floor(d / 2))]!)
       }
       x++
     }
@@ -236,7 +236,17 @@ export function chipRow(files: readonly TideFile[], cols: number, newest: string
   add(' ', '')
   add(`−${t0.removed}`, KZ.red)
   add(` · ${t0.count} ${t0.count === 1 ? 'file' : 'files'}`, KZ.mist)
-  const shown = [...files].reverse().slice(0, Math.max(1, Math.floor(cols / 5))).reverse()
+  // The newest chips that fit whole beside a "+N more" for the rest; the newest
+  // always (trimmed if need be).
+  const chipW = (f: TideFile) => [...`  ● ${f.name} +${f.added}−${f.removed}`].length
+  const shown: TideFile[] = []
+  let room = cols - used
+  for (const f of [...files].reverse()) {
+    const rest = files.length - shown.length - 1
+    if (shown.length && chipW(f) + (rest > 0 ? `  +${rest} more`.length : 0) > room) break
+    shown.unshift(f)
+    room -= chipW(f)
+  }
   const hidden = files.length - shown.length
   for (const f of shown) {
     add('  ', '')

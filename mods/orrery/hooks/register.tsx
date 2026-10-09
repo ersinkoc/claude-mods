@@ -117,12 +117,13 @@ async function publish($: EngineInterface, at?: number): Promise<void> {
     isWorking,
     lastEnd,
   }
-  const isMoving = list.some(a => a.status === 'run' || (a.status === 'fail' && now - (a.end ?? 0) < 5000))
+  const isMoving = list.some(a => a.status === 'run' || (a.status === 'fail' && a.end !== null && now - a.end < 5000))
   const isShown = list.length > 0 && (list.some(a => a.status === 'run') || now - lastEnd < LINGER_MS)
   const key = JSON.stringify({ ...snap, now: isMoving ? now : 0, isShown })
   if (key === lastKey) return
-  lastKey = key
   await update($, snapAtom, () => snap)
+  // Noted once written, so a refused write is tried again on the next tick.
+  lastKey = key
 }
 
 export const register: Register = on => {
@@ -211,12 +212,11 @@ export const register: Register = on => {
     const hasRunning = snap.agents.some(a => a.status === 'run')
     if (!hasRunning && snap.now - snap.lastEnd >= LINGER_MS) return drawn
 
-    const ui = $.ui.resolve(e)
-    const { Box, Button } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const hide = <Button key="orrery-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns)
       const H = e.props.maxRows >= 10 ? 112 : 92
       return (
@@ -230,8 +230,7 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    const { Client } = $.ui.resolve(e)
     const cols = Math.max(40, e.props.bodyColumns || 80)
     const rows = e.props.maxRows >= 12 ? 5 : 4
     return (

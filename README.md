@@ -616,12 +616,14 @@ a guard for destructive shell commands. Before Claude or a subagent runs rm -rf 
 ```
 npm install                       # TypeScript and playwright-core
 node scripts/validate-all.mjs     # sync the shared kit, rebuild the catalog, tsc, validate and test every mod
+node scripts/coverage.mjs [mod]   # statement, branch, function and line coverage, per file (every file is at 100%)
 node scripts/capture-previews.mjs # play the made-up session through each mod
 node scripts/render-previews.mjs  # render the drawings to docs/previews/*.png
 node scripts/build-readme.mjs     # rebuild this README's gallery
 ```
 
 - `shared/kz.ts`, `shared/probe.ts` — the shared kit: palette, gauges, sparklines, braille graphs, a raster canvas, SVG helpers, prices, git and machine parsers. `scripts/sync-shared.mjs` copies it into each mod's `hooks/lib/`, because a hooks module may only import files of its own plugin.
+- `scripts/coverage.mjs` measures coverage, which `claude plugin test` does not: it instruments a copy of each mod with istanbul in `.kozmos/cov/`, reads the counters back through a hidden command when every test ends, and fails unless every file is at 100% on all four counts.
 - `scripts/build-catalog.mjs` writes `.claude-plugin/marketplace.json` and the hub's catalog.
 - `AUTHORING.md` — the rules the engine enforces and where every figure comes from, for writing a new mod.
 - `types/claude-code.d.ts` — the plugin API declarations of the Claude Code build the bundle targets.

@@ -229,20 +229,17 @@ export const register: Register = on => {
       )
     }
 
-    const ui = $.ui.resolve(e)
-    if ('Svg' in ui) {
-      const { Box, Button, Svg } = ui
-      const pic = dashSvg(snap, Math.max(240, (cols - 3) * 8 - 8))
-      return (
-        <Box flexDirection="column">
-          {drawn}
-          <Box key="throttle" flexDirection="row">
-            <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
-            <Button key="throttle-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
-          </Box>
+    // Every other surface draws SVG.
+    const { Box, Button, Svg } = $.ui.resolve(e)
+    const pic = dashSvg(snap, Math.max(240, (cols - 3) * 8 - 8))
+    return (
+      <Box flexDirection="column">
+        {drawn}
+        <Box key="throttle" flexDirection="row">
+          <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
+          <Button key="throttle-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
         </Box>
-      )
-    }
-    return drawn
+      </Box>
+    )
   })
 }

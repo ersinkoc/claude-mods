@@ -101,8 +101,7 @@ export function warpFrame(stars: readonly Star[], cols: number, rows: number, sp
     const cx = Math.round(x)
     const cy = Math.round(y)
     if (cx < 0 || cy < 0 || cx >= W || cy >= H) return
-    const row = grid[cy]
-    if (!row) return
+    const row = grid[cy]! // inside the grid, checked above
     const old = row[cx]
     if (!old || old.z <= z) row[cx] = { ch, c, z }
   }
@@ -123,7 +122,7 @@ export function warpFrame(stars: readonly Star[], cols: number, rows: number, sp
     const slope = Math.abs(uy) / Math.max(1e-6, Math.abs(ux))
     const streak = slope < 0.35 ? (sp > 0.65 && s.z > 0.5 ? '═' : '─') : slope > 2.5 ? '│' : ux * uy > 0 ? '╲' : '╱'
     if (len >= 1) {
-      const norm = Math.hypot(ux, uy) || 1
+      const norm = Math.hypot(ux, uy) // > 0: rx and ry are positive and cos, sin never both 0
       const dx = ux / norm
       const dy = uy / norm
       const n = Math.min(24, Math.ceil(len))
@@ -149,13 +148,12 @@ export function warpFrame(stars: readonly Star[], cols: number, rows: number, sp
     }
   }
 
+  // `y` is a row of the grid (the middle or the last); text past the right edge is cut.
   const write = (y: number, x0: number, text: string, c: string) => {
+    const row = grid[y]!
     let x = x0
     for (const ch of text) {
-      if (x >= 0 && x < W) {
-        const row = grid[y]
-        if (row) row[x] = { ch, c, z: 99 }
-      }
+      if (x < W) row[x] = { ch, c, z: 99 }
       x++
     }
   }

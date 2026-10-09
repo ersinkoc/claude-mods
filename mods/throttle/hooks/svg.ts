@@ -25,7 +25,7 @@ const f1 = (n: number) => n.toFixed(1)
 type DialSpec = {
   id: string
   cx: number
-  value: number | null
+  value: number
   prev: number | null
   max: number
   text: string
@@ -38,7 +38,7 @@ type DialSpec = {
 function dial(d: DialSpec, cy: number, css: string[]): string {
   const r = 29
   const L = (r * rad(SWEEP))
-  const v = d.value === null ? 0 : Math.max(0, Math.min(1, d.value / d.max))
+  const v = Math.max(0, Math.min(1, d.value / d.max))
   const pv = d.prev === null ? v : Math.max(0, Math.min(1, d.prev / d.max))
   const [x0, y0] = pt(d.cx, cy, r, START)
   const [x1, y1] = pt(d.cx, cy, r, START + SWEEP)
@@ -53,18 +53,16 @@ function dial(d: DialSpec, cy: number, css: string[]): string {
     const [bx, by] = pt(d.cx, cy, r - (i % 3 === 0 ? 11 : 8.5), a)
     out.push(`<line class="tick" x1="${f1(ax)}" y1="${f1(ay)}" x2="${f1(bx)}" y2="${f1(by)}" stroke-width="${i % 3 === 0 ? 1.4 : 0.8}"/>`)
   }
-  if (d.value !== null) {
-    css.push(`@keyframes a${d.id}{from{stroke-dashoffset:${f1(L * (1 - pv))}}to{stroke-dashoffset:${f1(L * (1 - v))}}}`)
-    out.push(`<path d="${arc}" stroke="url(#g${d.id})" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${f1(L)} ${f1(L + 10)}" stroke-dashoffset="${f1(L * (1 - v))}" class="glow" style="animation:a${d.id} .9s cubic-bezier(.2,.8,.2,1) both"/>`)
-    const from = START + SWEEP * pv
-    const to = START + SWEEP * v
-    css.push(`@keyframes n${d.id}{from{transform:rotate(${f1(from)}deg)}to{transform:rotate(${f1(to)}deg)}}`)
-    css.push(`@keyframes s${d.id}{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}`)
-    const origin = `transform-box:view-box;transform-origin:${d.cx}px ${cy}px`
-    out.push(`<g style="${origin};animation:n${d.id} .9s cubic-bezier(.25,1.4,.4,1) both"><g style="${origin}${d.isShaking ? `;animation:s${d.id} .11s ease-in-out infinite alternate` : ''}">`)
-    out.push(`<line x1="${d.cx - 6}" y1="${cy}" x2="${d.cx + r - 4}" y2="${cy}" stroke="${KZ.red}" stroke-width="2.2" stroke-linecap="round"/>`)
-    out.push(`</g></g>`)
-  }
+  css.push(`@keyframes a${d.id}{from{stroke-dashoffset:${f1(L * (1 - pv))}}to{stroke-dashoffset:${f1(L * (1 - v))}}}`)
+  out.push(`<path d="${arc}" stroke="url(#g${d.id})" stroke-width="5" fill="none" stroke-linecap="round" stroke-dasharray="${f1(L)} ${f1(L + 10)}" stroke-dashoffset="${f1(L * (1 - v))}" class="glow" style="animation:a${d.id} .9s cubic-bezier(.2,.8,.2,1) both"/>`)
+  const from = START + SWEEP * pv
+  const to = START + SWEEP * v
+  css.push(`@keyframes n${d.id}{from{transform:rotate(${f1(from)}deg)}to{transform:rotate(${f1(to)}deg)}}`)
+  css.push(`@keyframes s${d.id}{from{transform:rotate(-1.4deg)}to{transform:rotate(1.4deg)}}`)
+  const origin = `transform-box:view-box;transform-origin:${d.cx}px ${cy}px`
+  out.push(`<g style="${origin};animation:n${d.id} .9s cubic-bezier(.25,1.4,.4,1) both"><g style="${origin}${d.isShaking ? `;animation:s${d.id} .11s ease-in-out infinite alternate` : ''}">`)
+  out.push(`<line x1="${d.cx - 6}" y1="${cy}" x2="${d.cx + r - 4}" y2="${cy}" stroke="${KZ.red}" stroke-width="2.2" stroke-linecap="round"/>`)
+  out.push(`</g></g>`)
   out.push(`<circle cx="${d.cx}" cy="${cy}" r="3.6" fill="${KZ.red}"/><circle cx="${d.cx}" cy="${cy}" r="1.5" class="p"/>`)
   out.push(svgText(d.cx, cy + 17, d.text, { size: 13, weight: 750, anchor: 'middle', fill: d.isAlarm ? KZ.red : undefined }))
   out.push(svgText(d.cx, cy + 28, d.unit, { cls: 'm', size: 8.5, weight: 600, anchor: 'middle' }))
@@ -83,7 +81,7 @@ function odometer(x: number, y: number, usd: number, prevUsd: number | null, css
   let cx = x
   let wheel = 0
   for (let i = 0; i < now.length; i++) {
-    const ch = now[i] ?? '0'
+    const ch = now.charAt(i)
     if (ch === '.') {
       out.push(svgText(cx + 2, y + wh - 5, '.', { cls: 's', size: 14, weight: 700, anchor: 'middle' }))
       cx += 6
@@ -91,7 +89,7 @@ function odometer(x: number, y: number, usd: number, prevUsd: number | null, css
     }
     const isCents = i > 4
     out.push(`<rect x="${cx}" y="${y}" width="${ww}" height="${wh}" rx="3" ${isCents ? `fill="${KZ.red}" opacity=".9"` : 'class="well"'}/>`)
-    const old = was[i] ?? ch
+    const old = was.charAt(i)
     const cls = isCents ? '' : 'wtx'
     const fill = isCents ? '#fff' : undefined
     const digit = (dy: number, s: string) =>

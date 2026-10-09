@@ -1,6 +1,11 @@
+import type { ToolCallArgs } from 'claude-code'
 import { describe, expect, mock, test } from 'claude-code/testing'
 
 import { Tally, cloudSvg, familyOf, mcpParts } from '../hooks/book.ts'
+
+// A call the generated tool types do not list: an MCP server this machine has
+// not connected, or a malformed input as a model may send it.
+const loose = (input: Record<string, unknown> & { tool: string }) => input as unknown as ToolCallArgs
 
 const PANE = {
   component: 'Pane' as const,
@@ -54,7 +59,7 @@ describe('register', () => {
     await $.command.run({ command: 'review', args: '', ...RUN })
     await $.tool.call({ tool: 'Skill', skill: 'pdf' })
     await $.tool.call({ tool: 'Bash', command: 'ls' })
-    await $.tool.call({ tool: 'mcp__github__get_issue', number: 1 })
+    await $.tool.call(loose({ tool: 'mcp__github__get_issue', number: 1 }))
     await $.tool.call({ tool: 'mcp__storyboard__chapter', title: 't', phase: 'plan' })
 
     await $.agent.spawn({ tool_use_id: 'tu1', prompt: 'look around', description: 'Look around', subagentType: 'Explore', provider: { plugin: 'engine', tier: 'core' }, parentModel: 'claude-opus-5-5', background: false, fork: false })

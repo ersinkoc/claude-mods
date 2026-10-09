@@ -153,12 +153,11 @@ const RAMP: [number, string][] = [[0, '#3b4b9a'], [0.3, KZ.violet], [0.55, KZ.ma
 
 export function thermal(t: number): string {
   const k = Math.max(0, Math.min(1, Number.isFinite(t) ? t : 0))
-  for (let i = 1; i < RAMP.length; i++) {
-    const [p1, c1] = RAMP[i]!
-    const [p0, c0] = RAMP[i - 1]!
-    if (k <= p1) return mix(c0, c1, (k - p0) / (p1 - p0))
-  }
-  return KZ.yellow
+  // The first stop at or past k (never the 0 stop): the last stop is 1, so one always is.
+  const i = Math.max(1, RAMP.findIndex(([p]) => k <= p))
+  const [p1, c1] = RAMP[i]!
+  const [p0, c0] = RAMP[i - 1]!
+  return mix(c0, c1, (k - p0) / (p1 - p0))
 }
 
 // ---------------------------------------------------------------------------
@@ -226,6 +225,7 @@ export function squarify<T>(items: readonly { value: number; item: T }[], rect: 
       row = [a]
     }
   }
-  if (row.length) layRow(rowStart, row)
+  // The list is not empty, so the last row holds at least its last item.
+  layRow(rowStart, row)
   return out
 }

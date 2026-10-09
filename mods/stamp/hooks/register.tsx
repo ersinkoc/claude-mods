@@ -1,9 +1,8 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, RenderNode } from 'claude-code'
+import type { EngineInterface, ModelUsage, Register, RenderNode } from 'claude-code'
 
 import type { StampChip, StampReceipt } from '../types'
 import { KZ, costOf, fmtPct, fmtTokens, fmtUsd, pxOf, svg, svgText, textWidth, toolColor, toolGlyph } from './lib/kz.ts'
-import type { Usage } from './lib/kz.ts'
 
 // How a TurnDuration line finds its turn
 // ---------------------------------------
@@ -28,7 +27,8 @@ type Pending = {
   startCtx?: number
   tools: number
   families: Record<string, StampChip>
-  steps: Usage
+  /** The main loop's requests summed; undefined until one reports usage. */
+  steps?: ModelUsage
   model: string
 }
 
@@ -81,8 +81,8 @@ function segments(r: StampReceipt, durationMs: number): Seg[] {
     out.push({ text: ` · ${r.tools} tool${r.tools === 1 ? '' : 's'}`, kind: 'dim' })
     for (const c of r.chips) out.push({ text: `${toolGlyph(c.tool)}${c.n}`, kind: 'chip', color: toolColor(c.tool) })
   }
-  if (r.inTokens !== undefined || r.outTokens !== undefined) {
-    out.push({ text: ` · ↑${fmtTokens(r.inTokens ?? 0)} ↓${fmtTokens(r.outTokens ?? 0)} tok`, kind: 'dim' })
+  if (r.inTokens !== undefined && r.outTokens !== undefined) {
+    out.push({ text: ` · ↑${fmtTokens(r.inTokens)} ↓${fmtTokens(r.outTokens)} tok`, kind: 'dim' })
   }
   if (r.costUsd !== undefined) out.push({ text: ` · ${fmtUsd(r.costUsd)}`, kind: 'cost', color: KZ.yellow })
   if (r.ctxPercent !== undefined) {
@@ -95,18 +95,21 @@ function segments(r: StampReceipt, durationMs: number): Seg[] {
   return out
 }
 
-function sumUsage(a: Usage, b: Usage | null | undefined): Usage {
+const NO_USAGE: ModelUsage = { input_tokens: 0, output_tokens: 0, cache_read_input_tokens: 0, cache_creation_input_tokens: 0 }
+
+function sumUsage(a: ModelUsage | undefined, b: ModelUsage | null): ModelUsage | undefined {
   if (!b) return a
+  const base = a ?? NO_USAGE
   return {
-    input_tokens: (a.input_tokens ?? 0) + (b.input_tokens ?? 0),
-    output_tokens: (a.output_tokens ?? 0) + (b.output_tokens ?? 0),
-    cache_read_input_tokens: (a.cache_read_input_tokens ?? 0) + (b.cache_read_input_tokens ?? 0),
-    cache_creation_input_tokens: (a.cache_creation_input_tokens ?? 0) + (b.cache_creation_input_tokens ?? 0),
+    input_tokens: base.input_tokens + b.input_tokens,
+    output_tokens: base.output_tokens + b.output_tokens,
+    cache_read_input_tokens: base.cache_read_input_tokens + b.cache_read_input_tokens,
+    cache_creation_input_tokens: base.cache_creation_input_tokens + b.cache_creation_input_tokens,
   }
 }
 
 async function startTurn($: EngineInterface, turnId: string): Promise<void> {
-  const p: Pending = { turnId, startedAt: await $.clock.now(), tools: 0, families: {}, steps: {}, model: '' }
+  const p: Pending = { turnId, startedAt: await $.clock.now(), tools: 0, families: {}, model: '' }
   current = p
   try {
     const u = await $.session.usage()
@@ -119,11 +122,11 @@ async function startTurn($: EngineInterface, turnId: string): Promise<void> {
 
 async function finishTurn(
   $: EngineInterface,
-  e: { turnId: string; durationMs: number; reason: string; usage?: Usage & { model?: string } },
+  e: { turnId: string; durationMs: number; reason: string; usage?: ModelUsage & { model: string } },
 ): Promise<void> {
   const p = current?.turnId === e.turnId ? current : undefined
   if (p) current = undefined
-  const usage: Usage | undefined = e.usage ?? (p && (p.steps.input_tokens !== undefined || p.steps.output_tokens !== undefined) ? p.steps : undefined)
+  const usage: ModelUsage | undefined = e.usage ?? p?.steps
   const model = e.usage?.model ?? p?.model ?? ''
   let endCost: number | undefined
   let ctx: number | undefined
@@ -146,14 +149,14 @@ async function finishTurn(
     reason: e.reason,
     tools: p?.tools ?? 0,
     chips,
-    inTokens: usage ? (usage.input_tokens ?? 0) + (usage.cache_creation_input_tokens ?? 0) : undefined,
+    inTokens: usage ? usage.input_tokens + usage.cache_creation_input_tokens : undefined,
     outTokens: usage?.output_tokens,
     cacheRead: usage?.cache_read_input_tokens,
     costUsd,
     ctxPercent: ctx,
     ctxDelta: ctx !== undefined && p?.startCtx !== undefined ? ctx - p.startCtx : undefined,
   }
-  await update($, receiptsAtom, prev => [...(prev ?? []).filter(r => r.turnId !== receipt.turnId), receipt].slice(-KEEP))
+  await update($, receiptsAtom, prev => [...prev.filter(r => r.turnId !== receipt.turnId), receipt].slice(-KEEP))
 }
 
 async function setOn($: EngineInterface, isOn: boolean): Promise<void> {
@@ -163,7 +166,8 @@ async function setOn($: EngineInterface, isOn: boolean): Promise<void> {
 
 function lastText(r: StampReceipt | undefined): string {
   if (!r) return 'no turn finished yet'
-  return segments(r, r.durationMs).map(s => s.text + (s.kind === 'chip' ? ' ' : '')).join('').replace(/\s+/g, ' ').trim()
+  // A chip reads after a space, as the terminal draws it (` $2`).
+  return segments(r, r.durationMs).map(s => (s.kind === 'chip' ? ' ' : '') + s.text).join('').replace(/\s+/g, ' ').trim()
 }
 
 export const register: Register = on => {
@@ -200,7 +204,7 @@ export const register: Register = on => {
     const r = yield* next(e)
     if (e.agentId === undefined && current && current.turnId === e.turnId) {
       current.steps = sumUsage(current.steps, r.usage)
-      current.model = r.usage?.model ?? e.model ?? current.model
+      current.model = r.usage?.model ?? e.model
     }
     return r
   })
@@ -260,7 +264,7 @@ function receiptSvg(segs: readonly Seg[], maxW: number): { source: string; width
   for (const s of segs) {
     if (s.kind === 'chip') {
       const w = textWidth(s.text, 11) + 12
-      body.push(`<rect x="${x + 4}" y="3" width="${w}" height="16" rx="8" fill="${s.color ?? KZ.mist}" opacity=".18"/>`)
+      body.push(`<rect x="${x + 4}" y="3" width="${w}" height="16" rx="8" fill="${s.color}" opacity=".18"/>`)
       body.push(svgText(x + 4 + w / 2, 15, s.text, { size: 11, weight: 650, anchor: 'middle', fill: s.color }))
       x += w + 4
       continue

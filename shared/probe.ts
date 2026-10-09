@@ -69,7 +69,7 @@ export function parseGitStatus(status: string, headLine = ''): GitSnap {
   }
   const h = headLine.trim()
   if (h) {
-    const [sha = '', subject = '', when = ''] = h.split('\t')
+    const [sha, subject = '', when = ''] = h.split('\t') as [string, ...string[]]
     snap.head = { sha, subject, when }
   }
   if (snap.isDetached && snap.head) snap.branch = snap.head.sha
@@ -84,7 +84,7 @@ export function parseGitLog(out: string): GitCommit[] {
     .split('\n')
     .filter(Boolean)
     .map(l => {
-      const [sha = '', subject = '', when = '', author = '', ct = '0'] = l.split('\t')
+      const [sha, subject = '', when = '', author = '', ct = '0'] = l.split('\t') as [string, ...string[]]
       return { sha, subject, when, author, at: Number(ct) * 1000 }
     })
 }
@@ -97,7 +97,7 @@ export function parseNumstat(out: string): GitFileStat[] {
     .split('\n')
     .filter(Boolean)
     .map(l => {
-      const [a = '0', d = '0', ...rest] = l.split('\t')
+      const [a, d = '0', ...rest] = l.split('\t') as [string, ...string[]]
       return { path: rest.join('\t'), added: Number(a) || 0, removed: Number(d) || 0 }
     })
 }
@@ -151,7 +151,7 @@ export type CpuTicks = { idle: number; total: number }
 
 /** Linux: `/proc/stat`'s first line, against the previous reading. */
 export function parseProcStat(stat: string, prev: CpuTicks | undefined): { cpu?: number; ticks: CpuTicks } {
-  const nums = (stat.split('\n')[0] ?? '').trim().split(/\s+/).slice(1).map(Number)
+  const nums = stat.split('\n')[0]!.trim().split(/\s+/).slice(1).map(Number)
   const idle = (nums[3] ?? 0) + (nums[4] ?? 0)
   const total = nums.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0)
   const ticks = { idle, total }
@@ -185,16 +185,17 @@ export function parseMacTop(top: string, memsize: string): SysSnap {
 export const NVIDIA_SMI = ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,name', '--format=csv,noheader,nounits'] as const
 
 export function parseNvidia(out: string): GpuSnap | undefined {
-  const line = out.split('\n')[0]
-  if (!line?.trim()) return undefined
-  const [util = '0', used = '0', total = '0', temp = '0', name = 'GPU'] = line.split(',').map(s => s.trim())
+  const line = out.split('\n')[0]!
+  if (!line.trim()) return undefined
+  const [util, used = '0', total = '0', temp = '0', name = 'GPU'] = line.split(',').map(s => s.trim()) as [string, ...string[]]
   return { util: Number(util), memUsed: Number(used) * 1024 ** 2, memTotal: Number(total) * 1024 ** 2, temp: Number(temp), name }
 }
 
 export function fmtBytes(n: number | undefined): string {
   if (n === undefined || !Number.isFinite(n)) return '—'
-  if (n >= 1024 ** 4) return `${(n / 1024 ** 4).toFixed(1)}T`
-  if (n >= 1024 ** 3) return `${(n / 1024 ** 3).toFixed(1)}G`
-  if (n >= 1024 ** 2) return `${Math.round(n / 1024 ** 2)}M`
+  // Each unit starts where the one below would round up to 1024 of itself.
+  if (n >= 1023.95 * 1024 ** 3) return `${(n / 1024 ** 4).toFixed(1)}T`
+  if (n >= 1023.5 * 1024 ** 2) return `${(n / 1024 ** 3).toFixed(1)}G`
+  if (n >= 1023.5 * 1024) return `${Math.round(n / 1024 ** 2)}M`
   return `${Math.round(n / 1024)}K`
 }

@@ -45,7 +45,17 @@ export type Segment = {
 // ---------------------------------------------------------------------------
 // A small shell-ish splitter: good enough for bash, PowerShell and cmd lines.
 
-export function splitSegments(cmd: string): Segment[] {
+/** A word that reads as a Windows path so far (`C:`, `D:\Data`). */
+const WIN_PATH = /^[A-Za-z]:|\\/
+
+/**
+ * Splits a command line into segments. By default `\"` and `\ ` are escapes,
+ * as bash reads them. With `isWinPaths`, a backslash after a Windows path is
+ * the path's own, as PowerShell and cmd read `C:\ -Recurse` and `"C:\"`. The
+ * rules judge both readings and flag the union, so neither reading can hide
+ * what the other one runs.
+ */
+export function splitSegments(cmd: string, isWinPaths = false): Segment[] {
   const segs: Segment[] = []
   let words: string[] = []
   let word = ''
@@ -69,15 +79,15 @@ export function splitSegments(cmd: string): Segment[] {
   }
 
   for (let i = 0; i < cmd.length; i++) {
-    const c = cmd[i] ?? ''
-    const n = cmd[i + 1] ?? ''
+    const c = cmd.charAt(i)
+    const n = cmd.charAt(i + 1)
     if (quote) {
       raw += c
       if (c === quote) {
         quote = ''
         continue
       }
-      if (quote === '"' && c === '\\' && (n === '"' || n === '\\' || n === '$' || n === '`')) {
+      if (quote === '"' && c === '\\' && (n === '\\' || n === '$' || n === '`' || (n === '"' && !(isWinPaths && WIN_PATH.test(word))))) {
         word += n
         raw += n
         i++
@@ -92,7 +102,7 @@ export function splitSegments(cmd: string): Segment[] {
       raw += c
       continue
     }
-    if (c === '\\' && (n === '"' || n === "'" || n === ' ' || n === '\n')) {
+    if (c === '\\' && (n === '"' || n === "'" || (n === ' ' && !(isWinPaths && WIN_PATH.test(word))) || n === '\n')) {
       if (n !== '\n') {
         word += n
         hasWord = true
@@ -144,7 +154,7 @@ export function splitSegments(cmd: string): Segment[] {
       continue
     }
     if (c === '&') {
-      const prev = cmd[i - 1] ?? ''
+      const prev = cmd.charAt(i - 1)
       if (prev === '>' || prev === '<' || n === '>') {
         word += c
         hasWord = true
@@ -180,8 +190,7 @@ export function splitSegments(cmd: string): Segment[] {
 
 /** `C:\Tools\Git.EXE` → `git`. */
 export function baseProg(w: string): string {
-  const parts = w.split(/[\\/]/)
-  return (parts[parts.length - 1] ?? w).toLowerCase().replace(/\.(exe|cmd|bat|ps1)$/, '')
+  return w.replace(/^[\s\S]*[\\/]/, '').toLowerCase().replace(/\.(exe|cmd|bat|ps1)$/, '')
 }
 
 const PREFIXES = new Set(['sudo', 'doas', 'nohup', 'time', 'env', 'command', 'exec', 'xargs', 'nice', 'ionice', 'builtin', 'then', 'do', 'else', '!', 'stdbuf', 'timeout', 'watch', 'call', 'start'])
@@ -190,8 +199,7 @@ const SUDO_VALUED = new Set(['-u', '-g', '-h', '-p', '-C', '-U', '-r', '-t', '-D
 /** The program a segment runs and its arguments, past `VAR=x`, `sudo` and kin. */
 export function programOf(words: readonly string[]): { prog: string; args: string[] } {
   let i = 0
-  while (i < words.length) {
-    const w = words[i] ?? ''
+  for (let w = words[i]; w !== undefined; w = words[i]) {
     if (/^[A-Za-z_][A-Za-z0-9_]*=/.test(w)) {
       i++
       continue
@@ -199,8 +207,7 @@ export function programOf(words: readonly string[]): { prog: string; args: strin
     const base = baseProg(w)
     if (PREFIXES.has(base) || w === '&' || w === '.') {
       i++
-      while (i < words.length && (words[i] ?? '').startsWith('-')) {
-        const flag = words[i] ?? ''
+      for (let flag = words[i]; flag?.startsWith('-'); flag = words[i]) {
         i++
         if ((base === 'sudo' || base === 'doas') && SUDO_VALUED.has(flag)) i++
         if (base === 'xargs' && /^-[IdEsnLP]$/.test(flag)) i++
@@ -228,15 +235,15 @@ export function breadth(path: string): Breadth {
   if (p === '/' || /^\/(\*|\.)$/.test(p)) return 'system'
   // Trailing `/`, `/*`, `/.` say the same folder (or all of it).
   while (p.length > 1 && /(\/\*|\/\.|\/)$/.test(p)) p = p.replace(/(\/\*|\/\.|\/)$/, '')
-  if (p === '' || p === '/') return 'system'
-  if (/^[a-z]:$/i.test(p) || /^[a-z]:\/\*$/i.test(p)) return 'system'
+  if (p === '') return 'system'
+  if (/^[a-z]:$/i.test(p)) return 'system'
   if (/^\/(mnt\/)?[a-z]$/i.test(p)) return 'system'
   if (/^[a-z]:\/(windows|program files|program files \(x86\)|programdata)(\/.*)?$/i.test(p)) return 'system'
   if (/^[a-z]:\/users$/i.test(p)) return 'system'
   if (HOME.test(p)) return 'system'
   // A top folder of a home: ~/Documents, ~/.ssh.
-  const home = /^(.*)\/([^/]+)$/.exec(p)
-  if (home && HOME.test(home[1] ?? '') && !/^(node_modules|\.cache|tmp|temp)$/i.test(home[2] ?? '')) return 'system'
+  const cut = p.lastIndexOf('/')
+  if (cut >= 0 && HOME.test(p.slice(0, cut)) && !/^(node_modules|\.cache|tmp|temp)$/i.test(p.slice(cut + 1))) return 'system'
   if (/^\/[^/]+$/.test(p) || /^[a-z]:\/[^/]+$/i.test(p)) return 'system'
   if (SYSTEM_DIRS.test(p)) return 'system'
   // An unset variable turns `$DIR/` into `/`.
@@ -313,8 +320,8 @@ function removeItemHits(prog: string, args: readonly string[]): Hit[] {
   let isRecursive = false
   let isForce = false
   const targets: string[] = []
-  for (let i = 0; i < args.length; i++) {
-    const a = args[i] ?? ''
+  const rest = args.values()
+  for (const a of rest) {
     if (/^\/s$/i.test(a)) {
       isRecursive = true
       continue
@@ -328,10 +335,9 @@ function removeItemHits(prog: string, args: readonly string[]): Hit[] {
       if (/^-r(e(c(u(r(s(e)?)?)?)?)?)?$/.test(name)) isRecursive = true
       else if (/^-fo(r(c(e)?)?)?$/.test(name) || name === '-f') isForce = true
       else if (/^-(path|literalpath|pspath|lp)$/.test(name)) {
-        const v = args[i + 1]
-        if (v !== undefined) targets.push(v)
-        i++
-      } else if (/^-(include|exclude|filter|credential|stream)$/.test(name)) i++
+        const v = rest.next()
+        if (!v.done) targets.push(v.value)
+      } else if (/^-(include|exclude|filter|credential|stream)$/.test(name)) rest.next()
       continue
     }
     targets.push(a)
@@ -353,8 +359,7 @@ function removeItemHits(prog: string, args: readonly string[]): Hit[] {
 
 function gitHits(args: readonly string[]): Hit[] {
   let i = 0
-  while (i < args.length) {
-    const a = args[i] ?? ''
+  for (let a = args[i]; a !== undefined; a = args[i]) {
     if (a === '-C' || a === '-c' || a === '--git-dir' || a === '--work-tree' || a === '--namespace') {
       i += 2
       continue
@@ -457,7 +462,8 @@ function segmentHits(seg: Segment, next: Segment | undefined, depth: number, ext
 
   if (/^mkfs(\..+)?$/.test(prog) || prog === 'mke2fs' || prog === 'wipefs') out.push(hit('mkfs', prog, 'critical', 'Formats a disk or partition: everything on it is gone.'))
   if (prog === 'dd' && lower.some(a => /^of=\/dev\/(sd|hd|nvme|disk|rdisk|mmcblk|xvd|vd)/.test(a))) out.push(hit('dd-device', 'dd of=/dev/…', 'critical', 'Writes raw bytes over a disk.'))
-  if (prog === 'format' && args.some(a => /^[a-z]:\\?$/i.test(a))) out.push(hit('format', clipLabel(`format ${args.find(a => /^[a-z]:/i.test(a)) ?? ''}`), 'critical', 'Formats a drive: everything on it is gone.'))
+  const drive = args.find(a => /^[a-z]:/i.test(a))
+  if (prog === 'format' && drive !== undefined && args.some(a => /^[a-z]:\\?$/i.test(a))) out.push(hit('format', clipLabel(`format ${drive}`), 'critical', 'Formats a drive: everything on it is gone.'))
   if (prog === 'format-volume' || prog === 'clear-disk' || prog === 'initialize-disk') out.push(hit('format', prog === 'clear-disk' ? 'Clear-Disk' : prog === 'initialize-disk' ? 'Initialize-Disk' : 'Format-Volume', 'critical', 'Formats or wipes a disk.'))
   if (prog === 'diskpart') out.push(hit('diskpart', 'diskpart', 'high', 'Edits disk partitions.'))
 
@@ -491,8 +497,10 @@ const RAW_RULES: readonly [RegExp, Hit][] = [
 
 function scan(command: string, extra: readonly RegExp[], depth: number): Hit[] {
   const out: Hit[] = []
-  const segs = splitSegments(command)
-  segs.forEach((seg, i) => out.push(...segmentHits(seg, segs[i + 1], depth, extra)))
+  // The bash reading and the Windows-path reading: a hit in either counts.
+  for (const segs of [splitSegments(command), splitSegments(command, true)]) {
+    segs.forEach((seg, i) => out.push(...segmentHits(seg, segs[i + 1], depth, extra)))
+  }
   if (depth === 0) {
     for (const [re, h] of RAW_RULES) if (re.test(command)) out.push(h)
     for (const re of extra) {

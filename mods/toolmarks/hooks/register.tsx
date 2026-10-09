@@ -68,7 +68,8 @@ function badgeSvg(parts: readonly Part[]): { source: string; width: number } {
     x += textWidth(p.text, size)
   }
   const width = Math.ceil(x + 8)
-  const tint = parts.find(p => p.color)?.color ?? KZ.mist
+  // Every badge opens with its colored glyph or verdict.
+  const tint = parts[0]!.color!
   return { source: svg(width, 18, `<rect x="0" y="0" width="${width}" height="18" rx="9" fill="${tint}" opacity=".14"/>${body.join('')}`), width }
 }
 
@@ -112,7 +113,8 @@ export const register: Register = on => {
           if (exit !== undefined) mark.exit = exit
         }
       }
-      void record($, id, mark).catch(() => undefined)
+      // A failed write lands in the .catch handler below, which hands back `ran` all the same.
+      await record($, id, mark)
     }
     return ran
   }).catch(($, e, next) => next(e))

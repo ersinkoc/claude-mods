@@ -46,8 +46,8 @@ async function onLimits($: EngineInterface, limits: readonly { kind: string; per
   limitSeen = seen
   if (alerts.length === 0) return
   await sound($, 'alarm')
-  const a = alerts[alerts.length - 1]
-  if (a && !isMuted && profile !== 'silent') $.ui.toast(`🔔 ${limitLabel(a.kind)} limit past ${a.threshold}% (${Math.round(a.percent)}%)`)
+  const a = alerts[alerts.length - 1]! // alerts is not empty here
+  if (!isMuted && profile !== 'silent') $.ui.toast(`🔔 ${limitLabel(a.kind)} limit past ${a.threshold}% (${Math.round(a.percent)}%)`)
 }
 
 export const register: Register = (on, options) => {
@@ -68,7 +68,7 @@ export const register: Register = (on, options) => {
   })
 
   on('command.run', { command: 'resonance' }, async ($, e) => {
-    const [verb = '', arg = ''] = e.args.trim().toLowerCase().split(/\s+/)
+    const [verb, arg = ''] = e.args.trim().toLowerCase().split(/\s+/)
     if (verb === 'play') {
       const s = SOUNDS.find(x => x === arg)
       if (!s) return { text: `Sounds: ${SOUNDS.join(', ')}` }

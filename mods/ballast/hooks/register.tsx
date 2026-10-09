@@ -3,6 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { BallastSnap } from '../types'
 import { KZ, clamp01, fitText, fmtPct, fmtTokens, heat, mix, pxOf, svg, svgText } from './lib/kz.ts'
+import { compactedText, errorText } from './text.ts'
 
 const SNOOZE_POINTS = 4
 const AUTO_GAP_MS = 60_000
@@ -86,9 +87,10 @@ async function compactNow($: EngineInterface): Promise<string> {
   }
   live.isQueued = false
   live.isCompacting = true
-  await publish($)
   const before = live.tokens
   try {
+    // Inside the try, so a refused state write cannot leave isCompacting stuck.
+    await publish($)
     const r = await $.session.compact()
     live.isCompacting = false
     if (r.skip !== undefined) {
@@ -99,10 +101,10 @@ async function compactNow($: EngineInterface): Promise<string> {
     await sample($)
     const b = r.tokensBefore ?? before
     const a = r.tokensAfter ?? live.tokens
-    live.last = { before: b ?? null, after: a ?? null, at: await $.clock.now(), by: 'ballast' }
+    live.last = { before: b, after: a, at: await $.clock.now(), by: 'ballast' }
     live.snoozedAt = null
     await publish($)
-    const text = compactedText(b ?? null, a ?? null)
+    const text = compactedText(b, a)
     $.ui.toast(text, { timeoutMs: 8000 })
     return text
   } catch (err) {
@@ -110,17 +112,8 @@ async function compactNow($: EngineInterface): Promise<string> {
     live.isCompacting = false
     live.isQueued = true
     await publish($)
-    return `Could not compact now (${err instanceof Error ? err.message : String(err)}); queued for the end of the next turn.`
+    return `Could not compact now (${errorText(err)}); queued for the end of the next turn.`
   }
-}
-
-function compactedText(before: number | null, after: number | null): string {
-  if (before && after !== null) {
-    const cut = Math.round((1 - after / before) * 100)
-    return `⚓ compacted: ${fmtTokens(before)} → ${fmtTokens(after)} tokens (−${Math.max(0, cut)}%)`
-  }
-  if (after !== null) return `⚓ compacted: now ${fmtTokens(after)} tokens`
-  return '⚓ compacted.'
 }
 
 async function snooze($: EngineInterface): Promise<void> {
@@ -171,8 +164,9 @@ const isBandDue = (s: BallastSnap): boolean =>
   s.percent !== null && s.percent >= s.actAt && (s.snoozedAt === null || s.percent >= s.snoozedAt + SNOOZE_POINTS)
 
 export const register: Register = (on, options) => {
-  const warnAt = Math.max(1, Math.min(99, Number(options.warnAt ?? 75) || 75))
-  const actAt = Math.max(warnAt, Math.min(100, Number(options.actAt ?? 88) || 88))
+  // The manifest fills in the defaults; a value that is not a number falls back to them.
+  const warnAt = Math.max(1, Math.min(99, Number(options.warnAt) || 75))
+  const actAt = Math.max(warnAt, Math.min(100, Number(options.actAt) || 88))
   const autoCompact = options.autoCompact === true
 
   on('session.start', async ($, e, next) => {
@@ -190,7 +184,13 @@ export const register: Register = (on, options) => {
 
   on('command.run', { command: 'ballast' }, async ($, e) => {
     const arg = e.args.trim().toLowerCase()
-    if (arg === 'now' || arg === 'compact') return { text: await compactNow($) }
+    if (arg === 'now' || arg === 'compact') {
+      if (live.isCompacting || live.isWorking) return { text: await compactNow($) }
+      // The host refuses a compaction under the command.run hook that asks for
+      // it: start it just after this hook has answered.
+      $.clock.after(250, () => void compactNow($).catch(() => undefined))
+      return { text: '⚓ ballast: compacting now; a toast shows before → after.' }
+    }
     if (arg === 'status') {
       await sample($)
       const last = live.last ? ` Last compaction: ${compactedText(live.last.before, live.last.after).replace('⚓ ', '')} (${live.last.by}).` : ''

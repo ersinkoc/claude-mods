@@ -5,9 +5,15 @@
   "scripts": {
     "sync": "node scripts/sync-shared.mjs",
     "typecheck": "node scripts/sync-shared.mjs && tsc -p tsconfig.json",
-    "validate": "node scripts/validate-all.mjs"
+    "validate": "node scripts/validate-all.mjs",
+    "coverage": "node scripts/coverage.mjs"
   },
   "devDependencies": {
+    "@babel/core": "^7.29.7",
+    "istanbul-lib-coverage": "^3.2.2",
+    "istanbul-lib-instrument": "^6.0.3",
+    "istanbul-lib-report": "^3.0.1",
+    "istanbul-reports": "^3.2.0",
     "playwright-core": "^1.64.0",
     "typescript": "~5.9.3"
   }

@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { ChronEvent, ChronFilter, ChronKind, ChronSnap } from '../types'
 import { Canvas, KZ, clip, fitText, fmtClock, fmtTokens, fmtUsd, limitLabel, pxOf, svg, svgText, toolDetail, toolName } from './lib/kz.ts'
@@ -281,6 +281,8 @@ export const register: Register = (on, options) => {
       )
     }
 
+    // Only the terminal is left, and it always has Raster.
+    const { Raster } = ui as Elements['terminal']
     const cols = Math.max(30, e.props.bodyColumns || 44)
     const t = tally(snap)
     const ribbonW = Math.max(8, cols - 2)
@@ -292,9 +294,7 @@ export const register: Register = (on, options) => {
           <Text color={KZ.green}>◉ {t.commits}</Text><Text dimColor> commits  </Text>
           <Text color={t.errors ? KZ.red : KZ.mist}>✖ {t.errors}</Text><Text dimColor> errors</Text>
         </Text>
-        {'Raster' in ui
-          ? <ui.Raster key="ribbon" columns={ribbonW} rows={1} cells={ribbon(snap, ribbonW)} />
-          : null}
+        <Raster key="ribbon" columns={ribbonW} rows={1} cells={ribbon(snap, ribbonW)} />
         {buttons}
         {shown.length === 0 ? <Text dimColor>  nothing here yet</Text> : null}
         {shown.slice(0, 80).map((ev, i) => {

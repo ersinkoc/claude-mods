@@ -14,7 +14,7 @@ export type Tile = { name: string; count: number; at: number; description: strin
 const SKIP = new Set(['launchpad'])
 
 export function cleanName(s: string): string {
-  return s.trim().replace(/^\/+/, '').split(/\s+/)[0] ?? ''
+  return s.trim().replace(/^\/+/, '').replace(/\s[\s\S]*$/, '')
 }
 
 /** Adds one run of `name` at `at` to the counts. */
@@ -59,9 +59,10 @@ export type PadAction =
 export function parseArgs(args: string): PadAction {
   const trimmed = args.trim()
   if (!trimmed) return { kind: 'toggle' }
-  const m = /^(\S+)\s*([\s\S]*)$/.exec(trimmed)
-  const verb = (m?.[1] ?? '').toLowerCase()
-  const rest = (m?.[2] ?? '').trim()
+  // The first word is the verb; the rest, trimmed, its argument.
+  const gap = trimmed.search(/\s/)
+  const verb = (gap < 0 ? trimmed : trimmed.slice(0, gap)).toLowerCase()
+  const rest = gap < 0 ? '' : trimmed.slice(gap).trim()
   if (verb === 'list' || verb === 'ls') return { kind: 'list' }
   if (verb === 'save' || verb === 'add') return rest ? { kind: 'save', text: rest.slice(0, MAX_PROMPT) } : { kind: 'help', reason: 'Usage: /launchpad save <prompt text>' }
   if (verb === 'rm' || verb === 'remove' || verb === 'del') {
@@ -94,6 +95,17 @@ export function accentOf(name: string): string {
 
 export function agoText(at: number, now: number): string {
   return at > 0 ? `${fmtSpan(now - at)} ago` : 'never run'
+}
+
+/** Where a saved prompt went, for the pane's last line. */
+export function fillNote(r: { isFilled: boolean; refusal?: 'no_composer' | 'dialog' }): string {
+  if (r.isFilled) return 'in the prompt box'
+  return r.refusal === 'dialog' ? 'a dialog holds the prompt box' : 'the prompt box did not take it'
+}
+
+/** A failure as one line of text. */
+export function errorText(err: unknown): string {
+  return err instanceof Error ? err.message : String(err)
 }
 
 // ---------------------------------------------------------------------------

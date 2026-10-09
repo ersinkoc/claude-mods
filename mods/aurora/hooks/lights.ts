@@ -75,7 +75,7 @@ export function auroraFrame(t: number, cols: number, rows: number, level: number
     const fromBottom = H - 1 - y
     const segs: Seg[] = []
     for (let x = 0; x < W; x++) {
-      const { edge, top, ray, hu } = at[x] ?? { edge: 0.3, top: 0.6, ray: 0.5, hu: 0.4 }
+      const { edge, top, ray, hu } = at[x]!
       const e = edge * total - fromBottom * 8
       const tp = top * total - fromBottom * 8
       const lo = Math.max(0, Math.round(e))
@@ -111,7 +111,7 @@ export function auroraFrame(t: number, cols: number, rows: number, level: number
 /** The label beside the lights: `thinking · xhigh · 12s` over two or three lines. */
 export function labelLines(mode: Mode, effort: string | null, secs: number, level: number, rows: number, t: number): Seg[][] {
   const color = mode === 'thinking' ? hue(0.36 + 0.1 * Math.sin(t * 0.8), 0.8, 0.58) : hue(0.5, 0.75, 0.55)
-  const star = ['✧', '✦', '✶', '✦'][Math.floor(t * (2 + level * 4)) % 4] ?? '✧'
+  const star = '✧✦✶✦'.charAt(Math.floor(t * (2 + level * 4)) % 4)
   const word = mode === 'thinking' ? 'thinking' : 'responding'
   const time = `${Math.max(0, Math.floor(secs))}s`
   const bar: Seg = { s: pips(level, 5), c: color }

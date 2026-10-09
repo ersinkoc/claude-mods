@@ -16,7 +16,6 @@ const viewAtom = atom({ plugin: 'breadcrumbs', key: 'view' } as const, { folded:
 
 let live: BreadcrumbsSnap = emptySnap()
 let isSeeded = false
-let lastPublished = ''
 let seq = 0
 const agentNames = new Map<string, string>()
 
@@ -31,10 +30,8 @@ async function seed($: EngineInterface): Promise<void> {
   }
 }
 
+/** Every call follows a change to the trail, so each one writes. */
 async function publish($: EngineInterface): Promise<void> {
-  const key = JSON.stringify(live)
-  if (key === lastPublished) return
-  lastPublished = key
   const next = structuredClone(live)
   await update($, snapAtom, () => next)
 }
@@ -61,10 +58,9 @@ async function toggle($: EngineInterface): Promise<boolean> {
 }
 
 async function copyTrail($: EngineInterface, surface: RenderSurface): Promise<void> {
-  const snap = (await read($, snapAtom)) ?? emptySnap()
-  const text = toMarkdown(snap)
-  if (!text) return
-  const r = await $.ui.copy({ text, surface })
+  // The copy button shows only once the trail has a step, so there is a snapshot and Markdown.
+  const snap = (await read($, snapAtom)) as BreadcrumbsSnap
+  const r = await $.ui.copy({ text: toMarkdown(snap), surface })
   if (r.isCopied) $.ui.toast(`Breadcrumbs: ${snap.crumbs.length} steps copied as Markdown`)
 }
 
@@ -77,7 +73,6 @@ export const register: Register = (on, options) => {
     const started = await next(e)
     live = emptySnap()
     isSeeded = true
-    lastPublished = ''
     agentNames.clear()
     await $.command.register({ name: 'breadcrumbs', description: 'KOZMOS: toggle the Breadcrumbs web-trail sidebar (/breadcrumbs md prints the trail as Markdown)', argumentHint: '[md]', immediate: true })
     await publish($).catch(() => undefined)
@@ -197,7 +192,7 @@ export const register: Register = (on, options) => {
                   <Box key={`c-${c.id}`} flexDirection="column" paddingLeft={2}>
                     {c.kind === 'search'
                       ? <Text key={`q-${c.id}`} wrap="truncate-end">{clockOf(c.at)} · {rowLabel(c)}{who(c)}</Text>
-                      : <Link key={`l-${c.id}`} href={c.url ?? ''} label={`${clockOf(c.at)} · ${rowLabel(c)}${who(c)}`} />}
+                      : <Link key={`l-${c.id}`} href={c.url as string} label={`${clockOf(c.at)} · ${rowLabel(c)}${who(c)}`} />}
                     {c.error ? <Text key={`e-${c.id}`} color={KZ.red} wrap="truncate-end">  {c.error}</Text> : null}
                     {(c.hits ?? []).map((hit, i) => <Link key={`h-${c.id}-${i}`} href={hit.url} label={`  ↗ ${hit.title}`} />)}
                   </Box>
@@ -264,7 +259,7 @@ export const register: Register = (on, options) => {
                         <Text dimColor>  {clockOf(c.at)} </Text>
                         <Text color={statusColor(c)}>{statusLabel(c).padEnd(3)} </Text>
                         {c.bytes !== undefined ? <Text dimColor>{fmtBytes(c.bytes)} </Text> : ''}
-                        <Link href={c.url ?? ''}>{`↗ ${c.path ?? c.url ?? ''}`}</Link>
+                        <Link href={c.url as string}>{`↗ ${c.path}`}</Link>
                         <Text dimColor>{who(c)}</Text>
                       </Text>
                     )}

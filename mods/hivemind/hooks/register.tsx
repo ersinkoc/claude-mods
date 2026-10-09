@@ -1,7 +1,7 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register, Timer } from 'claude-code'
+import type { AgentStatus, EngineInterface, Register, Timer } from 'claude-code'
 
-import type { HiveNode, HiveSnap, HiveStatus } from '../types'
+import type { HiveLastTool, HiveNode, HiveSnap, HiveStatus, HiveTool } from '../types'
 import {
   KZ, bar, clamp01, contextOf, costOf, fitText, fmtClock, fmtTokens, fmtUsd, heat, modelName, pxOf, sparkline,
   svg, svgBar, svgText, tokensOf, toolColor, toolDetail, toolGlyph, toolName, windowOf,
@@ -10,7 +10,7 @@ import {
 const PANE = 'kz-hivemind'
 const TITLE = 'KOZMOS · Hivemind'
 const ROOT = 'main'
-const SPIN = ['◐', '◓', '◑', '◒']
+const SPIN = '◐◓◑◒'
 
 const snapAtom = atom({ plugin: 'hivemind', key: 'snap' } as const, null)
 const viewAtom = atom({ plugin: 'hivemind', key: 'view' } as const, { showDone: true })
@@ -85,12 +85,11 @@ async function onTick($: EngineInterface): Promise<void> {
   await publish($)
 }
 
-const fromList = (s: string): HiveStatus | undefined =>
+const fromList = (s: AgentStatus): HiveStatus =>
   s === 'pending' || s === 'running' ? 'running'
     : s === 'waiting' || s === 'idle' ? 'waiting'
       : s === 'completed' ? 'done'
-        : s === 'failed' || s === 'killed' ? 'failed'
-          : undefined
+        : 'failed' // failed, killed
 
 /** The engine's own roster wins on status and parentage. */
 async function reconcile($: EngineInterface): Promise<void> {
@@ -108,7 +107,6 @@ async function reconcile($: EngineInterface): Promise<void> {
     n.description = n.description || a.description
     if (a.parentId !== undefined) n.parentId = a.parentId
     const st = fromList(a.status)
-    if (!st) continue
     // A loop that ended by our own turn.complete stays ended until it steps again.
     if (st === 'running' && n.endedAt !== undefined) continue
     if (st !== n.status) {
@@ -270,7 +268,7 @@ export const register: Register = (on, options) => {
 
     const cols = Math.max(30, e.props.bodyColumns || 44)
     const t = counts(snap)
-    const frame = SPIN[Math.floor(snap.now / 1000) % 4] ?? '◐'
+    const frame = SPIN.charAt(Math.floor(snap.now / 1000) % 4)
     return (
       <Box flexDirection="column">
         <Box flexDirection="row" justifyContent="space-between">
@@ -355,11 +353,20 @@ function flatten(s: HiveSnap, showDone: boolean): { rows: Row[]; hidden: number 
 const statusColor = (st: HiveStatus) => (st === 'running' ? KZ.violet : st === 'done' ? KZ.green : st === 'failed' ? KZ.red : KZ.mist)
 
 function glyphOf(n: HiveNode, now: number): string {
-  if (n.status === 'running') return SPIN[Math.floor(now / 1000) % 4] ?? '◐'
+  if (n.status === 'running') return SPIN.charAt(Math.floor(now / 1000) % 4)
   return n.status === 'done' ? '✓' : n.status === 'failed' ? '✖' : '⏸'
 }
 
 const elapsedOf = (n: HiveNode, now: number) => (n.endedAt ?? now) - n.startedAt
+
+type ToolTag = { name: string; detail: string; color: string; tail: string; isLive: boolean }
+
+/** The tool a node runs now, else the one it ran last, as both surfaces show it. */
+function toolTag(tool: HiveTool | undefined, last: HiveLastTool | undefined, now: number): ToolTag | undefined {
+  if (tool) return { name: tool.name, detail: tool.detail, color: toolColor(tool.name), tail: fmtClock(now - tool.startedAt), isLive: true }
+  if (last) return { name: last.name, detail: last.detail, color: last.isError ? KZ.red : KZ.mist, tail: `${last.ms}ms`, isLive: false }
+  return undefined
+}
 
 // ---------------------------------------------------------------------------
 // Terminal.
@@ -378,7 +385,7 @@ function termNode(ui: ReturnType<EngineInterface['ui']['resolve']>, r: Row, now:
     n.tokens ? `${fmtTokens(n.tokens)} tok` : '',
     n.usd ? fmtUsd(n.usd) : '',
   ].filter(Boolean).join(' · ')
-  const t = n.tool ?? n.lastTool
+  const t = toolTag(n.tool, n.lastTool, now)
   const ind = r.cont + '  '
   return (
     <Box key={`n-${n.id}`} flexDirection="column">
@@ -402,8 +409,8 @@ function termNode(ui: ReturnType<EngineInterface['ui']['resolve']>, r: Row, now:
         ? (
             <Text wrap="truncate-end">
               <Text dimColor>{ind}↳ </Text>
-              <Text color={n.tool ? toolColor(t.name) : 'isError' in t && t.isError ? KZ.red : KZ.mist}>{toolGlyph(t.name)} {toolName(t.name)}</Text>
-              <Text dimColor> {t.detail}{n.tool ? ` · ${fmtClock(now - n.tool.startedAt)}` : n.lastTool ? ` · ${n.lastTool.ms}ms` : ''}</Text>
+              <Text color={t.color}>{toolGlyph(t.name)} {toolName(t.name)}</Text>
+              <Text dimColor> {t.detail} · {t.tail}</Text>
             </Text>
           )
         : null}
@@ -460,13 +467,12 @@ function headerSvg(s: HiveSnap, W: number): { source: string; height: number } {
   const top = Math.max(1, ...hist)
   const gx = 120
   const gw = W - gx - 12
-  if (gw > 40) {
-    const step = gw / Math.max(1, hist.length - 1)
-    const pts = hist.map((v, i) => `${(gx + i * step).toFixed(1)},${(y + h - 8 - (v / top) * (h - 16)).toFixed(1)}`)
-    p.push(`<defs><linearGradient id="hmG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${KZ.violet}" stop-opacity=".5"/><stop offset="1" stop-color="${KZ.violet}" stop-opacity="0"/></linearGradient></defs>`)
-    p.push(`<path d="M${pts.join('L')}L${gx + gw},${y + h - 8}L${gx},${y + h - 8}Z" fill="url(#hmG)"/>`)
-    p.push(`<path d="M${pts.join('L')}" stroke="${KZ.violet}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`)
-  }
+  // The pane is at least 200 px wide (pxOf): the strip always has room.
+  const step = gw / Math.max(1, hist.length - 1)
+  const pts = hist.map((v, i) => `${(gx + i * step).toFixed(1)},${(y + h - 8 - (v / top) * (h - 16)).toFixed(1)}`)
+  p.push(`<defs><linearGradient id="hmG" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${KZ.violet}" stop-opacity=".5"/><stop offset="1" stop-color="${KZ.violet}" stop-opacity="0"/></linearGradient></defs>`)
+  p.push(`<path d="M${pts.join('L')}L${gx + gw},${y + h - 8}L${gx},${y + h - 8}Z" fill="url(#hmG)"/>`)
+  p.push(`<path d="M${pts.join('L')}" stroke="${KZ.violet}" stroke-width="1.5" fill="none" stroke-linejoin="round"/>`)
   y += h
   return { source: svg(W, y, p.join(''), CSS), height: y }
 }
@@ -506,9 +512,9 @@ function treeSvg(s: HiveSnap, rows: Row[], W: number): { source: string; height:
     const cy = y + 13
     ys[i] = cy
     if (r.parentRow !== undefined) {
-      const pr = rows[r.parentRow]
-      const py = ys[r.parentRow] ?? cy
-      const px = pad + 8 + (pr?.depth ?? 0) * indent
+      // The parent is one level up and drawn already (rows run depth-first).
+      const py = ys[r.parentRow]!
+      const px = pad + 8 + (r.depth - 1) * indent
       lines.push(`<path class="ln${n.status === 'running' ? ' flow' : ''}" d="M${px} ${py + 8}V${cy - 4}Q${px} ${cy} ${px + 4} ${cy}H${cx - 9}" fill="none" stroke-width="1.4"${n.status === 'running' ? ` style="stroke:${KZ.violet};stroke-opacity:.6"` : ''}/>`)
     }
     if (n.status === 'running') p.push(`<rect x="${cx - 12}" y="${y - 2}" width="${W - cx + 10}" height="${h - 4}" rx="9" fill="${KZ.violet}" opacity=".07"/>`)
@@ -534,22 +540,19 @@ function treeSvg(s: HiveSnap, rows: Row[], W: number): { source: string; height:
     const barW = 46
     const hasCtx = n.ctxPct !== undefined
     p.push(svgText(x0, cy + 21, fitText(meta || '—', 10.5, right - x0 - (hasCtx ? barW + 44 : 0)), { cls: 'm', size: 10.5 }))
-    if (hasCtx) {
-      const ratio = clamp01((n.ctxPct ?? 0) / 100)
+    if (n.ctxPct !== undefined) {
+      const ratio = clamp01(n.ctxPct / 100)
       p.push(svgBar(right - barW - 30, cy + 15, barW, 5, ratio, heat(ratio * 1.1)))
-      p.push(svgText(right, cy + 21, `${Math.round(n.ctxPct ?? 0)}%`, { cls: 's', size: 10, anchor: 'end' }))
+      p.push(svgText(right, cy + 21, `${Math.round(n.ctxPct)}%`, { cls: 's', size: 10, anchor: 'end' }))
     }
-    const t = n.tool ?? n.lastTool
+    const t = toolTag(n.tool, n.lastTool, s.now)
     if (t) {
-      const isLive = n.tool !== undefined
-      const col = isLive ? toolColor(t.name) : n.lastTool?.isError ? KZ.red : KZ.mist
       const tag = `${toolGlyph(t.name)} ${toolName(t.name)}`
       const tagW = Math.min(150, tag.length * 6.4 + 14)
-      p.push(`<rect x="${x0}" y="${cy + 28}" width="${tagW}" height="16" rx="8" fill="${col}" opacity="${isLive ? 0.2 : 0.12}"${isLive ? ' class="pulse"' : ''}/>`)
-      p.push(svgText(x0 + 7, cy + 40, fitText(tag, 10, tagW - 10), { size: 10, weight: 650, fill: col }))
-      const tail = isLive && n.tool ? fmtClock(s.now - n.tool.startedAt) : n.lastTool ? `${n.lastTool.ms}ms` : ''
-      p.push(svgText(x0 + tagW + 6, cy + 40, fitText(t.detail || '', 10.5, Math.max(10, right - x0 - tagW - 60)), { cls: 's', size: 10.5, mono: true }))
-      p.push(svgText(right, cy + 40, tail, { cls: 'm', size: 10, anchor: 'end' }))
+      p.push(`<rect x="${x0}" y="${cy + 28}" width="${tagW}" height="16" rx="8" fill="${t.color}" opacity="${t.isLive ? 0.2 : 0.12}"${t.isLive ? ' class="pulse"' : ''}/>`)
+      p.push(svgText(x0 + 7, cy + 40, fitText(tag, 10, tagW - 10), { size: 10, weight: 650, fill: t.color }))
+      p.push(svgText(x0 + tagW + 6, cy + 40, fitText(t.detail, 10.5, Math.max(10, right - x0 - tagW - 60)), { cls: 's', size: 10.5, mono: true }))
+      p.push(svgText(right, cy + 40, t.tail, { cls: 'm', size: 10, anchor: 'end' }))
     }
     y += h
   })

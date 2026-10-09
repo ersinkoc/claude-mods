@@ -71,9 +71,9 @@ async function record($: EngineInterface, tool: string, input: Record<string, un
   const key = treePath(cwd, target)
   files.set(key, hit(files.get(key), key, kind, now))
   if (files.size > MAX_FILES) {
-    // Drop the coldest.
-    const coldest = [...files.values()].sort((a, b) => a.heat * Math.pow(0.5, (now - a.heatAt) / HALF_LIFE_MS) - b.heat * Math.pow(0.5, (now - b.heatAt) / HALF_LIFE_MS))[0]
-    if (coldest) files.delete(coldest.path)
+    // Drop the coldest (there are more than MAX_FILES to pick from).
+    const coldest = [...files.values()].sort((a, b) => a.heat * Math.pow(0.5, (now - a.heatAt) / HALF_LIFE_MS) - b.heat * Math.pow(0.5, (now - b.heatAt) / HALF_LIFE_MS))[0]!
+    files.delete(coldest.path)
   }
   isDirty = true
   if (await isOpen($)) await publish($)
@@ -166,7 +166,8 @@ export const register: Register = (on, options) => {
     const maxDir = Math.max(1e-9, ...rows.filter(r => r.isDir).map(r => metricOf(r.node.stats, metric)))
     const maxFile = Math.max(1e-9, ...rows.filter(r => !r.isDir).map(r => metricOf(r.node.stats, metric)))
     const blocks = (ratio: number) => {
-      const n = ratio > 0 ? Math.max(1, Math.ceil(ratio * 5)) : 0
+      // Rows come from `ranked`, so every value (and ratio) is above zero.
+      const n = Math.max(1, Math.ceil(ratio * 5))
       return Array.from({ length: 5 }, (_, i) => (
         <Text key={`b${i}`} color={i < n ? thermal((i + 1) / 5) : KZ.mist} dimColor={i >= n}>{i < n ? '■' : '□'}</Text>
       ))

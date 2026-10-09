@@ -204,13 +204,14 @@ export const register: Register = (on, options) => {
       )
     }
 
-    const rule = (label: string, extra = '') => {
-      const text = `── ${label}${extra ? ' ' + extra : ''} `
+    // A section rule: its label, a count, and a line to the edge.
+    const rule = (label: string, extra: string) => {
+      const text = `── ${label} ${extra} `
       return (
         <Box key={`rule-${label}`} marginTop={1}>
           <Text wrap="truncate-end">
             <Text bold color={KZ.violet}>{`── ${label}`}</Text>
-            {extra ? <Text dimColor> {extra}</Text> : ''}
+            <Text dimColor> {extra}</Text>
             <Text color={KZ.mist} dimColor> {'─'.repeat(Math.max(0, cols - text.length - 1))}</Text>
           </Text>
         </Box>
@@ -242,7 +243,7 @@ export const register: Register = (on, options) => {
       const rail = snap.commits.length === 1 ? '◉' : i === 0 ? '┬' : last ? '└' : '├'
       const age = now - c.at
       const tone = mix(KZ.violet, KZ.mist, Math.min(1, age / (7 * 864e5)))
-      const right = `${fmtAgo(age)} ${clip(c.author.split(' ')[0] ?? '', 10)}`
+      const right = `${fmtAgo(age)} ${clip(c.author.split(' ')[0]!, 10)}`
       return (
         <Box key={`c-${c.sha}`} flexDirection="row">
           <Box width={railW} flexShrink={0}>

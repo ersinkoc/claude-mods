@@ -30,39 +30,44 @@ function copyTurn(t: BbTurn): BbTurn {
   return { ...t, lanes: [...t.lanes], labels: { ...t.labels }, bars: t.bars.map(b => ({ ...b })), ticks: t.ticks.map(k => ({ ...k })) }
 }
 
-async function publish($: EngineInterface): Promise<void> {
-  if (!turn) return
+async function publish($: EngineInterface, t: BbTurn): Promise<void> {
   const now = await $.clock.now()
   lastPublishAt = now
-  lastSpan = axisSpan((turn.endedAt ?? now) - turn.startedAt, isLive)
-  const snap: BlackboxSnap = { turn: copyTurn(turn), isLive, now }
+  lastSpan = axisSpan((t.endedAt ?? now) - t.startedAt, isLive)
+  const snap: BlackboxSnap = { turn: copyTurn(t), isLive, now }
   await update($, snapAtom, () => snap)
 }
 
 function laneOf(agentId: string | undefined): string {
   if (agentId === undefined) return MAIN
-  if (turn && !turn.labels[agentId] && names.has(agentId)) turn.labels[agentId] = names.get(agentId) ?? ''
+  const name = names.get(agentId)
+  if (turn && !turn.labels[agentId] && name) turn.labels[agentId] = name
   return agentId
 }
 
-/** Between events: repaint the terminal Raster so the cursor and running bars move. */
-async function frame($: EngineInterface): Promise<void> {
-  if (!turn || !isLive || !mounted || isHiddenNow) return
+/**
+ * Between events: repaint the terminal Raster of live turn `t` so the cursor
+ * and running bars move. Its timer stops with the turn.
+ */
+async function frame($: EngineInterface, t: BbTurn): Promise<void> {
+  if (!mounted || isHiddenNow) return
   const now = await $.clock.now()
-  const f = paint(turn, now, mounted.columns, mounted.lanes, true)
-  if (f.rows !== mounted.rows || f.columns !== mounted.columns) return
+  // The Canvas clamps columns the same way at every paint: only the rows can differ.
+  const f = paint(t, now, mounted.columns, mounted.lanes, true)
+  if (f.rows !== mounted.rows) return
   try {
-    await $.ui.blit({ requestId: mounted.requestId, key: 'blackbox-rec', cells: f.cells })
+    const r = await $.ui.blit({ requestId: mounted.requestId, key: 'blackbox-rec', cells: f.cells })
+    // Refused (the Raster is gone or resized): wait for the band to draw again.
+    if (r.deny !== undefined) mounted = undefined
   } catch {
     mounted = undefined
   }
 }
 
-/** Once a second: names for new lanes, and a fresh snapshot when the axis rescales. */
-async function sync($: EngineInterface): Promise<void> {
-  if (!turn || !isLive) return
+/** Once a second while turn `t` is live: names for new lanes, and a fresh snapshot when the axis rescales. */
+async function sync($: EngineInterface, t: BbTurn): Promise<void> {
   const now = await $.clock.now()
-  const unnamed = turn.lanes.filter(l => l !== MAIN && !turn?.labels[l])
+  const unnamed = t.lanes.filter(l => l !== MAIN && !t.labels[l])
   if (unnamed.length) {
     try {
       for (const a of await $.agent.list()) if (a.description) names.set(a.id, a.description)
@@ -71,8 +76,8 @@ async function sync($: EngineInterface): Promise<void> {
       // Unnamed lanes keep their short id.
     }
   }
-  const span = axisSpan(now - turn.startedAt, true)
-  if (span !== lastSpan || now - lastPublishAt >= 5000 || unnamed.length) await publish($)
+  const span = axisSpan(now - t.startedAt, true)
+  if (span !== lastSpan || now - lastPublishAt >= 5000 || unnamed.length) await publish($, t)
 }
 
 function stopTimers(): void {
@@ -123,12 +128,13 @@ export const register: Register = on => {
 
   on('turn.start', async ($, e, next) => {
     const now = await $.clock.now()
-    turn = { turnId: e.turnId, startedAt: now, endedAt: null, lanes: [MAIN], labels: {}, bars: [], ticks: [] }
+    const t: BbTurn = { turnId: e.turnId, startedAt: now, endedAt: null, lanes: [MAIN], labels: {}, bars: [], ticks: [] }
+    turn = t
     isLive = true
     stopTimers()
-    blitTimer = $.clock.every(BLIT_MS, () => void frame($).catch(() => undefined))
-    syncTimer = $.clock.every(1000, () => void sync($).catch(() => undefined))
-    await publish($)
+    blitTimer = $.clock.every(BLIT_MS, () => void frame($, t).catch(() => undefined))
+    syncTimer = $.clock.every(1000, () => void sync($, t).catch(() => undefined))
+    await publish($, t)
     return next(e)
   })
 
@@ -137,7 +143,7 @@ export const register: Register = on => {
       turn.endedAt = await $.clock.now()
       isLive = false
       stopTimers()
-      await publish($)
+      await publish($, turn)
     }
     return next(e)
   })
@@ -151,7 +157,7 @@ export const register: Register = on => {
   on('turn.step', async function* ($, e, next) {
     if (turn && isLive) {
       addTick(turn, laneOf(e.agentId), await $.clock.now())
-      void publish($).catch(() => undefined)
+      void publish($, turn).catch(() => undefined)
     }
     return yield* next(e)
   })
@@ -161,11 +167,11 @@ export const register: Register = on => {
     const recording = turn
     const bar: BbBar = { lane: laneOf(e.agentId), tool: String(e.tool), s: await $.clock.now(), e: null, isError: false }
     addBar(recording, bar)
-    void publish($).catch(() => undefined)
+    void publish($, recording).catch(() => undefined)
     const ran = await next(e)
     bar.e = await $.clock.now()
     bar.isError = ran.isError === true || ran.deny !== undefined
-    if (turn === recording) void publish($).catch(() => undefined)
+    if (turn === recording) void publish($, recording).catch(() => undefined)
     return ran
   }).catch(($, e, next) => next(e))
 
@@ -195,21 +201,18 @@ export const register: Register = on => {
       )
     }
 
-    const ui = $.ui.resolve(e)
-    if ('Svg' in ui) {
-      const { Box, Button, Svg } = ui
-      const pic = recorderSvg(snap, cols * 8 - 8)
-      return (
-        <Box flexDirection="column">
-          {drawn}
-          <Box key="blackbox" flexDirection="row">
-            <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
-            <Button key="blackbox-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
-          </Box>
+    // Every other surface draws Svg.
+    const { Box, Button, Svg } = $.ui.resolve(e)
+    const pic = recorderSvg(snap, cols * 8 - 8)
+    return (
+      <Box flexDirection="column">
+        {drawn}
+        <Box key="blackbox" flexDirection="row">
+          <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
+          <Button key="blackbox-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
         </Box>
-      )
-    }
-    return drawn
+      </Box>
+    )
   })
 }
 

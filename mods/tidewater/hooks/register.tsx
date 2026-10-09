@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { TideFile } from '../types'
 import { pxOf } from './lib/kz.ts'
@@ -56,7 +56,8 @@ export const register: Register = on => {
   // A new prompt typed while idle starts a new tide; one delivered into a
   // running turn (a queued message) keeps the current one.
   on('prompt.submit', async ($, e, next) => {
-    if (e.turnId === undefined) await recede($).catch(() => undefined)
+    // Should recede fail, the .catch handler passes the prompt on all the same.
+    if (e.turnId === undefined) await recede($)
     return next(e)
   }).catch(($, e, next) => next(e))
 
@@ -100,10 +101,10 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    // Past the Svg surfaces only the terminal is left, and it draws Client.
+    const { Client } = ui as Elements['terminal']
     const cols = Math.max(20, (e.props.bodyColumns || 80) - 3)
-    const newest = snap.files[snap.files.length - 1]?.path ?? ''
+    const newest = snap.files[snap.files.length - 1]!.path
     return (
       <Box flexDirection="column">
         {drawn}

@@ -12,7 +12,8 @@ const CMD = { origin: { kind: 'composer' as const }, presentation: { isFullscree
 
 /** Calls an MCP tool and lets `ms` pass while it runs. */
 async function call($: Engine, clock: MockClock, tool: `mcp__${string}__${string}`, ms: number): Promise<void> {
-  const p = $.tool.call({ tool, q: 'x' })
+  // The session's own tool list types `$.tool.call`; a test server's tool is cast.
+  const p = $.tool.call({ tool, q: 'x' } as never)
   await clock.advance(ms)
   await p
 }

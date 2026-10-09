@@ -87,14 +87,18 @@ export function addUsage(t: Tally, model: string, u: Usage | null | undefined): 
 }
 
 export function toRecap(t: Tally, endedAt: number, durationMs: number, reason: string, costNow?: number): EpilogueRecap {
+  const tools = FAMILY_ORDER.flatMap(f => {
+    const count = t.tools[f] ?? 0
+    return count > 0 ? [{ family: f, count }] : []
+  })
   return {
     id: t.turnId,
     endedAt,
     durationMs,
     reason,
     prompt: t.prompt.replace(/\s+/g, ' ').trim().slice(0, 120),
-    tools: FAMILY_ORDER.filter(f => (t.tools[f] ?? 0) > 0).map(f => ({ family: f, count: t.tools[f] ?? 0 })),
-    toolCount: Object.values(t.tools).reduce((a, b) => a + (b ?? 0), 0),
+    tools,
+    toolCount: tools.reduce((a, x) => a + x.count, 0),
     files: t.files.map(f => baseName(f)),
     agents: t.agents,
     failed: t.failed.slice(0, 12),

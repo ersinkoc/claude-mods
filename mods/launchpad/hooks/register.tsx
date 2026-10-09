@@ -4,8 +4,8 @@ import type { EngineInterface, Register } from 'claude-code'
 import type { LaunchpadData, PadCount } from '../types'
 import { KZ, bar, clip, pxOf } from './lib/kz.ts'
 import {
-  MAX_SAVED, agoText, accentOf, bannerSvg, bump, commandCardSvg, frequentTiles, listText, parseArgs, pinnedTiles, promptCardSvg,
-  sectionSvg,
+  MAX_SAVED, agoText, accentOf, bannerSvg, bump, commandCardSvg, errorText, fillNote, frequentTiles, listText, parseArgs, pinnedTiles,
+  promptCardSvg, sectionSvg,
 } from './pad.ts'
 import type { Tile } from './pad.ts'
 
@@ -64,17 +64,16 @@ async function launch($: EngineInterface, name: string): Promise<void> {
     const { text } = await $.command.run({ command: name })
     await update($, padAtom, prev => ({ ...prev, lastRun: { label: `/${name}`, text: clip(text ?? 'done', 120) || 'done' } }))
   } catch (err) {
-    await update($, padAtom, prev => ({ ...prev, lastRun: { label: `/${name}`, text: err instanceof Error ? err.message : String(err) } }))
+    await update($, padAtom, prev => ({ ...prev, lastRun: { label: `/${name}`, text: errorText(err) } }))
   }
 }
 
 async function fill($: EngineInterface, text: string): Promise<void> {
-  let note = 'in the prompt box'
+  let note: string
   try {
-    const r = await $.prompt.fill({ text })
-    if (!r.isFilled) note = r.refusal === 'dialog' ? 'a dialog holds the prompt box' : 'the prompt box did not take it'
+    note = fillNote(await $.prompt.fill({ text }))
   } catch (err) {
-    note = err instanceof Error ? err.message : String(err)
+    note = errorText(err)
   }
   await update($, padAtom, prev => ({ ...prev, lastRun: { label: 'prompt', text: note } }))
 }

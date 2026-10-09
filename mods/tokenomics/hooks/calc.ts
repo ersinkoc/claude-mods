@@ -101,8 +101,9 @@ export function dayKey(ms: number): string {
 }
 
 export function parseDay(key: string): Date {
-  const [y, m, d] = key.split('-').map(Number)
-  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1, 12)
+  // split always yields the year; month and day may be missing.
+  const [y, m, d] = key.split('-').map(Number) as [number, number?, number?]
+  return new Date(y, (m ?? 1) - 1, d ?? 1, 12)
 }
 
 export function addDays(key: string, n: number): string {

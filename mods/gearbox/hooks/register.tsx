@@ -28,13 +28,12 @@ let startedAt = 0
 let inFlight = 0
 let split = { mainCalls: 0, subCalls: 0, mainMs: 0, subMs: 0 }
 let agentNames = new Map<string, string>()
-let lastPublished = ''
 let pubSeq = 0
 
+/** The 95th percentile of a tool's durations (it has at least one: its first call made it). */
 function p95(values: readonly number[]): number {
-  if (values.length === 0) return 0
   const sorted = [...values].sort((a, b) => a - b)
-  return sorted[Math.max(0, Math.ceil(sorted.length * 0.95) - 1)] ?? 0
+  return Math.max(...sorted.slice(0, Math.ceil(sorted.length * 0.95)))
 }
 
 function snapshot(): GearSnap {
@@ -43,7 +42,7 @@ function snapshot(): GearSnap {
     calls: a.calls,
     errors: a.errors,
     totalMs: a.totalMs,
-    avgMs: a.calls ? Math.round(a.totalMs / a.calls) : 0,
+    avgMs: Math.round(a.totalMs / a.calls),
     p95Ms: p95(a.durations),
     maxMs: a.maxMs,
     main: a.main,
@@ -52,14 +51,13 @@ function snapshot(): GearSnap {
   return { tools, slowest: [...slowest], perMinute: [...minutes], startedAt, ...split, inFlight }
 }
 
+// Every publish follows a change to the tally (a call started or ended), so
+// there is nothing to compare; of publishes that overlap only the last lands.
 async function publish($: EngineInterface): Promise<void> {
   const seq = ++pubSeq
   const snap = snapshot()
-  const key = JSON.stringify(snap)
-  if (key === lastPublished) return
   await Promise.resolve()
   if (seq !== pubSeq) return
-  lastPublished = key
   await update($, snapAtom, () => snap)
 }
 
@@ -73,7 +71,7 @@ function countMinute(at: number): void {
   }
   const i = idx - offset
   while (minutes.length <= i) minutes.push(0)
-  minutes[i] = (minutes[i] ?? 0) + 1
+  minutes[i] = minutes[i]! + 1 // the loop above filled it
 }
 
 async function toggle($: EngineInterface): Promise<boolean> {
@@ -95,7 +93,6 @@ export const register: Register = (on, options) => {
     inFlight = 0
     split = { mainCalls: 0, subCalls: 0, mainMs: 0, subMs: 0 }
     agentNames = new Map()
-    lastPublished = ''
     await $.command.register({ name: 'gearbox', description: 'KOZMOS: toggle the Gearbox tool-analytics sidebar', immediate: true })
     await publish($)
     if (options.autoOpen === true) void $.ui.open({ id: PANE, title: TITLE })
@@ -132,7 +129,8 @@ export const register: Register = (on, options) => {
       a.totalMs += ms
       a.maxMs = Math.max(a.maxMs, ms)
       a.durations = [...a.durations, ms].slice(-1000)
-      const isMain = e.agentId === undefined
+      const agentId = e.agentId
+      const isMain = agentId === undefined
       if (isMain) {
         a.main++
         split.mainCalls++
@@ -143,7 +141,7 @@ export const register: Register = (on, options) => {
         split.subMs += ms
       }
       accs.set(name, a)
-      const slow: GearSlow = { name, detail: toolDetail(name, e), ms, at, isError, ...(isMain ? {} : { agent: agentNames.get(e.agentId ?? '') ?? 'agent' }) }
+      const slow: GearSlow = { name, detail: toolDetail(name, e), ms, at, isError, ...(isMain ? {} : { agent: agentNames.get(agentId) ?? 'agent' }) }
       slowest = [...slowest, slow].sort((x, y) => y.ms - x.ms).slice(0, 5)
       await publish($)
     }
@@ -161,7 +159,7 @@ export const register: Register = (on, options) => {
         hotkey="s"
         dimColor
         label={`⇅ sort: ${SORT_LABEL[sort]}`}
-        onPress={() => void update($, sortAtom, s => SORTS[(SORTS.indexOf(s) + 1) % SORTS.length] ?? 'time')}
+        onPress={() => void update($, sortAtom, s => SORTS[(SORTS.indexOf(s) + 1) % SORTS.length]!)}
       />
     )
     const totals = totalsOf(snap)
@@ -225,7 +223,7 @@ export const register: Register = (on, options) => {
         {tools.length === 0 ? <Text dimColor>  no tool calls yet</Text> : null}
         {tools.map(t => {
           const c = toolColor(t.name)
-          const errPct = t.calls ? (100 * t.errors) / t.calls : 0
+          const errPct = (100 * t.errors) / t.calls
           return (
             <Text key={`t-${t.name}`} wrap="truncate-end">
               <Text color={c}>{padEnd(`${toolGlyph(t.name)} ${toolName(t.name)}`, nameW)}</Text>

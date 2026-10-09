@@ -30,6 +30,11 @@ export function moodForHour(hour: number): LofiMood {
   return 'night'
 }
 
+/** The `mood` option as a setting: `auto` unless it is text. */
+export function moodSettingOf(v: unknown): string {
+  return typeof v === 'string' ? v : 'auto'
+}
+
 export function resolveMood(setting: string, hour: number): LofiMood {
   return isMood(setting) ? setting : moodForHour(hour)
 }
@@ -39,8 +44,8 @@ export function assetOf(mood: LofiMood): string {
 }
 
 /** 0..100 → the engine's linear gain (0..4); 40 → about half. */
-export function gainOf(volume: number): number {
-  const v = Number.isFinite(volume) ? Math.max(0, Math.min(100, volume)) : 40
+export function gainOf(volume: unknown): number {
+  const v = typeof volume === 'number' && Number.isFinite(volume) ? Math.max(0, Math.min(100, volume)) : 40
   return Math.round((v / 100) * 1.25 * 100) / 100
 }
 
@@ -59,7 +64,7 @@ export function eqLevels(n: number, t: number, bpm: number): number[] {
 
 export function eqBars(levels: readonly number[], mood: LofiMood): { s: string; c: string }[] {
   const [lo, hi] = TINT[mood]
-  return levels.map(v => ({ s: BARS[Math.max(1, Math.round(v * 8))] ?? '▁', c: mix(lo, hi, v) }))
+  return levels.map(v => ({ s: BARS.charAt(Math.max(1, Math.min(8, Math.round(v * 8)))), c: mix(lo, hi, v) }))
 }
 
 /** One row: a pill with the note, `lofi · mood`, and bars dancing by CSS at the loop's tempo. */

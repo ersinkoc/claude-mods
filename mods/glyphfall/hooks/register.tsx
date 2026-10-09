@@ -85,12 +85,12 @@ export const register: Register = on => {
     const snap = await read($, snapAtom)
     if (!snap || snap.tools.length === 0) return drawn
 
-    const ui = $.ui.resolve(e)
-    const { Box, Button } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const hide = <Button key="glyphfall-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    // Every surface but the terminal draws SVG; the terminal animates a Client.
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns)
       const H = e.props.maxRows >= 10 ? 96 : 76
       return (
@@ -104,8 +104,7 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    const { Client } = $.ui.resolve(e)
     const cols = Math.max(24, e.props.bodyColumns || 80)
     const rows = e.props.maxRows >= 10 ? 4 : 3
     return (

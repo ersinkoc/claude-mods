@@ -103,8 +103,10 @@ async function toggle($: EngineInterface): Promise<boolean> {
 }
 
 export const register: Register = (on, options) => {
-  order = parseSegments(typeof options.segments === 'string' ? options.segments : undefined)
-  width = typeof options.width === 'number' && Number.isFinite(options.width) ? Math.max(20, options.width) : 110
+  // The engine checks the options against plugin.json and fills in its
+  // defaults: `segments` is always a string, `width` a finite number.
+  order = parseSegments(String(options.segments))
+  width = Math.max(20, Number(options.width))
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -131,7 +133,8 @@ export const register: Register = (on, options) => {
   on('turn.step', async function* ($, e, next) {
     if (e.agentId === undefined) {
       if (e.effort !== undefined) live.effort = String(e.effort)
-      if (e.model) live.model = e.model
+      // The engine never starts a step without a model name.
+      live.model = e.model
     }
     return yield* next(e)
   })

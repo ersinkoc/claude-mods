@@ -111,7 +111,7 @@ export function avgOf(ms: readonly number[]): number | null {
 export function p95Of(ms: readonly number[]): number | null {
   if (!ms.length) return null
   const sorted = [...ms].sort((a, b) => a - b)
-  return sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)] ?? null
+  return sorted[Math.min(sorted.length - 1, Math.ceil(sorted.length * 0.95) - 1)]!
 }
 
 /** Erroring when the last call failed or two of the last five did. */

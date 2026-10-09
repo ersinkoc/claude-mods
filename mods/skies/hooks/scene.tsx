@@ -130,10 +130,10 @@ export function frame(weather: Weather, w: number, t: number): { px: (string | u
         const u = (x - cx) / rx
         if (Math.abs(u) >= 1) continue
         const h = PX * Math.sqrt(1 - u * u)
-        for (let b = 0; b < RAINBOW.length; b++) {
+        for (const [b, band] of RAINBOW.entries()) {
           const y = Math.floor(PX - h) + b
           const shimmer = 0.25 * (0.5 + 0.5 * Math.sin(t * 0.15 - x * 0.18))
-          if (y >= 0 && y < PX) setPx(x, y, mix(RAINBOW[b] ?? '#fff', '#ffffff', shimmer))
+          if (y >= 0 && y < PX) setPx(x, y, mix(band, '#ffffff', shimmer))
         }
       }
       clouds(2, '#cbd5e1', 0.03)

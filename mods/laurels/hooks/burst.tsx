@@ -52,7 +52,8 @@ const Burst: ClientModule<P, S> = (props, surface) => {
     const seed = Math.floor((x + f * 0.5) / 1) + 7
     const r = hash(seed)
     const on = r < 0.28
-    field.push(on ? { ch: CONFETTI[Math.floor(hash(seed + 3) * CONFETTI.length)] ?? '·', color: HUES[Math.floor(hash(seed + 5) * HUES.length)] ?? '#fff' } : { ch: ' ', color: '#000000' })
+    // hash() is in [0, 1): both picks are in range.
+    field.push(on ? { ch: CONFETTI[Math.floor(hash(seed + 3) * CONFETTI.length)]!, color: HUES[Math.floor(hash(seed + 5) * HUES.length)]! } : { ch: ' ', color: '#000000' })
   }
   const runs: { color: string; text: string }[] = []
   for (const c of field) {
@@ -61,7 +62,7 @@ const Burst: ClientModule<P, S> = (props, surface) => {
     else runs.push({ color: c.color, text: c.ch })
   }
 
-  const sparkle = CONFETTI[f % CONFETTI.length] ?? '✦'
+  const sparkle = CONFETTI[f % CONFETTI.length]
   return (
     <Box flexDirection="row">
       <Text wrap="truncate-end">

@@ -176,7 +176,7 @@ export const register: Register = (on, options) => {
   on('turn.step', async function* ($, e, next) {
     if (e.agentId === undefined) {
       live.effort = e.effort === undefined ? live.effort : String(e.effort)
-      live.model = e.model || live.model
+      live.model = e.model
     }
     return yield* next(e)
   })
@@ -365,7 +365,7 @@ function desktopCard(s: BridgeSnap, W: number): { source: string; height: number
     parts.push(`<path d="M${pad + 4} ${y + 14}v18M${pad + 4} ${y + 23}c8 0 10-6 10-9" stroke="${KZ.cyan}" stroke-width="2" fill="none" stroke-linecap="round"/><circle cx="${pad + 14}" cy="${y + 13}" r="3" fill="${KZ.cyan}"/>`)
     parts.push(svgText(pad + 26, y + 20, fitText(s.branch, 13, inner - 140), { size: 13, weight: 650 }))
     const ab = `${s.ahead ? `↑${s.ahead} ` : ''}${s.behind ? `↓${s.behind}` : ''}`.trim()
-    parts.push(svgText(pad + 26, y + 37, ab || (s.ahead + s.behind === 0 ? 'in sync' : ''), { cls: 'm', size: 10.5 }))
+    parts.push(svgText(pad + 26, y + 37, ab || 'in sync', { cls: 'm', size: 10.5 }))
     const chips: [string, number, string][] = [['staged', s.staged, KZ.green], ['changed', s.unstaged, KZ.amber], ['new', s.untracked, KZ.blue], ['conflict', s.conflicts, KZ.red]]
     let cx = W - pad
     for (const [label, n, c] of chips.reverse()) {
@@ -414,14 +414,14 @@ function desktopCard(s: BridgeSnap, W: number): { source: string; height: number
   // The tool running now, or the last one.
   const t = s.tool ?? s.lastTool
   if (t) {
-    const isRunning = s.tool !== undefined
-    const c = isRunning ? toolColor(t.name) : s.lastTool?.isError ? KZ.red : KZ.mist
+    // Only the last tool carries its duration.
+    const isRunning = !('ms' in t)
+    const c = 'ms' in t ? (t.isError ? KZ.red : KZ.mist) : toolColor(t.name)
     parts.push(`<rect class="p" x="0" y="${y}" width="${W}" height="40" rx="12"/>`)
     parts.push(`<rect x="0" y="${y}" width="4" height="40" rx="2" fill="${c}" class="${isRunning ? 'pulse' : ''}"/>`)
     parts.push(svgText(pad + 4, y + 17, `${isRunning ? 'RUNNING' : 'LAST'} · ${toolName(t.name)}`, { size: 10.5, weight: 700, fill: c }))
-    const detail = 'detail' in t ? t.detail : ''
-    parts.push(svgText(pad + 4, y + 32, fitText(detail || '—', 11, inner - 70), { cls: 's', size: 11, mono: true }))
-    parts.push(svgText(W - pad, y + 24, isRunning && s.tool ? fmtClock(s.now - s.tool.startedAt) : s.lastTool ? `${s.lastTool.ms}ms` : '', { cls: 'm', size: 11, anchor: 'end' }))
+    parts.push(svgText(pad + 4, y + 32, fitText(t.detail || '—', 11, inner - 70), { cls: 's', size: 11, mono: true }))
+    parts.push(svgText(W - pad, y + 24, 'ms' in t ? `${t.ms}ms` : fmtClock(s.now - t.startedAt), { cls: 'm', size: 11, anchor: 'end' }))
     y += 48
   }
 

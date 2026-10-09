@@ -63,7 +63,7 @@ function snapshot(now: number): AlmanacSnap {
   }
 }
 
-async function publish($: EngineInterface, force = false): Promise<void> {
+async function publish($: EngineInterface, force: boolean): Promise<void> {
   if (!isDirty && !force) return
   isDirty = false
   const now = await $.clock.now()
@@ -171,11 +171,10 @@ export const register: Register = (on, options) => {
     return next(e)
   }).catch(($, e, next) => next(e))
 
+  // The engine names the model of every step (a non-empty name).
   on('turn.step', async function* ($, e, next) {
-    if (e.model) {
-      models.add(e.model, await $.clock.now())
-      isDirty = true
-    }
+    models.add(e.model, await $.clock.now())
+    isDirty = true
     return yield* next(e)
   })
 
@@ -268,14 +267,14 @@ export const register: Register = (on, options) => {
           {famTotal > 0 && (
             <Text wrap="truncate-end">
               {s.families.map(x => (
-                <Text key={`fb-${x.name}`} color={FAMILY_COLOR[x.name as Family] ?? KZ.mist}>{'█'.repeat(Math.max(1, Math.round((x.n / famTotal) * stackW)))}</Text>
+                <Text key={`fb-${x.name}`} color={FAMILY_COLOR[x.name as Family]}>{'█'.repeat(Math.max(1, Math.round((x.n / famTotal) * stackW)))}</Text>
               ))}
             </Text>
           )}
           <Box flexDirection="row" flexWrap="wrap">
             {s.families.map(x => (
               <Box key={`fl-${x.name}`} marginRight={2}>
-                <Text><Text color={FAMILY_COLOR[x.name as Family] ?? KZ.mist}>■</Text> {familyLabel(x)} <Text dimColor>{x.n}</Text></Text>
+                <Text><Text color={FAMILY_COLOR[x.name as Family]}>■</Text> {familyLabel(x)} <Text dimColor>{x.n}</Text></Text>
               </Box>
             ))}
           </Box>

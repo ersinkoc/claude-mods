@@ -54,7 +54,7 @@ async function summarize($: EngineInterface, id: string, answer: string): Promis
   }
   if (!summary) return
   const text = summary
-  await update($, recapsAtom, list => (list ?? []).map(r => (r.id === id ? { ...r, summary: text } : r)))
+  await update($, recapsAtom, list => list.map(r => (r.id === id ? { ...r, summary: text } : r)))
 }
 
 export const register: Register = (on, options) => {
@@ -119,7 +119,7 @@ export const register: Register = (on, options) => {
     const t = tally
     tally = null
     const recap = toRecap(t, await $.clock.now(), e.durationMs, e.reason, await costNow($))
-    await update($, recapsAtom, list => [...(list ?? []), recap].slice(-KEEP))
+    await update($, recapsAtom, list => [...list, recap].slice(-KEEP))
     await update($, shownAtom, () => true)
     if (wantsSummary && e.answer.trim()) void summarize($, recap.id, e.answer).catch(() => undefined)
     return done
@@ -130,16 +130,16 @@ export const register: Register = (on, options) => {
     const drawn = await next(e)
     if (e.props.hasSurvey || e.props.isWorking) return drawn
     if (!(await read($, shownAtom)) || (await read($, hiddenAtom))) return drawn
+    // Shown only once turn.complete stored a recap.
     const recaps = await read($, recapsAtom)
-    const r = recaps[recaps.length - 1]
-    if (!r) return drawn
-    const ui = $.ui.resolve(e)
-    const { Box, Button, Text } = ui
+    const r = recaps[recaps.length - 1]!
+    const { Box, Button, Text } = $.ui.resolve(e)
     const cols = Math.max(40, e.props.bodyColumns || 80)
     const hide = <Button key="epilogue-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    // The terminal draws text rows; every other surface one SVG card.
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(cols)
       const card = recapCard(r, W, { isBand: true })
       return (
@@ -170,8 +170,7 @@ export const register: Register = (on, options) => {
   // ---- the pane -------------------------------------------------------------
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const recaps = [...(await read($, recapsAtom))].reverse()
-    const ui = $.ui.resolve(e)
-    const { Box, Text } = ui
+    const { Box, Text } = $.ui.resolve(e)
     const cols = Math.max(32, e.props.bodyColumns || 60)
     if (recaps.length === 0) {
       return (
@@ -181,8 +180,8 @@ export const register: Register = (on, options) => {
         </Box>
       )
     }
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(cols, 60)
       return (
         <Box flexDirection="column">
@@ -229,7 +228,7 @@ function reasonMark(r: EpilogueRecap): string {
 }
 
 function altOf(r: EpilogueRecap): string {
-  const tools = r.tools.map(t => `${FAMILIES[t.family as Family]?.label ?? t.family} ${t.count}`).join(', ')
+  const tools = r.tools.map(t => `${FAMILIES[t.family as Family].label} ${t.count}`).join(', ')
   return [
     `Turn recap: ${fmtClock(r.durationMs)}`,
     `${fmtTokens(r.tokens)} tokens, ${costLine(r)}`,
@@ -244,7 +243,7 @@ function altOf(r: EpilogueRecap): string {
 /** One or two rows of colored text: the figures and chips, then files, agents and the one-liner. */
 function termLines(r: EpilogueRecap, cols: number, Text: TextTag, isPane = false): RenderChildren[] {
   const chips = r.tools.map(t => {
-    const f = FAMILIES[t.family as Family] ?? FAMILIES.other
+    const f = FAMILIES[t.family as Family]
     return [
       <Text key={`c-${t.family}`} backgroundColor={f.color} color="#111111" bold> {f.glyph} {t.count} </Text>,
       <Text key={`s-${t.family}`}> </Text>,
@@ -320,7 +319,7 @@ function recapCard(r: EpilogueRecap, W: number, opts: { isBand: boolean; index?:
   // Line 2: chips, files, agents.
   x = pad
   r.tools.forEach((t, i) => {
-    const f = FAMILIES[t.family as Family] ?? FAMILIES.other
+    const f = FAMILIES[t.family as Family]
     const txt = `${f.glyph} ${f.label} ${t.count}`
     const w = textWidth(txt, 10.5) + 16
     if (x + w > W - pad) return

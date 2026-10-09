@@ -61,7 +61,8 @@ export function buildSegments(d: TickerData, order: readonly SegmentName[]): str
         const bits = [g.ahead ? `↑${g.ahead}` : '', g.behind ? `↓${g.behind}` : '', g.dirty ? `●${g.dirty}` : ''].filter(Boolean)
         out.push(`⎇ ${g.branch}${bits.length ? ' ' + bits.join(' ') : ''}`)
       }
-    } else if (name === 'tool') {
+    } else {
+      // 'tool', the last of the SegmentNames.
       const t = d.tool
       if (t) out.push(`▶ ${toolName(t.name)}${t.detail ? ' ' + clip(t.detail, 28) : ''} ${fmtClock(d.now - t.startedAt)}`)
     }

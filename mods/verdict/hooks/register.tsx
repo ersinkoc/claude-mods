@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { VerdictRun, VerdictSnap } from '../types'
 import { KZ, clip, hash, pxOf } from './lib/kz.ts'
@@ -108,8 +108,8 @@ export const register: Register = on => {
     if (ran.deny !== undefined) return ran
     const result = ran.result as { backgroundTaskId?: string; interrupted?: boolean } | undefined
     if (result?.backgroundTaskId || result?.interrupted) return ran
-    const o = judge(command, outputOf(ran.result, ran.text), ran.isError === true)
-    if (!o) return ran
+    // judge knows the command: detect() above already did.
+    const o = judge(command, outputOf(ran.result, ran.text), ran.isError === true)!
     const at = await $.clock.now()
     runs = [...runs, { ...o, id: (runs[runs.length - 1]?.id ?? 0) + 1, at, ms: at - startedAt, command: clip(command, 120) }].slice(-KEEP)
     await publish($).catch(() => undefined)
@@ -146,8 +146,8 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    // Every surface but the terminal has Svg and drew above.
+    const { Client } = ui as Elements['terminal']
     const cols = Math.max(20, (e.props.bodyColumns || 80) - 3)
     return (
       <Box flexDirection="column">

@@ -28,10 +28,7 @@ export function clean(text: string): string {
     .replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, '')
     .replace(/\u001b\][^\u0007]*\u0007/g, '')
     .split('\n')
-    .map(l => {
-      const parts = l.split('\r')
-      return parts[parts.length - 1] ?? ''
-    })
+    .map(l => l.slice(l.lastIndexOf('\r') + 1))
     .join('\n')
 }
 
@@ -48,14 +45,12 @@ function uniq(xs: string[]): string[] {
 
 const num = (re: RegExp, s: string): number => Number(re.exec(s)?.[1] ?? 0) || 0
 
+/** Every match of `re`: the patterns here come without the g flag and never match an empty string. */
 function all(re: RegExp, s: string): RegExpExecArray[] {
-  const g = new RegExp(re.source, re.flags.includes('g') ? re.flags : re.flags + 'g')
+  const g = new RegExp(re.source, re.flags + 'g')
   const out: RegExpExecArray[] = []
   let m: RegExpExecArray | null
-  while ((m = g.exec(s)) !== null) {
-    out.push(m)
-    if (m[0] === '') g.lastIndex++
-  }
+  while ((m = g.exec(s)) !== null) out.push(m)
   return out
 }
 
@@ -107,15 +102,15 @@ const zero = (): Part => ({ pass: 0, fail: 0, skip: 0, errors: 0, warnings: 0, f
 export function parseVitest(out: string): Part | undefined {
   const tests = /^\s*Tests\s+(.+?)\s*\((\d+)\)\s*$/m.exec(out)
   if (!tests) return undefined
-  const s = tests[1] ?? ''
+  const s = tests[1]!
   const p = zero()
   p.fail = num(/(\d+) failed/, s)
   p.pass = num(/(\d+) passed/, s)
   p.skip = num(/(\d+) skipped/, s) + num(/(\d+) todo/, s)
   const errs = num(/^\s*Errors\s+(\d+) errors?/m, out)
   p.errors = errs
-  const fails = all(/^\s*FAIL\s+(.+?)\s*$/m, out).map(m => m[1] ?? '')
-  const crosses = all(/^\s*[×✗]\s+(.+?)(?:\s+\d+m?s)?\s*$/m, out).map(m => m[1] ?? '')
+  const fails = all(/^\s*FAIL\s+(.+?)\s*$/m, out).map(m => m[1]!)
+  const crosses = all(/^\s*[×✗]\s+(.+?)(?:\s+\d+m?s)?\s*$/m, out).map(m => m[1]!)
   p.failures = uniq(fails.length ? fails : crosses)
   p.runner = 'vitest'
   return p
@@ -124,13 +119,13 @@ export function parseVitest(out: string): Part | undefined {
 export function parseJest(out: string): Part | undefined {
   const tests = /^Tests:\s+(.*?)(\d+) total/m.exec(out)
   if (!tests) return undefined
-  const s = tests[1] ?? ''
+  const s = tests[1]!
   const p = zero()
   p.fail = num(/(\d+) failed/, s)
   p.pass = num(/(\d+) passed/, s)
   p.skip = num(/(\d+) skipped/, s) + num(/(\d+) todo/, s)
-  p.failures = uniq(all(/^\s*● (?!Console)(.+?)\s*$/m, out).map(m => m[1] ?? '').filter(x => !/^Test suite failed to run/.test(x)))
-  if (!p.failures.length) p.failures = uniq(all(/^\s*✕ (.+?)(?: \(\d+ ?m?s\))?\s*$/m, out).map(m => m[1] ?? ''))
+  p.failures = uniq(all(/^\s*● (?!Console)(.+?)\s*$/m, out).map(m => m[1]!).filter(x => !/^Test suite failed to run/.test(x)))
+  if (!p.failures.length) p.failures = uniq(all(/^\s*✕ (.+?)(?: \(\d+ ?m?s\))?\s*$/m, out).map(m => m[1]!))
   p.runner = 'jest'
   return p
 }
@@ -142,7 +137,7 @@ export function parsePytest(out: string): Part | undefined {
     if (/^=+ no tests ran/m.test(out)) return zero()
     return undefined
   }
-  const s = last[1] ?? ''
+  const s = last[1]!
   const p = zero()
   p.pass = num(/(\d+) passed/, s) + num(/(\d+) xpassed/, s)
   p.fail = num(/(\d+) failed/, s)
@@ -150,8 +145,8 @@ export function parsePytest(out: string): Part | undefined {
   p.errors = num(/(\d+) errors?/, s)
   p.warnings = num(/(\d+) warnings?/, s)
   p.failures = uniq([
-    ...all(/^FAILED (\S+)(?: - (.*))?$/m, out).map(m => (m[2] ? `${m[1]} — ${m[2]}` : m[1] ?? '')),
-    ...all(/^ERROR (\S+)(?: - (.*))?$/m, out).map(m => (m[2] ? `${m[1]} — ${m[2]}` : m[1] ?? '')),
+    ...all(/^FAILED (\S+)(?: - (.*))?$/m, out).map(m => (m[2] ? `${m[1]} — ${m[2]}` : m[1]!)),
+    ...all(/^ERROR (\S+)(?: - (.*))?$/m, out).map(m => (m[2] ? `${m[1]} — ${m[2]}` : m[1]!)),
   ])
   p.runner = 'pytest'
   return p
@@ -159,11 +154,11 @@ export function parsePytest(out: string): Part | undefined {
 
 export function parseGo(out: string): Part | undefined {
   const pass = all(/^\s*--- PASS: /m, out).length
-  const failNames = all(/^\s*--- FAIL: (\S+)/m, out).map(m => m[1] ?? '')
+  const failNames = all(/^\s*--- FAIL: (\S+)/m, out).map(m => m[1]!)
   const skip = all(/^\s*--- SKIP: /m, out).length
   const okPkgs = all(/^ok\s+\S+/m, out).length
-  const failPkgs = all(/^FAIL\s+(\S+)(?:\s+\[build failed\]|\s+[\d.]+s)?\s*$/m, out).map(m => m[1] ?? '').filter(x => x !== '')
-  const compile = all(/^(\S+\.go:\d+:\d+: .+)$/m, out).map(m => m[1] ?? '')
+  const failPkgs = all(/^FAIL\s+(\S+)(?:\s+\[build failed\]|\s+[\d.]+s)?\s*$/m, out).map(m => m[1]!)
+  const compile = all(/^(\S+\.go:\d+:\d+: .+)$/m, out).map(m => m[1]!)
   if (!pass && !failNames.length && !skip && !okPkgs && !failPkgs.length && !compile.length) return undefined
   const p = zero()
   if (pass || failNames.length || skip) {
@@ -186,9 +181,9 @@ function rustErrors(out: string): { errors: string[]; warnings: number } {
   const lines = out.split('\n')
   lines.forEach((l, i) => {
     const m = /^error(\[E\d+\])?: (.+)$/.exec(l)
-    if (!m || /^(could not compile|aborting due to|test failed|build failed|\d+ previous errors?)/.test(m[2] ?? '')) return
+    if (!m || /^(could not compile|aborting due to|test failed|build failed|\d+ previous errors?)/.test(m[2]!)) return
     const at = /^\s*--> (.+)$/.exec(lines[i + 1] ?? '')?.[1]
-    errors.push(at ? `${at} ${m[1] ?? ''} ${m[2] ?? ''}` : `${m[1] ?? ''} ${m[2] ?? ''}`)
+    errors.push(at ? `${at} ${m[1] ?? ''} ${m[2]}` : `${m[1] ?? ''} ${m[2]}`)
   })
   const warnings = all(/^warning: (?!.*generated \d+ warnings?)(?!unused manifest)/m, out).length
   return { errors, warnings }
@@ -200,13 +195,13 @@ export function parseCargo(out: string): Part | undefined {
   if (!results.length && !rust.errors.length && !/Finished|Compiling/.test(out)) return undefined
   const p = zero()
   for (const r of results) {
-    p.pass += Number(r[1]) || 0
-    p.fail += Number(r[2]) || 0
-    p.skip += Number(r[3]) || 0
+    p.pass += Number(r[1])
+    p.fail += Number(r[2])
+    p.skip += Number(r[3])
   }
   p.errors = rust.errors.length
   p.warnings = rust.warnings
-  p.failures = uniq([...all(/^test (\S+) \.\.\. FAILED$/m, out).map(m => m[1] ?? ''), ...rust.errors])
+  p.failures = uniq([...all(/^test (\S+) \.\.\. FAILED$/m, out).map(m => m[1]!), ...rust.errors])
   return p
 }
 
@@ -216,9 +211,9 @@ export function parseDotnet(out: string): Part | undefined {
   const builds = /(\d+) Error\(s\)/.exec(out)
   if (modern.length) {
     for (const m of modern) {
-      p.fail += Number(m[1]) || 0
-      p.pass += Number(m[2]) || 0
-      p.skip += Number(m[3]) || 0
+      p.fail += Number(m[1])
+      p.pass += Number(m[2])
+      p.skip += Number(m[3])
     }
   } else if (/^\s*Total tests: \d+/m.test(out)) {
     p.pass = num(/^\s*Passed: (\d+)/m, out)
@@ -227,10 +222,10 @@ export function parseDotnet(out: string): Part | undefined {
   } else if (!builds && !/: error [A-Z]+\d+:/.test(out)) {
     return undefined
   }
-  const errLines = all(/^\s*(\S.*?: error [A-Z]+\d+: .+?)(?: \[[^\]]+\])?\s*$/m, out).map(m => m[1] ?? '')
-  p.errors = builds ? Number(builds[1]) || 0 : uniq(errLines).length
+  const errLines = all(/^\s*(\S.*?: error [A-Z]+\d+: .+?)(?: \[[^\]]+\])?\s*$/m, out).map(m => m[1]!)
+  p.errors = builds ? Number(builds[1]) : uniq(errLines).length
   p.warnings = num(/(\d+) Warning\(s\)/, out)
-  p.failures = uniq([...all(/^\s*Failed (\S+) \[/m, out).map(m => m[1] ?? ''), ...errLines])
+  p.failures = uniq([...all(/^\s*Failed (\S+) \[/m, out).map(m => m[1]!), ...errLines])
   return p
 }
 
@@ -244,11 +239,11 @@ export function parseMocha(out: string): Part | undefined {
   const tail = at >= 0 ? out.slice(at).split('\n').slice(1) : []
   const names: string[] = []
   for (let i = 0; i < tail.length; i++) {
-    const m = /^\s+\d+\) (.+)$/.exec(tail[i] ?? '')
+    const m = /^\s+\d+\) (.+)$/.exec(tail[i]!)
     if (!m) continue
-    const path = [m[1] ?? '']
+    const path = [m[1]!]
     // The title continues on deeper-indented lines until one ends with a colon.
-    while (!/:$/.test(path[path.length - 1] ?? '') && i + 1 < tail.length && /^\s{4,}\S/.test(tail[i + 1] ?? '') && path.length < 6) path.push((tail[++i] ?? '').trim())
+    while (!/:$/.test(path[path.length - 1]!) && i + 1 < tail.length && /^\s{4,}\S/.test(tail[i + 1]!) && path.length < 6) path.push(tail[++i]!.trim())
     names.push(path.join(' › ').replace(/:$/, ''))
   }
   p.failures = uniq(names)
@@ -262,7 +257,7 @@ export function parseBun(out: string): Part | undefined {
   p.pass = num(/^\s*(\d+) pass\s*$/m, out)
   p.fail = num(/^\s*(\d+) fail\s*$/m, out)
   p.skip = num(/^\s*(\d+) skip\s*$/m, out) + num(/^\s*(\d+) todo\s*$/m, out)
-  p.failures = uniq(all(/^\(fail\) (.+?)(?: \[[\d.]+m?s\])?\s*$/m, out).map(m => m[1] ?? ''))
+  p.failures = uniq(all(/^\(fail\) (.+?)(?: \[[\d.]+m?s\])?\s*$/m, out).map(m => m[1]!))
   p.runner = 'bun test'
   return p
 }
@@ -271,11 +266,11 @@ export function parseTsc(out: string): Part | undefined {
   const lines = [
     ...all(/^(.+?)\((\d+),(\d+)\): error (TS\d+): (.+)$/m, out),
     ...all(/^(.+?):(\d+):(\d+) - error (TS\d+): (.+)$/m, out),
-  ].map(m => `${m[1] ?? ''}:${m[2] ?? ''} ${m[4] ?? ''} ${m[5] ?? ''}`)
+  ].map(m => `${m[1]}:${m[2]} ${m[4]} ${m[5]}`)
   const found = /Found (\d+) errors?/.exec(out)
   if (!found && !lines.length) return undefined
   const p = zero()
-  p.errors = found ? Number(found[1]) || 0 : lines.length
+  p.errors = found ? Number(found[1]) : lines.length
   p.failures = uniq(lines)
   return p
 }
@@ -288,11 +283,11 @@ export function parseEslint(out: string): Part | undefined {
   for (const l of out.split('\n')) {
     if (/^(?:[A-Za-z]:)?[/\\]?\S.*\.\w+$/.test(l) && !/^\s/.test(l)) file = l.trim()
     const m = /^\s+(\d+):(\d+)\s+(error|warning)\s+(.+?)(?:\s{2,}(\S+))?\s*$/.exec(l)
-    if (m && m[3] === 'error') errs.push(`${file ? file.split(/[\\/]/).pop() + ':' : ''}${m[1] ?? ''} ${m[4] ?? ''}${m[5] ? ` (${m[5]})` : ''}`)
+    if (m && m[3] === 'error') errs.push(`${file ? file.split(/[\\/]/).pop() + ':' : ''}${m[1]} ${m[4]}${m[5] ? ` (${m[5]})` : ''}`)
   }
   if (!summary && !errs.length) return undefined
-  p.errors = summary ? Number(summary[2]) || 0 : errs.length
-  p.warnings = summary ? Number(summary[3]) || 0 : 0
+  p.errors = summary ? Number(summary[2]) : errs.length
+  p.warnings = summary ? Number(summary[3]) : 0
   p.failures = uniq(errs)
   return p
 }
@@ -304,12 +299,12 @@ export function parseMaven(out: string): Part | undefined {
   const p = zero()
   const last = runs[runs.length - 1]
   if (last) {
-    const total = Number(last[1]) || 0
-    p.fail = (Number(last[2]) || 0) + (Number(last[3]) || 0)
-    p.skip = Number(last[4]) || 0
+    const total = Number(last[1])
+    p.fail = Number(last[2]) + Number(last[3])
+    p.skip = Number(last[4])
     p.pass = Math.max(0, total - p.fail - p.skip)
   }
-  const errLines = all(/^\[ERROR\] (.+)$/m, out).map(m => m[1] ?? '').filter(x => x.trim() && !/^(->|Re-run|To see the full|For more information|\[Help|Failed to execute goal|Tests run:|Failures:|Errors:|Run \d|$)/.test(x.trim()))
+  const errLines = all(/^\[ERROR\] (.+)$/m, out).map(m => m[1]!).filter(x => x.trim() && !/^(->|Re-run|To see the full|For more information|\[Help|Failed to execute goal|Tests run:|Failures:|Errors:|Run \d|$)/.test(x.trim()))
   p.failures = uniq(errLines)
   p.errors = verdict?.[1] === 'FAILURE' && p.fail === 0 ? Math.max(1, all(/^\[ERROR\] .+\.(?:java|kt):\[?\d+/m, out).length) : 0
   p.buildFailed = verdict?.[1] === 'FAILURE'
@@ -322,15 +317,15 @@ export function parseGradle(out: string): Part | undefined {
   if (!verdict && !tests) return undefined
   const p = zero()
   if (tests) {
-    const total = Number(tests[1]) || 0
+    const total = Number(tests[1])
     p.fail = Number(tests[2]) || 0
     p.skip = Number(tests[3]) || 0
     p.pass = Math.max(0, total - p.fail - p.skip)
   }
-  const compile = [...all(/^e: (.+)$/m, out).map(m => m[1] ?? ''), ...all(/^(.+\.java:\d+: error: .+)$/m, out).map(m => m[1] ?? '')]
+  const compile = [...all(/^e: (.+)$/m, out).map(m => m[1]!), ...all(/^(.+\.java:\d+: error: .+)$/m, out).map(m => m[1]!)]
   const wrong = /\* What went wrong:\n(.+)/.exec(out)?.[1]
   p.errors = compile.length || (verdict?.[1] === 'FAILED' && p.fail === 0 ? 1 : 0)
-  p.failures = uniq([...all(/^(\S+ > .+) FAILED$/m, out).map(m => m[1] ?? ''), ...compile, ...(wrong ? [wrong] : [])])
+  p.failures = uniq([...all(/^(\S+ > .+) FAILED$/m, out).map(m => m[1]!), ...compile, ...(wrong ? [wrong] : [])])
   p.buildFailed = verdict?.[1] === 'FAILED'
   return p
 }
@@ -372,7 +367,8 @@ export function judge(command: string, output: string, isError: boolean): Outcom
   if (!hit) return undefined
   const out = clean(output)
   let part: Part | undefined
-  for (const parse of BY_RUNNER[hit.runner] ?? []) {
+  // Every rule's runner has its parsers.
+  for (const parse of BY_RUNNER[hit.runner]!) {
     part = parse(out)
     if (part) break
   }

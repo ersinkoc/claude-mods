@@ -1,5 +1,5 @@
 import { atom, read, update } from 'claude-code'
-import type { EngineInterface, Register } from 'claude-code'
+import type { Elements, EngineInterface, Register } from 'claude-code'
 
 import type { HeartBeat, HeartSnap } from '../types'
 import { ekgAlt, ekgSvg } from './ekg.ts'
@@ -29,12 +29,17 @@ async function setHidden($: EngineInterface, isHidden: boolean): Promise<void> {
   }
 }
 
+/** Adds a beat and publishes; with no clock to read the beat is dropped. */
 async function beat($: EngineInterface, k: HeartBeat['k'], c: string): Promise<void> {
-  const at = await $.clock.now()
-  beats.push({ at, k, c })
-  if (beats.length > 600) beats = beats.slice(-400)
-  lastAt = at
-  await publish($)
+  try {
+    const at = await $.clock.now()
+    beats.push({ at, k, c })
+    if (beats.length > 600) beats = beats.slice(-400)
+    lastAt = at
+    await publish($)
+  } catch {
+    // The band misses one beat.
+  }
 }
 
 async function publish($: EngineInterface): Promise<void> {
@@ -56,6 +61,11 @@ async function publish($: EngineInterface): Promise<void> {
   if (key === lastKey) return
   lastKey = key
   await update($, snapAtom, () => snap)
+}
+
+/** Publishes, never failing: a missed publish only skips one redraw. */
+function tryPublish($: EngineInterface): Promise<void> {
+  return publish($).catch(() => undefined)
 }
 
 async function readContext($: EngineInterface): Promise<void> {
@@ -83,8 +93,8 @@ export const register: Register = on => {
       // Fresh store.
     }
     await readContext($)
-    await publish($).catch(() => undefined)
-    $.clock.every(1000, () => void publish($).catch(() => undefined))
+    await tryPublish($)
+    $.clock.every(1000, () => void tryPublish($))
     return started
   })
 
@@ -97,36 +107,36 @@ export const register: Register = on => {
   on('turn.start', async ($, e, next) => {
     isWorking = true
     lastAt = await $.clock.now()
-    void publish($).catch(() => undefined)
+    void tryPublish($)
     return next(e)
   })
 
   on('turn.complete', async ($, e, next) => {
     if (e.agentId === undefined) {
       isWorking = false
-      void publish($).catch(() => undefined)
+      void tryPublish($)
     }
     return next(e)
   })
 
   // Every model request is a small blip: cyan on the main loop, violet in a subagent.
   on('turn.step', async function* ($, e, next) {
-    await beat($, 's', e.agentId === undefined ? KZ.cyan : KZ.violet).catch(() => undefined)
+    await beat($, 's', e.agentId === undefined ? KZ.cyan : KZ.violet)
     return yield* next(e)
   })
 
   // Every tool call is a spike; a failed one adds a red inverted spike.
   on('tool.call', async ($, e, next) => {
-    await beat($, 't', toolColor(String(e.tool))).catch(() => undefined)
+    await beat($, 't', toolColor(String(e.tool)))
     const ran = await next(e)
-    if (ran.isError === true || ran.deny !== undefined) await beat($, 'f', KZ.red).catch(() => undefined)
+    if (ran.isError === true || ran.deny !== undefined) await beat($, 'f', KZ.red)
     return ran
   }).catch(($, e, next) => next(e))
 
   on('session.measure', async ($, e, next) => {
     if (e.context.percent !== undefined) {
       ctx = e.context.percent
-      void publish($).catch(() => undefined)
+      void tryPublish($)
     }
     return next(e)
   })
@@ -158,8 +168,8 @@ export const register: Register = on => {
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
+    // Only the terminal is left, and it always has Client.
+    const { Client } = ui as Elements['terminal']
     const cols = Math.max(24, e.props.bodyColumns || 60)
     const rows = e.props.maxRows >= 10 ? 3 : 2
     return (

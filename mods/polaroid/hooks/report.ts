@@ -155,9 +155,11 @@ export function stamp(at: number): string {
 // ---------------------------------------------------------------------------
 // HTML.
 
+const ENTITIES: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' }
+
 /** Escapes text for HTML element content and quoted attribute values alike. */
 export function esc(s: unknown): string {
-  return String(s ?? '').replace(/[&<>"'`]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;', '`': '&#96;' })[c] ?? c)
+  return String(s ?? '').replace(/[&<>"'`]/g, c => ENTITIES[c] as string)
 }
 
 const oneLine = (s: string, max: number): string => {
@@ -297,7 +299,8 @@ function contextChart(d: ReportData): string {
   const span = Math.max(1, d.endedAt - d.startedAt)
   const xy = pts.map(([t, p]) => [(clamp01(t / span) * W).toFixed(1), (H - 8 - clamp01(p / 100) * (H - 16)).toFixed(1)])
   const line = xy.map(([x, y]) => `${x},${y}`).join(' ')
-  const area = `M0,${H} L${xy.map(([x, y]) => `${x},${y}`).join(' L')} L${xy[xy.length - 1]?.[0] ?? W},${H} Z`
+  // Two points at least, so there is a last one.
+  const area = `M0,${H} L${xy.map(([x, y]) => `${x},${y}`).join(' L')} L${(xy[xy.length - 1] as string[])[0]},${H} Z`
   const grid = [25, 50, 75].map(p => `<line x1="0" x2="${W}" y1="${H - 8 - (p / 100) * (H - 16)}" y2="${H - 8 - (p / 100) * (H - 16)}" stroke="rgba(255,255,255,.07)" stroke-dasharray="3 5"/><text x="${W}" y="${H - 11 - (p / 100) * (H - 16)}" fill="#6f6c8f" font-size="10" text-anchor="end">${p}%</text>`).join('')
   return `<svg viewBox="0 0 ${W} ${H}" role="img" aria-label="Context fill over the session"><defs><linearGradient id="cg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${KZ.cyan}" stop-opacity=".5"/><stop offset="1" stop-color="${KZ.cyan}" stop-opacity="0"/></linearGradient></defs>${grid}<path d="${area}" fill="url(#cg)"/><polyline points="${line}" fill="none" stroke="${KZ.cyan}" stroke-width="2" stroke-linejoin="round"/></svg>`
 }
@@ -348,7 +351,7 @@ export function buildHtml(d: ReportData, generatedAt: number): string {
   const topTools = Object.entries(d.toolNames).sort((a, b) => b[1] - a[1]).slice(0, 10)
   const toolTop = Math.max(1, ...topTools.map(([, n]) => n))
   const toolsTable = topTools.length
-    ? `<table><thead><tr><th>Tool</th><th></th><th class="n">Calls</th></tr></thead><tbody>${topTools.map(([name, n]) => `<tr><td class="mono">${esc(name)}</td><td style="width:45%">${barCell(n / toolTop, FAMILY_COLOR[familyOf(name)] ?? KZ.mist)}</td><td class="n">${num(n)}</td></tr>`).join('')}</tbody></table>`
+    ? `<table><thead><tr><th>Tool</th><th></th><th class="n">Calls</th></tr></thead><tbody>${topTools.map(([name, n]) => `<tr><td class="mono">${esc(name)}</td><td style="width:45%">${barCell(n / toolTop, FAMILY_COLOR[familyOf(name)] as string)}</td><td class="n">${num(n)}</td></tr>`).join('')}</tbody></table>`
     : ''
 
   const maxDur = Math.max(1, ...d.turns.map(t => t.durationMs))

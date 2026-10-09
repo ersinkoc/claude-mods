@@ -23,7 +23,7 @@ export const DIM = '#5b6470'
 const TAU = Math.PI * 2
 
 export function agentColor(order: number): string {
-  return PALETTE[((order % PALETTE.length) + PALETTE.length) % PALETTE.length] ?? KZ.violet
+  return PALETTE[((order % PALETTE.length) + PALETTE.length) % PALETTE.length]!
 }
 
 /** A glyph per agent type: explorers ◍, planners ◆, reviewers ◈, the rest ●. */
@@ -72,15 +72,15 @@ export function fieldFrame(agents: readonly Agent[], snapNow: number, t: number,
   const cx = W // dots
   const cy = H * 2
   const dot = (x: number, y: number, c: string) => {
+    // Every orbit lies inside the field; only a point that is not a number misses it.
     const dx = Math.round(x)
     const dy = Math.round(y)
-    if (dx < 0 || dy < 0 || dx >= W * 2 || dy >= H * 4) return
     const col = Math.floor(dx / 2)
     const row = Math.floor(dy / 4)
     const r = bits[row]
     const rc = bitColor[row]
     if (!r || !rc) return
-    r[col] = (r[col] ?? 0) | ((dx % 2 === 0 ? LEFT : RIGHT)[dy % 4] ?? 0)
+    r[col] = r[col]! | (dx % 2 === 0 ? LEFT : RIGHT)[dy % 4]!
     rc[col] = c
   }
   const put = (x: number, y: number, ch: string, c: string, b?: boolean) => {
@@ -123,7 +123,7 @@ export function fieldFrame(agents: readonly Agent[], snapNow: number, t: number,
     if (noise(i, phase) < 0.3) continue
     dot(cx + Math.cos(a) * corona * 1.9, cy + Math.sin(a) * corona, mix(KZ.amber, DIM, 0.35))
   }
-  const sunGlyph = isWorking ? (['✶', '✷', '✸', '✹', '✸', '✷'][phase % 6] ?? '✹') : '✺'
+  const sunGlyph = isWorking ? '✶✷✸✹✸✷'.charAt(phase % 6) : '✺'
   put(cx, cy - 0.5, sunGlyph, isWorking ? mix(KZ.yellow, KZ.amber, 0.5 + 0.5 * Math.sin(t / 180)) : KZ.amber, true)
 
   // The finished, settled on the outer ring by spawn order.
@@ -157,9 +157,9 @@ export function fieldFrame(agents: readonly Agent[], snapNow: number, t: number,
     const segs: Seg[] = []
     for (let x = 0; x < W; x++) {
       const cell = line[x]
-      const b = bits[y]?.[x] ?? 0
+      const b = bits[y]![x]!
       const ch = cell ? cell.ch : b ? String.fromCharCode(0x2800 + b) : ' '
-      const c = cell ? cell.c : b ? (bitColor[y]?.[x] ?? DIM) : undefined
+      const c = cell ? cell.c : b ? bitColor[y]![x] : undefined
       const bold = cell?.b
       const last = segs[segs.length - 1]
       if (last && last.c === c && last.b === bold) last.s += ch

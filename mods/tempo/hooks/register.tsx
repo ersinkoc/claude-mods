@@ -82,9 +82,9 @@ async function tick($: EngineInterface): Promise<void> {
     timer = moved
     await saveTimer($)
     // Several phases slept through: only the latest is worth a toast.
-    const last = finished[finished.length - 1]
+    const last = finished[finished.length - 1]!
     for (const p of finished.slice(0, -1)) if (p === 'work') days = pruneDays({ ...days, [dayKey(now)]: (days[dayKey(now)] ?? 0) + 1 })
-    if (last) await announce($, last, moved, now)
+    await announce($, last, moved, now)
   }
   await publish($)
 }
@@ -180,25 +180,16 @@ export const register: Register = (on, options) => {
     const drawn = await next(e)
     const snap = await read($, snapAtom)
     if (!snap || e.props.hasSurvey || (await read($, hiddenAtom))) return drawn
-    const ui = $.ui.resolve(e)
-    const { Box, Button, Text } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const cols = Math.max(30, e.props.bodyColumns || 80)
     const remain = Math.max(0, snap.endsAt - snap.now)
     const total = Math.max(1, snap.endsAt - snap.startedAt)
     const hide = <Button key="tempo-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
 
+    // The terminal animates a Client; every other surface draws SVG.
     let mine
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
-      const W = pxOf(cols)
-      mine = (
-        <Box key="tempo" flexDirection="row">
-          <Svg source={ringRow(snap, W)} alt={altOf(snap)} width={W} height={48} />
-          {hide}
-        </Box>
-      )
-    } else if ('Client' in ui) {
-      const { Client } = ui
+    if (e.surface === 'terminal') {
+      const { Client } = $.ui.resolve(e)
       const props = { cols: cols - 3, phase: snap.phase, remain, total, round: snap.round, today: snap.today, claude: snap.isClaudeWorking }
       mine = (
         <Box key="tempo" flexDirection="row">
@@ -207,9 +198,11 @@ export const register: Register = (on, options) => {
         </Box>
       )
     } else {
+      const { Svg } = $.ui.resolve(e)
+      const W = pxOf(cols)
       mine = (
         <Box key="tempo" flexDirection="row">
-          <Text>{altOf(snap)} </Text>
+          <Svg source={ringRow(snap, W)} alt={altOf(snap)} width={W} height={48} />
           {hide}
         </Box>
       )

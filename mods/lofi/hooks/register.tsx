@@ -3,7 +3,7 @@ import type { EngineInterface, Register } from 'claude-code'
 
 import type { LofiMood, LofiSnap } from '../types'
 import { pxOf } from './lib/kz.ts'
-import { MOODS, assetOf, gainOf, isMood, lofiSvg, resolveMood } from './mood.ts'
+import { MOODS, assetOf, gainOf, isMood, lofiSvg, moodSettingOf, resolveMood } from './mood.ts'
 
 const snapAtom = atom({ plugin: 'lofi', key: 'snap' } as const, null)
 const hiddenAtom = atom({ plugin: 'lofi', key: 'isHidden' } as const, false)
@@ -32,8 +32,9 @@ async function publish($: EngineInterface): Promise<void> {
   const snap: LofiSnap = { isPlaying: p !== undefined, mood: p?.mood ?? fallback, isEnabled, since: p?.since ?? 0 }
   const key = JSON.stringify(snap)
   if (key === lastKey) return
-  lastKey = key
   await update($, snapAtom, () => snap)
+  // Only once it is written, so a refused write is tried again next time.
+  lastKey = key
 }
 
 function stop(): void {
@@ -44,7 +45,11 @@ function stop(): void {
 
 /** Plays one loop until it is stopped; `p` is already the current player. */
 async function play($: EngineInterface, p: NonNullable<typeof player>): Promise<void> {
-  await publish($)
+  try {
+    await publish($)
+  } catch {
+    // The band catches up at the next publish; the music plays regardless.
+  }
   try {
     await $.audio.play({ asset: assetOf(p.mood) }, { shouldLoop: true, gain, signal: p.stop.signal })
   } catch {
@@ -90,7 +95,7 @@ async function remember($: EngineInterface, key: string, value: unknown): Promis
 }
 
 async function command($: EngineInterface, args: string): Promise<string> {
-  const [verb = '', arg = ''] = args.trim().toLowerCase().split(/\s+/)
+  const [verb, arg = ''] = args.trim().toLowerCase().split(/\s+/)
   if (verb === 'on' || verb === 'off') {
     isEnabled = verb === 'on'
     isMuted = false
@@ -125,8 +130,8 @@ export const register: Register = (on, options) => {
     isMuted = false
     lastKey = ''
     isEnabled = options.enabled === true
-    moodSetting = typeof options.mood === 'string' ? options.mood : 'auto'
-    gain = gainOf(typeof options.volume === 'number' ? options.volume : 40)
+    moodSetting = moodSettingOf(options.mood)
+    gain = gainOf(options.volume)
     await $.command.register({ name: 'lofi', description: 'KOZMOS: lo-fi music while Claude works (on, off, mood <m>, status; bare toggles the band)', argumentHint: '[on|off|mood <auto|focus|deep|night|sunny>|status]', immediate: true })
     try {
       const enabled = await $.store.get('enabled')
@@ -174,32 +179,31 @@ export const register: Register = (on, options) => {
     const snap = await read($, snapAtom)
     if (!snap || !snap.isPlaying) return drawn
 
-    const ui = $.ui.resolve(e)
-    const { Box, Button } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const hide = <Button key="lofi-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
-      const W = Math.min(pxOf(e.props.bodyColumns) - 28, 260)
+    if (e.surface === 'terminal') {
+      const { Client } = $.ui.resolve(e)
+      const bands = Math.max(6, Math.min(16, (e.props.bodyColumns || 80) - 24))
       return (
         <Box flexDirection="column">
           {drawn}
-          <Box flexDirection="row" alignItems="center">
-            <Svg source={lofiSvg(snap.mood, W, await $.clock.now(), snap.since)} alt={`Lofi playing: ${snap.mood}`} width={W} height={30} />
+          <Box flexDirection="row">
+            <Client key="lofi" module="./eq.tsx" width={14 + snap.mood.length + bands} height={1} props={{ mood: snap.mood, bands }} />
             {hide}
           </Box>
         </Box>
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
-    const bands = Math.max(6, Math.min(16, (e.props.bodyColumns || 80) - 24))
+    // Desktop, VS Code and mobile: one animated Svg.
+    const { Svg } = $.ui.resolve(e)
+    const W = Math.min(pxOf(e.props.bodyColumns) - 28, 260)
     return (
       <Box flexDirection="column">
         {drawn}
-        <Box flexDirection="row">
-          <Client key="lofi" module="./eq.tsx" width={14 + snap.mood.length + bands} height={1} props={{ mood: snap.mood, bands }} />
+        <Box flexDirection="row" alignItems="center">
+          <Svg source={lofiSvg(snap.mood, W, await $.clock.now(), snap.since)} alt={`Lofi playing: ${snap.mood}`} width={W} height={30} />
           {hide}
         </Box>
       </Box>

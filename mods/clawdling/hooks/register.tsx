@@ -127,7 +127,7 @@ export const register: Register = (on, options) => {
     await readUsage($)
     await publish($)
     $.clock.every(1000, () => void tick($).catch(() => undefined))
-    $.clock.every(10_000, () => void readUsage($).catch(() => undefined))
+    $.clock.every(10_000, () => void readUsage($)) // readUsage never throws
     return started
   })
 
@@ -202,25 +202,23 @@ export const register: Register = (on, options) => {
     const drawn = await next(e)
     const snap = await read($, snapAtom)
     if (!snap || e.props.hasSurvey || (await read($, hiddenAtom))) return drawn
-    const ui = $.ui.resolve(e)
-    const { Box, Button, Text } = ui
+    const { Box, Button } = $.ui.resolve(e)
     const cols = Math.max(40, e.props.bodyColumns || 80)
     const hide = <Button key="clawdling-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
     const icons = UNLOCKS.filter(u => u.level <= snap.level).map(u => u.icon).join('')
     let mine
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
-      const W = pxOf(cols)
-      mine = <Svg source={crabCard(snap, W, icons)} alt={altOf(snap)} width={W} height={CARD_H} />
-    } else if ('Client' in ui) {
-      const { Client } = ui
+    if (e.surface === 'terminal') {
+      const { Client } = $.ui.resolve(e)
       const props = {
         cols: cols - 3, mood: snap.mood, name: snap.name, level: snap.level, into: snap.into, need: snap.need,
         quip: snap.quip, acc: snap.acc, icons, status: statusOf(snap),
       }
       mine = <Client key="clawdling-crab" module="./crab.tsx" width={cols - 3} height={4} props={props} />
     } else {
-      mine = <Text>🦀 {altOf(snap)}</Text>
+      // Desktop, VS Code and mobile: the flipbook card.
+      const { Svg } = $.ui.resolve(e)
+      const W = pxOf(cols)
+      mine = <Svg source={crabCard(snap, W, icons)} alt={altOf(snap)} width={W} height={CARD_H} />
     }
     return (
       <Box flexDirection="column">
@@ -297,7 +295,7 @@ function crabCard(s: ClawdlingSnap, W: number, icons: string): string {
   parts.push(svgText(nx + 18, 19, `Lv ${s.level}`, { size: 10.5, weight: 750, anchor: 'middle', fill: '#d97706' }))
   if (icons) parts.push(`<text x="${nx + 44}" y="19" font-size="12">${xml(icons)}</text>`)
   const barW = Math.max(60, Math.min(200, room - 90))
-  parts.push(svgBar(x, 27, barW, 6, s.need ? s.into / s.need : 0, 'url(#cxp)'))
+  parts.push(svgBar(x, 27, barW, 6, s.into / s.need, 'url(#cxp)')) // need: 100 XP or more
   parts.push(svgText(x + barW + 8, 33, `${s.into}/${s.need} XP`, { cls: 'm', size: 10 }))
   parts.push(`<g class="cw-typ">${svgText(x, 48, fitText(`“${s.quip}”`, 11.5, room), { cls: 's', size: 11.5 }).replace('<text ', '<text font-style="italic" ')}</g>`)
   if (room > 300) parts.push(svgText(W - 14, 19, fitText(statusOf(s), 10, Math.max(80, room - textWidth(s.name, 14) - 120)), { cls: 'm', size: 10, anchor: 'end' }))

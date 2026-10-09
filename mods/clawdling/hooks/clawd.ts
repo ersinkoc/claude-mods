@@ -122,7 +122,7 @@ export const QUIPS: Record<Mood, readonly string[]> = {
 
 export function quipFor(mood: Mood, seed: number): string {
   const list = QUIPS[mood]
-  return list[Math.abs(Math.floor(seed)) % list.length] ?? ''
+  return list[Math.abs(Math.floor(seed)) % list.length]! // every mood has quips
 }
 
 export function cleanName(v: unknown): string {

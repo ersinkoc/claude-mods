@@ -100,9 +100,10 @@ export const clamp01 = (v: number): number => (Number.isFinite(v) ? Math.max(0, 
 
 export function fmtTokens(n: number): string {
   if (!Number.isFinite(n)) return '—'
-  if (n >= 1e9) return `${(n / 1e9).toFixed(1)}B`
-  if (n >= 1e6) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`
-  if (n >= 1e3) return `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}k`
+  // Each unit starts where the one below would round up to 1000 of itself.
+  if (n >= 999.5e6) return `${(n / 1e9).toFixed(1)}B`
+  if (n >= 999_500) return `${(n / 1e6).toFixed(n >= 1e7 ? 0 : 1)}M`
+  if (n >= 999.5) return `${(n / 1e3).toFixed(n >= 1e4 ? 0 : 1)}k`
   return `${Math.round(n)}`
 }
 
@@ -146,7 +147,7 @@ export function padEnd(s: string, n: number): string {
 }
 
 export function padStart(s: string, n: number): string {
-  return s.length >= n ? s.slice(-n) : ' '.repeat(n - s.length) + s
+  return s.length >= n ? s.slice(s.length - n) : ' '.repeat(n - s.length) + s
 }
 
 /** `claude-opus-5-5[1m]` → `Opus 5.5`. */
@@ -154,7 +155,7 @@ export function modelName(id: string | undefined): string {
   if (!id) return '—'
   const m = /(fable|mythos|opus|sonnet|haiku)-(\d+)(?:-(\d{1,2})(?!\d))?/i.exec(id)
   if (!m) return id.replace(/^claude-/, '').replace(/\[.*\]$/, '')
-  const fam = m[1] ?? ''
+  const fam = m[1]!
   return `${fam.charAt(0).toUpperCase()}${fam.slice(1).toLowerCase()} ${m[2]}${m[3] ? '.' + m[3] : ''}`
 }
 
@@ -243,7 +244,7 @@ export function brailleGraph(values: readonly number[], width: number, rows: num
       const row = rows - 1 - Math.floor(d / 4)
       const bits = isRight ? RIGHT : LEFT
       const cellRow = grid[row]
-      if (cellRow && col >= 0 && col < width) cellRow[col] = (cellRow[col] ?? 0) | (bits[d % 4] ?? 0)
+      if (cellRow && col >= 0) cellRow[col] = (cellRow[col] ?? 0) | bits[d % 4]!
     }
   })
   return grid.map(r => r.map(b => String.fromCharCode(0x2800 + b)).join(''))
@@ -258,15 +259,15 @@ export function toBase64(bytes: Uint8Array): string {
   let out = ''
   let i = 0
   for (; i + 2 < bytes.length; i += 3) {
-    const n = ((bytes[i] ?? 0) << 16) | ((bytes[i + 1] ?? 0) << 8) | (bytes[i + 2] ?? 0)
+    const n = (bytes[i]! << 16) | (bytes[i + 1]! << 8) | bytes[i + 2]!
     out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + B64[(n >> 6) & 63]! + B64[n & 63]!
   }
   const rest = bytes.length - i
   if (rest === 1) {
-    const n = (bytes[i] ?? 0) << 16
+    const n = bytes[i]! << 16
     out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + '=='
   } else if (rest === 2) {
-    const n = ((bytes[i] ?? 0) << 16) | ((bytes[i + 1] ?? 0) << 8)
+    const n = (bytes[i]! << 16) | (bytes[i + 1]! << 8)
     out += B64[(n >> 18) & 63]! + B64[(n >> 12) & 63]! + B64[(n >> 6) & 63]! + '='
   }
   return out
@@ -353,8 +354,10 @@ export class Canvas {
 export const FONT = "-apple-system,BlinkMacSystemFont,'Segoe UI',Inter,sans-serif"
 export const MONO = "ui-monospace,'Cascadia Code','SF Mono',Consolas,monospace"
 
+const XML_ESC: Record<string, string> = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }
+
 export function xml(s: string): string {
-  return s.replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' })[c] ?? c)
+  return s.replace(/[&<>"']/g, c => XML_ESC[c]!)
 }
 
 /** Theme-aware classes every KOZMOS drawing shares: t text, s secondary, m muted, k track, p panel. */

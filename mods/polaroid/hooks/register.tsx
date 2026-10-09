@@ -137,7 +137,8 @@ export const register: Register = on => {
     try {
       return { text: await shoot($, format) }
     } catch (err) {
-      return { text: `Polaroid could not write the report: ${err instanceof Error ? err.message : String(err)}` }
+      // The engine rejects its calls with an Error, and so does the code above.
+      return { text: `Polaroid could not write the report: ${(err as Error).message}` }
     }
   })
 

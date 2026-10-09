@@ -105,10 +105,11 @@ export const register: Register = (on, options) => {
   on('session.start', async ($, e, next) => {
     const started = await next(e)
     const now = await $.clock.now()
-    const prev = await read($, snapAtom).catch(() => null)
     live = blank(now)
     lastPublished = ''
     try {
+      // The snapshot of this same session survives a reload: keep its series.
+      const prev = await read($, snapAtom)
       const u = await $.session.usage()
       if (prev && prev.startedAt === u.startedAt) live.growth = prev.growth
     } catch {
@@ -190,7 +191,7 @@ export const register: Register = (on, options) => {
           ? graph.map((line, i) => <Text key={`g${i}`} color={KZ.cyan}>{line}</Text>)
           : <Text dimColor>a point lands at the end of each turn</Text>}
         <Text wrap="truncate-end">
-          <Text color={KZ.cyan}>{s.slope !== undefined ? `${s.slope >= 0 ? '+' : ''}${fmtTokens(Math.abs(s.slope))}/turn` : 'Δ —'}</Text>
+          <Text color={KZ.cyan}>{s.slope !== undefined ? `${s.slope >= 0 ? '+' : '−'}${fmtTokens(Math.abs(s.slope))}/turn` : 'Δ —'}</Text>
           <Text color={compactColor(s.turnsLeft)}> · {forecastLine(s)}</Text>
         </Text>
         <Text dimColor wrap="truncate-end">
@@ -319,7 +320,8 @@ function growthCard(s: SpSnap, W: number): Card {
   const ahead = s.turnsLeft !== undefined ? Math.min(s.turnsLeft, Math.max(3, series.length)) : 0
   const n = series.length + ahead
   const top = Math.max(s.threshold, ...series, 1) * 1.04
-  const X = (i: number) => gx + (n > 1 ? (i / (n - 1)) * gw : 0)
+  // Only drawn with two points or more, so n - 1 is at least 1.
+  const X = (i: number) => gx + (i / (n - 1)) * gw
   const Y = (v: number) => gy + gh - (v / top) * gh
   // The compaction line.
   const ty = Y(s.threshold)
@@ -330,7 +332,7 @@ function growthCard(s: SpSnap, W: number): Card {
     p.push(`<path d="M${pts.join('L')}L${X(series.length - 1).toFixed(1)},${gy + gh}L${gx},${gy + gh}Z" fill="url(#spG)"/>`)
     p.push(`<path d="M${pts.join('L')}" stroke="${KZ.cyan}" stroke-width="1.8" fill="none" stroke-linejoin="round"/>`)
     const lx = X(series.length - 1)
-    const lv = series[series.length - 1] ?? 0
+    const lv = series[series.length - 1]!
     if (ahead > 0 && s.slope !== undefined) {
       const ex = X(n - 1)
       const ev = Math.min(top, lv + s.slope * ahead)

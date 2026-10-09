@@ -29,6 +29,8 @@ let ctxPercent = 0
 let queue: string[] = []
 let isBursting = false
 let lastProgress = ''
+/** Badges an evaluation is unlocking right now, so a concurrent one leaves them be. */
+const claiming = new Set<string>()
 
 function sanitizeUnlocked(v: unknown): Record<string, number> {
   const out: Record<string, number> = {}
@@ -59,25 +61,32 @@ async function showNext($: EngineInterface): Promise<void> {
 }
 
 async function evaluate($: EngineInterface): Promise<void> {
-  const fresh = newlyUnlocked(facts, unlocked)
-  const progress = progressOf(facts)
-  const key = JSON.stringify(progress)
-  if (key !== lastProgress) {
-    lastProgress = key
-    await update($, progressAtom, () => progress)
+  // Tool calls run in parallel: claim the fresh badges before the first wait,
+  // or two evaluations would both unlock (and toast) the same one.
+  const fresh = newlyUnlocked(facts, unlocked).filter(b => !claiming.has(b.id))
+  for (const b of fresh) claiming.add(b.id)
+  try {
+    const progress = progressOf(facts)
+    const key = JSON.stringify(progress)
+    if (key !== lastProgress) {
+      lastProgress = key
+      await update($, progressAtom, () => progress)
+    }
+    if (fresh.length === 0) return
+    const now = await $.clock.now()
+    for (const b of fresh) {
+      unlocked[b.id] = now
+      $.ui.toast(`🏆 ${b.name} unlocked — ${b.cheer}`, { timeoutMs: 7000 })
+      queue.push(b.id)
+    }
+    const snapshot = { ...unlocked }
+    await update($, unlockedAtom, () => snapshot)
+    await persist($)
+    if (!isBursting) await showNext($)
+    else await update($, burstAtom, b => (b ? { ...b, more: queue.length } : b))
+  } finally {
+    for (const b of fresh) claiming.delete(b.id)
   }
-  if (fresh.length === 0) return
-  const now = await $.clock.now()
-  for (const b of fresh) {
-    unlocked[b.id] = now
-    $.ui.toast(`🏆 ${b.name} unlocked — ${b.cheer}`, { timeoutMs: 7000 })
-    queue.push(b.id)
-  }
-  const snapshot = { ...unlocked }
-  await update($, unlockedAtom, () => snapshot)
-  await persist($)
-  if (!isBursting) await showNext($)
-  else await update($, burstAtom, b => (b ? { ...b, more: queue.length } : b))
 }
 
 async function poll($: EngineInterface): Promise<void> {
@@ -284,24 +293,22 @@ export const register: Register = on => {
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     const drawn = await next(e)
     const burst = await read($, burstAtom)
-    if (!burst || e.props.hasSurvey || (await read($, hiddenAtom))) return drawn
-    const b = badgeById(burst.id)
-    if (!b) return drawn
-    const ui = $.ui.resolve(e)
-    const { Box, Button, Text } = ui
+    // A burst names a badge of this book (one renamed since a reload draws nothing).
+    const b = burst ? badgeById(burst.id) : undefined
+    if (!burst || !b || e.props.hasSurvey || (await read($, hiddenAtom))) return drawn
     const cols = Math.max(40, e.props.bodyColumns || 80)
-    const hide = <Button key="laurels-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
     let mine
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
-      const W = pxOf(cols)
-      mine = <Svg source={burstSvg(b, W, burst.more)} alt={`Achievement unlocked: ${b.name}. ${b.desc}`} width={W} height={44} />
-    } else if ('Client' in ui) {
-      const { Client } = ui
+    if (e.surface === 'terminal') {
+      const { Client } = $.ui.resolve(e)
       mine = <Client key="laurels-burst" module="./burst.tsx" width={cols - 3} height={1} props={{ cols: cols - 3, name: b.name, glyph: b.glyph, color: b.color, cheer: b.cheer, more: burst.more }} />
     } else {
-      mine = <Text color={b.color}>🏆 {b.name} unlocked — {b.cheer}</Text>
+      // Every other surface draws Svg.
+      const { Svg } = $.ui.resolve(e)
+      const W = pxOf(cols)
+      mine = <Svg source={burstSvg(b, W, burst.more)} alt={`Achievement unlocked: ${b.name}. ${b.desc}`} width={W} height={44} />
     }
+    const { Box, Button } = $.ui.resolve(e)
+    const hide = <Button key="laurels-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
     return (
       <Box flexDirection="column">
         {drawn}
@@ -343,8 +350,7 @@ export const register: Register = on => {
     const grid = twoCols
       ? Array.from({ length: Math.ceil(lines.length / 2) }, (_, i) => (
           <Box key={`g${i}`} flexDirection="row">
-            <Box width={colW} marginRight={2}>{lines[i * 2]}</Box>
-            <Box width={colW}>{lines[i * 2 + 1] ?? null}</Box>
+            {lines.slice(i * 2, i * 2 + 2).map((line, j) => <Box key={`c${j}`} width={colW} marginRight={j === 0 ? 2 : 0}>{line}</Box>)}
           </Box>
         ))
       : lines
@@ -375,7 +381,7 @@ function dateOf(ms: number): string {
 
 /** Unlocked first (newest first), then locked by how close they are. */
 function orderBadges(got: Readonly<Record<string, number>>, progress: Readonly<Record<string, number>>): Badge[] {
-  const done = BADGES.filter(b => got[b.id] !== undefined).sort((a, b) => (got[b.id] ?? 0) - (got[a.id] ?? 0))
+  const done = BADGES.filter(b => got[b.id] !== undefined).sort((a, b) => Number(got[b.id]) - Number(got[a.id]))
   const left = BADGES.filter(b => got[b.id] === undefined).sort((a, b) => (progress[b.id] ?? 0) / b.goal - (progress[a.id] ?? 0) / a.goal)
   return [...done, ...left]
 }

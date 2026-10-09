@@ -115,7 +115,8 @@ export const register: Register = on => {
     publishedKey = ''
     await $.command.register({ name: 'skies', description: 'KOZMOS: show or hide the Skies session weather above the prompt', immediate: true })
     await loadHidden($)
-    void detectOffset($).catch(() => undefined)
+    // detectOffset catches its own failures and never rejects.
+    void detectOffset($)
     $.clock.every(TICK_MS, () => void tick($).catch(() => undefined))
     return started
   })
@@ -173,20 +174,17 @@ export const register: Register = on => {
       )
     }
 
-    const ui = $.ui.resolve(e)
-    if ('Svg' in ui) {
-      const { Box, Button, Svg } = ui
-      const pic = skySvg(snap, cols * 8 - 8)
-      return (
-        <Box flexDirection="column">
-          {drawn}
-          <Box key="skies" flexDirection="row">
-            <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
-            <Button key="skies-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
-          </Box>
+    // Every surface but the terminal draws an Svg.
+    const { Box, Button, Svg } = $.ui.resolve(e)
+    const pic = skySvg(snap, cols * 8 - 8)
+    return (
+      <Box flexDirection="column">
+        {drawn}
+        <Box key="skies" flexDirection="row">
+          <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
+          <Button key="skies-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
         </Box>
-      )
-    }
-    return drawn
+      </Box>
+    )
   })
 }

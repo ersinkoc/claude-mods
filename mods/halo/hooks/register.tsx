@@ -170,20 +170,17 @@ export const register: Register = on => {
       )
     }
 
-    const ui = $.ui.resolve(e)
-    if ('Svg' in ui) {
-      const { Box, Button, Svg } = ui
-      const pic = haloSvg(snap, cols * 8 - 8, await $.clock.now())
-      return (
-        <Box flexDirection="column">
-          {drawn}
-          <Box key="halo" flexDirection="row">
-            <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
-            <Button key="halo-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
-          </Box>
+    // Every surface but the terminal draws an Svg.
+    const { Box, Button, Svg } = $.ui.resolve(e)
+    const pic = haloSvg(snap, cols * 8 - 8, await $.clock.now())
+    return (
+      <Box flexDirection="column">
+        {drawn}
+        <Box key="halo" flexDirection="row">
+          <Svg source={pic.source} alt={pic.alt} width={pic.width} height={pic.height} />
+          <Button key="halo-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
         </Box>
-      )
-    }
-    return drawn
+      </Box>
+    )
   })
 }

@@ -19,10 +19,6 @@ export class Tally {
     return this.m.has(name)
   }
 
-  get size(): number {
-    return this.m.size
-  }
-
   /** Ranked: most first, then earliest. `first` relative to `origin`. */
   entries(origin: number): AlmanacEntry[] {
     return [...this.m.entries()]
@@ -69,7 +65,7 @@ export function familyOf(tool: string): Family {
 export function mcpParts(tool: string, ownTools: ReadonlySet<string>): { server?: string; plugin?: string } {
   const m = /^mcp__(.+?)__(.+)$/.exec(tool)
   if (!m) return {}
-  const head = m[1] ?? ''
+  const head = m[1]! // the pattern always captures it
   const pm = /^plugin_([^_]+)_(.+)$/.exec(head)
   if (pm) return { server: pm[2], plugin: pm[1] }
   if (ownTools.has(tool)) return { plugin: head }
@@ -218,7 +214,7 @@ export function familiesSvg(xs: readonly AlmanacEntry[], W: number): { source: s
     let x = 12
     for (const e of xs) {
       const w = (e.n / total) * bw
-      parts.push(`<rect x="${x.toFixed(1)}" y="28" width="${w.toFixed(1)}" height="12" fill="${FAMILY_COLOR[e.name as Family] ?? KZ.mist}"/>`)
+      parts.push(`<rect x="${x.toFixed(1)}" y="28" width="${w.toFixed(1)}" height="12" fill="${FAMILY_COLOR[e.name as Family]}"/>`)
       x += w
     }
     parts.push('</g>')
@@ -227,7 +223,7 @@ export function familiesSvg(xs: readonly AlmanacEntry[], W: number): { source: s
   xs.forEach((e, i) => {
     const lx = 12 + (i % cols) * slot
     const ly = 58 + Math.floor(i / cols) * 17
-    parts.push(`<rect x="${lx}" y="${ly - 8}" width="9" height="9" rx="2.5" fill="${FAMILY_COLOR[e.name as Family] ?? KZ.mist}"/>`)
+    parts.push(`<rect x="${lx}" y="${ly - 8}" width="9" height="9" rx="2.5" fill="${FAMILY_COLOR[e.name as Family]}"/>`)
     parts.push(svgText(lx + 14, ly, fitText(`${e.name} ${e.n} · ${Math.round((e.n / total) * 100)}%`, 10.5, slot - 18), { cls: 's', size: 10.5 }))
   })
   return { source: svg(W, H, parts.join('')), height: H }

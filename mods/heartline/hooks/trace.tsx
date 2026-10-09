@@ -18,8 +18,9 @@ const Trace: ClientModule<P, S> = (props, surface) => {
   if (s === undefined) {
     surface.setState({ t: 0, sig: props.now, at: 0 })
     surface.every(FRAME, () => {
-      const c = surface.state
-      if (c) surface.setState({ ...c, t: c.t + 1 })
+      // Set just above, before the first tick.
+      const c = surface.state as S
+      surface.setState({ ...c, t: c.t + 1 })
     })
   } else if (s.sig !== props.now) {
     surface.setState({ ...s, sig: props.now, at: s.t })
@@ -51,7 +52,7 @@ const Trace: ClientModule<P, S> = (props, surface) => {
     </Text>,
     <Text key="r1" wrap="truncate-end">
       <Text dimColor>   ctx </Text>
-      <Text color={props.ctx === null ? FADE : heat((props.ctx ?? 0) / 100)} bold>{ctxTxt}</Text>
+      <Text color={props.ctx === null ? FADE : heat(props.ctx / 100)} bold>{ctxTxt}</Text>
     </Text>,
     <Text key="r2" wrap="truncate-end">
       <Text dimColor>   {String(props.rpm)} req/m</Text>

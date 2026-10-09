@@ -60,7 +60,7 @@ const Bench: ClientModule<BenchProps, S> = (props, surface) => {
   if (props.rows >= 2 && props.failures.length) {
     const n = props.failures.length
     const k = Math.floor(t / DWELL) % n
-    const line = props.failures[k] ?? ''
+    const line = props.failures[k]! // k < n
     const shown = Math.min(line.length, Math.floor(((t % DWELL) + 1) * 3))
     const head = n > 1 ? `${k + 1}/${n} ` : ''
     const room = Math.max(4, cols - 4 - head.length)

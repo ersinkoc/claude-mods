@@ -26,8 +26,8 @@ export function chipsOf(runs: readonly VerdictRun[], since: number): Chip[] {
   }
   const chips: Chip[] = []
   for (const [runner, list] of byRunner) {
-    const last = list[list.length - 1]
-    if (!last || last.at < since) continue
+    const last = list[list.length - 1]! // a runner is listed with its first run
+    if (last.at < since) continue
     chips.push({
       runner,
       text: chipText(last),
@@ -42,7 +42,7 @@ export function chipsOf(runs: readonly VerdictRun[], since: number): Chip[] {
 
 const BARS = '▁▂▃▄▅▆▇█'
 export function sparkBars(spark: readonly { h: number; ok: boolean }[]): { s: string; ok: boolean }[] {
-  return spark.map(p => ({ s: BARS[Math.max(0, Math.min(7, Math.round(p.h * 7)))] ?? '▁', ok: p.ok }))
+  return spark.map(p => ({ s: BARS[Math.max(0, Math.min(7, Math.round(p.h * 7)))]!, ok: p.ok }))
 }
 
 /** The failures to cycle through on the band: the failing chips', newest first. */

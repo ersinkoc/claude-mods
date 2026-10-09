@@ -30,7 +30,7 @@ async function sh($: EngineInterface, argv: readonly string[], timeoutMs: number
 
 async function publish($: EngineInterface): Promise<void> {
   const now = await $.clock.now()
-  live.idleMin = lastActivity ? Math.floor((now - lastActivity) / 60_000) : 0
+  live.idleMin = Math.floor((now - lastActivity) / 60_000)
   live.now = Math.floor(now / 60_000) * 60_000
   const key = JSON.stringify(live)
   if (key === lastPublished) return
@@ -146,7 +146,6 @@ export const register: Register = on => {
 
   on('ui.render', { component: 'PromptHint' }, async ($, e, next) => {
     const p = e.props
-    if (typeof p !== 'object' || p === null || typeof p.hint !== 'string') return next(e)
     if (!(await read($, onAtom))) return next(e)
     const hint = pickHint(await read($, snapAtom), p.isDraft === true, p.isWorking === true)
     if (!hint) return next(e)

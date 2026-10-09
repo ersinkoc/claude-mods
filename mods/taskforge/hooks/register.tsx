@@ -8,11 +8,15 @@ const PANE = 'kz-taskforge'
 const TITLE = 'KOZMOS · Taskforge'
 const snapAtom = atom({ plugin: 'taskforge', key: 'snap' } as const, null)
 
-const COLS: { status: ForgeStatus; label: string; glyph: string; color: string }[] = [
-  { status: 'pending', label: 'PENDING', glyph: '○', color: KZ.mist },
-  { status: 'in_progress', label: 'IN PROGRESS', glyph: '◐', color: KZ.violet },
-  { status: 'completed', label: 'DONE', glyph: '●', color: KZ.green },
-]
+type Column = { status: ForgeStatus; label: string; glyph: string; color: string }
+
+const PENDING: Column = { status: 'pending', label: 'PENDING', glyph: '○', color: KZ.mist }
+const ACTIVE: Column = { status: 'in_progress', label: 'IN PROGRESS', glyph: '◐', color: KZ.violet }
+const DONE: Column = { status: 'completed', label: 'DONE', glyph: '●', color: KZ.green }
+/** Board order, left to right. */
+const COLS: Column[] = [PENDING, ACTIVE, DONE]
+/** Stacked order on a narrow pane: what runs first. */
+const STACKED: Column[] = [ACTIVE, PENDING, DONE]
 
 // ---------------------------------------------------------------------------
 // The live board. Module state starts over on a reload.
@@ -243,8 +247,7 @@ export const register: Register = (on, options) => {
     return (
       <Box flexDirection="column">
         {header}
-        {[COLS[1], COLS[0], COLS[2]].map(col => {
-          if (!col) return null
+        {STACKED.map(col => {
           const list = byColumn(snap, col.status)
           if (list.length === 0) return null
           const shown = col.status === 'completed' ? list.slice(-6) : list
@@ -396,8 +399,8 @@ function cardSvg(c: ForgeCard, x: number, y: number, w: number, color: string, n
   const isActive = c.status === 'in_progress'
   const isDone = c.status === 'completed'
   const lines = wrap(c.subject, 11.5, w - 22, 3)
-  const hasForm = isActive && !!c.activeForm
-  const h = 14 + lines.length * 15 + (hasForm ? 15 : 0) + 18
+  const form = isActive ? c.activeForm : undefined
+  const h = 14 + lines.length * 15 + (form ? 15 : 0) + 18
   const p: string[] = []
   p.push(`<rect class="cd cds" x="${x}" y="${y}" width="${w}" height="${h}" rx="8" stroke-width="1"/>`)
   if (isActive) p.push(`<rect class="ants" x="${x + 0.75}" y="${y + 0.75}" width="${w - 1.5}" height="${h - 1.5}" rx="7.5" fill="none" stroke="${color}" stroke-width="1.5"/>`)
@@ -406,8 +409,8 @@ function cardSvg(c: ForgeCard, x: number, y: number, w: number, color: string, n
     p.push(svgText(x + 16, y + 20 + i * 15, l, { size: 11.5, weight: isActive ? 650 : 500, cls: isDone ? 's' : 't' }))
   })
   let ly = y + 20 + lines.length * 15
-  if (hasForm) {
-    p.push(svgText(x + 16, ly, fitText(`↳ ${c.activeForm ?? ''}`, 10.5, w - 22), { size: 10.5, fill: KZ.violet }))
+  if (form) {
+    p.push(svgText(x + 16, ly, fitText(`↳ ${form}`, 10.5, w - 22), { size: 10.5, fill: KZ.violet }))
     ly += 15
   }
   p.push(svgText(x + 16, ly + 1, fitText(cardMeta(c, now), 9.5, w - 22), { cls: 'm', size: 9.5 }))
@@ -416,7 +419,7 @@ function cardSvg(c: ForgeCard, x: number, y: number, w: number, color: string, n
   return { body: p.join(''), height: h }
 }
 
-function columnSvg(s: ForgeSnap, col: (typeof COLS)[number], x: number, y: number, w: number): Drawn {
+function columnSvg(s: ForgeSnap, col: Column, x: number, y: number, w: number): Drawn {
   const all = byColumn(s, col.status)
   const list = col.status === 'completed' ? all.slice(-10) : all
   const p: string[] = []
@@ -458,8 +461,7 @@ function boardSvg(s: ForgeSnap, W: number): { source: string; height: number } {
     drawn.forEach(d => parts.push(d.body.replace(/^<rect class="p" x="([\d.]+)" y="0" width="([\d.]+)" height="[\d.]+"/, `<rect class="p" x="$1" y="0" width="$2" height="${height}"`)))
   } else {
     let y = 0
-    for (const col of [COLS[1], COLS[0], COLS[2]]) {
-      if (!col) continue
+    for (const col of STACKED) {
       const d = columnSvg(s, col, 0, y, W)
       parts.push(d.body)
       y += d.height + gap

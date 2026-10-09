@@ -56,6 +56,12 @@ export function percentile(sorted: readonly number[], q: number): number | undef
   return sorted[Math.min(sorted.length - 1, Math.max(0, Math.ceil(q * sorted.length) - 1))]
 }
 
+/** The histogram bucket of a request's latency: the first edge it is under, else the last bucket. */
+export function bucketOf(r: RelayReq): number {
+  const i = EDGES.findIndex(e => r.ms / 1000 < e)
+  return i < 0 ? EDGES.length : i
+}
+
 export type Stats = {
   n: number
   p50?: number
@@ -77,16 +83,11 @@ export function statsOf(s: RelaySnap): Stats {
   const ttft = ok.map(r => r.ttft).filter((v): v is number => v !== undefined)
   const prompt = ok.reduce((n, r) => n + r.input + r.cacheRead + r.cacheWrite, 0)
   const read = ok.reduce((n, r) => n + r.cacheRead, 0)
-  const hist = Array.from({ length: EDGES.length + 1 }, () => 0)
-  for (const r of ok) {
-    const sec = r.ms / 1000
-    const i = EDGES.findIndex(e => sec < e)
-    const k = i < 0 ? EDGES.length : i
-    hist[k] = (hist[k] ?? 0) + 1
-  }
+  const buckets = ok.map(bucketOf)
+  const hist = Array.from({ length: EDGES.length + 1 }, (_, k) => buckets.filter(b => b === k).length)
   const byModel = new Map<string, number>()
   for (const r of s.reqs) byModel.set(modelName(r.model), (byModel.get(modelName(r.model)) ?? 0) + 1)
-  const mix = [...byModel.entries()].sort((a, b) => b[1] - a[1]).map(([model, n], i) => ({ model, n, color: PALETTE[i % PALETTE.length] ?? KZ.mist }))
+  const mix = [...byModel.entries()].sort((a, b) => b[1] - a[1]).map(([model, n], i) => ({ model, n, color: PALETTE[i % PALETTE.length]! }))
   return {
     n: s.reqs.length,
     p50: percentile(ms, 0.5),
@@ -144,7 +145,7 @@ export function vbars(values: readonly number[], rows: number): string[] {
   for (let r = rows - 1; r >= 0; r--) {
     out.push(values.map(v => {
       const level = (v / top) * rows * 8 - r * 8
-      return v > 0 && r === 0 && level < 1 ? '▁' : ' ▁▂▃▄▅▆▇█'[Math.max(0, Math.min(8, Math.round(level)))] ?? ' '
+      return v > 0 && r === 0 && level < 1 ? '▁' : ' ▁▂▃▄▅▆▇█'.charAt(Math.max(0, Math.min(8, Math.round(level))))
     }).join(''))
   }
   return out
@@ -200,15 +201,14 @@ export function histogramSvg(st: Stats, W: number): { source: string; height: nu
     parts.push(`<rect class="k" x="${(gx + i * bw + 2).toFixed(1)}" y="${base - gh}" width="${(bw - 4).toFixed(1)}" height="${gh}" rx="4" opacity=".45"/>`)
     if (hgt) parts.push(`<rect x="${(gx + i * bw + 2).toFixed(1)}" y="${(base - hgt).toFixed(1)}" width="${(bw - 4).toFixed(1)}" height="${hgt.toFixed(1)}" rx="4" fill="${c}"><title>${n} requests</title></rect>`)
     if (n) parts.push(svgText(gx + i * bw + bw / 2, base - hgt - 3, String(n), { size: 9, weight: 700, anchor: 'middle', fill: c }))
-    parts.push(svgText(gx + i * bw + bw / 2, base + 13, `${BUCKET_LABELS[i] ?? ''}${i === 0 ? 's' : ''}`, { cls: 'm', size: 9, anchor: 'middle' }))
+    parts.push(svgText(gx + i * bw + bw / 2, base + 13, `${BUCKET_LABELS[i]!}${i === 0 ? 's' : ''}`, { cls: 'm', size: 9, anchor: 'middle' }))
   })
   return { source: svg(W, H, parts.join('')), height: H }
 }
 
 export function throughputSvg(reqs: readonly RelayReq[], W: number): { source: string; height: number } {
   const H = 110
-  const pts = reqs.filter(r => r.tps !== undefined).slice(-120)
-  const vals = pts.map(r => r.tps ?? 0)
+  const vals = reqs.map(r => r.tps).filter((v): v is number => v !== undefined).slice(-120)
   const top = Math.max(1, ...vals)
   const parts = [card(W, H, 'TOKENS / SEC', vals.length ? `max ${fmtTps(top)}` : 'waiting for a response')]
   const gx = 12
@@ -223,7 +223,7 @@ export function throughputSvg(reqs: readonly RelayReq[], W: number): { source: s
     parts.push(`<defs><linearGradient id="tp" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${KZ.cyan}" stop-opacity=".45"/><stop offset="1" stop-color="${KZ.cyan}" stop-opacity="0"/></linearGradient></defs>`)
     parts.push(`<path d="M${xy.join('L')}L${gx + gw},${gy + gh}L${gx},${gy + gh}Z" fill="url(#tp)"/>`)
     parts.push(`<path d="M${xy.join('L')}" fill="none" stroke="${KZ.cyan}" stroke-width="1.8" stroke-linejoin="round"/>`)
-    const last = xy[xy.length - 1]?.split(',') ?? ['0', '0']
+    const last = xy[xy.length - 1]!.split(',')
     parts.push(`<circle cx="${last[0]}" cy="${last[1]}" r="3.2" fill="${KZ.cyan}" class="pulse"/>`)
   } else if (vals.length === 1) {
     parts.push(`<circle cx="${gx + gw}" cy="${gy + gh - gh}" r="3" fill="${KZ.cyan}"/>`)

@@ -49,8 +49,9 @@ async function publish($: EngineInterface): Promise<void> {
   // The clock matters only while the band shows (the HUD counts seconds).
   const key = JSON.stringify({ ...snap, now: visible ? Math.floor(now / 1000) : 0 })
   if (key === lastKey) return
-  lastKey = key
   await update($, snapAtom, () => snap)
+  // Only once it is written, so a refused write is tried again next time.
+  lastKey = key
 }
 
 export const register: Register = on => {
@@ -132,9 +133,10 @@ export const register: Register = on => {
     const snap = await read($, snapAtom)
     if (!snap || !snap.visible) return drawn
 
-    const ui = $.ui.resolve(e)
-    const { Box, Button } = ui
-    const label = snap.arrival && !snap.isWorking ? arrivalLine(snap.arrival.durationMs, snap.arrival.tokens, snap.arrival.isAborted) : ''
+    const { Box, Button } = $.ui.resolve(e)
+    // The jump that landed, while no turn runs.
+    const landed = snap.isWorking ? undefined : snap.arrival
+    const label = landed ? arrivalLine(landed.durationMs, landed.tokens, landed.isAborted) : ''
     const view: WarpView = {
       now: snap.now,
       speed: snap.speed,
@@ -143,34 +145,34 @@ export const register: Register = on => {
       elapsedMs: snap.isWorking ? snap.now - snap.turnStartedAt : 0,
       isWorking: snap.isWorking,
       label,
-      flashSeq: label ? (snap.arrival?.seq ?? 0) : 0,
+      flashSeq: landed ? landed.seq : 0,
     }
     const hide = <Button key="warpdrive-hide" label="✕" plain dimColor role="dismiss" onPress={() => void setHidden($, true)} />
     const rows = Math.max(2, Math.min(e.props.maxRows >= 12 ? 4 : 3, e.props.maxRows - 2))
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
-      const W = pxOf(e.props.bodyColumns) - 28
-      const H = rows >= 4 ? 84 : 66
+    if (e.surface === 'terminal') {
+      const { Client } = $.ui.resolve(e)
+      const cols = Math.max(20, (e.props.bodyColumns || 80) - 3)
       return (
         <Box flexDirection="column">
           {drawn}
-          <Box flexDirection="row" alignItems="flex-start">
-            <Svg source={warpSvg(view, W, H)} alt={warpAlt(view)} width={W} height={H} />
+          <Box flexDirection="row">
+            <Client key="warpdrive" module="./field.tsx" width={cols} height={rows} props={{ cols, rows, speed: view.speed, rate: view.rate, tokens: view.tokens, elapsedMs: view.elapsedMs, isWorking: view.isWorking, label, flashSeq: view.flashSeq }} />
             {hide}
           </Box>
         </Box>
       )
     }
 
-    if (!('Client' in ui)) return drawn
-    const { Client } = ui
-    const cols = Math.max(20, (e.props.bodyColumns || 80) - 3)
+    // Desktop, VS Code and mobile: one animated Svg.
+    const { Svg } = $.ui.resolve(e)
+    const W = pxOf(e.props.bodyColumns) - 28
+    const H = rows >= 4 ? 84 : 66
     return (
       <Box flexDirection="column">
         {drawn}
-        <Box flexDirection="row">
-          <Client key="warpdrive" module="./field.tsx" width={cols} height={rows} props={{ cols, rows, speed: view.speed, rate: view.rate, tokens: view.tokens, elapsedMs: view.elapsedMs, isWorking: view.isWorking, label, flashSeq: view.flashSeq }} />
+        <Box flexDirection="row" alignItems="flex-start">
+          <Svg source={warpSvg(view, W, H)} alt={warpAlt(view)} width={W} height={H} />
           {hide}
         </Box>
       </Box>

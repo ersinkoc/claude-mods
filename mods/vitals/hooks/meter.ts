@@ -34,6 +34,11 @@ export function avg(xs: readonly number[]): number {
   return xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0
 }
 
+/** Used over total, 0 when the total is unknown; an unknown use counts as none. */
+export function ratioOf(used: number | undefined, total: number | undefined): number {
+  return total ? (used ?? 0) / total : 0
+}
+
 /** Temperature tone: cool under 50 °C, hot from 85 °C. */
 export function tempRatio(c: number): number {
   return Math.max(0, Math.min(1, (c - 40) / 45))

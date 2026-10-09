@@ -35,7 +35,7 @@ export function sampleTrace(beats: readonly Beat[], now: number, n: number): { a
     for (const [o, a] of SHAPES[b.k]) {
       const i = at + o
       if (i < 0 || i >= n) continue
-      if (Math.abs(a) > Math.abs(amp[i] ?? 0)) {
+      if (Math.abs(a) > Math.abs(amp[i] as number)) {
         amp[i] = a
         col[i] = b.k === 'f' ? KZ.red : b.c
       }
@@ -71,22 +71,23 @@ export function traceFrame(beats: readonly Beat[], now: number, cols: number, ro
   })
   const bits: number[][] = Array.from({ length: h }, () => Array.from({ length: w }, () => 0))
   for (let i = 0; i < n; i++) {
-    const y = ys[i] ?? base0
-    const prev = i > 0 ? (ys[i - 1] ?? y) : y
+    const y = ys[i] as number
+    const prev = i > 0 ? (ys[i - 1] as number) : y
     const lo = Math.min(y, prev)
     const hi = Math.max(y, prev)
     const cell = Math.floor(i / 2)
     const table = i % 2 === 0 ? LEFT : RIGHT
     for (let d = Math.max(0, lo); d <= Math.min(dots - 1, hi); d++) {
-      const r = bits[Math.floor(d / 4)]
-      if (r) r[cell] = (r[cell] ?? 0) | (table[d % 4] ?? 0)
+      const r = bits[Math.floor(d / 4)] as number[]
+      r[cell] = (r[cell] as number) | (table[d % 4] as number)
     }
   }
   const base = mix(traceColor(ctx), FADE, breath)
   const colors: string[] = []
   for (let x = 0; x < w; x++) {
-    const a = Math.abs(amp[x * 2] ?? 0) >= Math.abs(amp[x * 2 + 1] ?? 0) ? x * 2 : x * 2 + 1
-    const c = col[a] ?? col[a === x * 2 ? a + 1 : a - 1] ?? base
+    const a = Math.abs(amp[x * 2] as number) >= Math.abs(amp[x * 2 + 1] as number) ? x * 2 : x * 2 + 1
+    // A column has a color exactly where it has a beat: the stronger dot's, else the line's.
+    const c = col[a] ?? base
     // Phosphor decay: the left third fades toward the grid.
     const age = 1 - x / Math.max(1, w - 1)
     colors.push(mix(c, FADE, Math.max(0, age - 0.35) * 0.9))
@@ -94,8 +95,8 @@ export function traceFrame(beats: readonly Beat[], now: number, cols: number, ro
   return bits.map(r => {
     const segs: Seg[] = []
     for (let x = 0; x < w; x++) {
-      const ch = String.fromCharCode(0x2800 + (r[x] ?? 0))
-      const c = colors[x] ?? base
+      const ch = String.fromCharCode(0x2800 + (r[x] as number))
+      const c = colors[x] as string
       const isPen = x === w - 1
       const last = segs[segs.length - 1]
       if (last && last.c === c && !isPen && !last.b) last.s += ch
@@ -136,13 +137,13 @@ export function ekgSvg(s: EkgInput, W: number, H: number): string {
     const shape = SHAPES[b.k]
     const c = b.k === 'f' ? KZ.red : b.c
     for (let k = 0; k + 1 < shape.length; k++) {
-      const p = shape[k]
-      const q = shape[k + 1]
-      if (!p || !q) continue
+      const p = shape[k] as readonly [number, number]
+      const q = shape[k + 1] as readonly [number, number]
       const xa = bx + p[0] * u
+      // Offsets rise strictly within a shape, so xb > xa.
       const xb = bx + q[0] * u
       for (let x = Math.ceil(xa); x <= Math.floor(xb); x++) {
-        const f = xb === xa ? 0 : (x - xa) / (xb - xa)
+        const f = (x - xa) / (xb - xa)
         const v = p[1] + (q[1] - p[1]) * f
         const cur = amp.get(x)
         if (!cur || Math.abs(v) > Math.abs(cur.a)) amp.set(x, { a: v, c })

@@ -61,7 +61,9 @@ async function record($: EngineInterface, entry: WardenEntry): Promise<void> {
 
 async function clearFlash($: EngineInterface): Promise<void> {
   const now = await $.clock.now()
-  await update($, snapAtom, prev => (prev.flash && prev.flash.until <= now + 50 ? { ...prev, flash: null } : prev))
+  // The one live timer always belongs to a flash, so `flash` is set here; a
+  // timer that fired early keeps it (the band hides it once its time is up).
+  await update($, snapAtom, prev => (Number(prev.flash?.until) <= now + 50 ? { ...prev, flash: null } : prev))
 }
 
 async function setHidden($: EngineInterface, isHidden: boolean): Promise<void> {
@@ -99,9 +101,9 @@ async function report($: EngineInterface, mode: Mode, bad: readonly string[]): P
 }
 
 export const register: Register = (on, options) => {
-  const rawMode = String(options.mode ?? 'ask')
-  const mode: Mode = rawMode === 'deny' || rawMode === 'warn' ? rawMode : 'ask'
-  const { patterns: extra, bad } = parseExtra(typeof options.extraPatterns === 'string' ? options.extraPatterns : '')
+  const mode: Mode = options.mode === 'deny' || options.mode === 'warn' ? options.mode : 'ask'
+  // The load checks userConfig: extraPatterns is always a string (default '').
+  const { patterns: extra, bad } = parseExtra(options.extraPatterns as string)
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)

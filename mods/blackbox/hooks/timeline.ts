@@ -93,12 +93,11 @@ export function levels(bars: readonly BbBar[], end: number): Map<BbBar, { level:
     busyUntil[level] = Math.max(busyUntil[level], until)
     out.set(b, { level, overlaps: false })
   }
-  for (const a of sorted) {
+  for (const [a, m] of out) {
     for (const b of sorted) {
       if (a === b) continue
       if (a.s < (b.e ?? end) && b.s < (a.e ?? end)) {
-        const m = out.get(a)
-        if (m) m.overlaps = true
+        m.overlaps = true
         break
       }
     }
@@ -143,11 +142,10 @@ export function paint(turn: BbTurn, now: number, cols: number, maxLanes: number,
     const x = stripX + Math.min(stripW - 1, Math.round((t / span) * (stripW - 1)))
     c.set(x, 0, '┬', AXIS)
     const label = fmtAxis(t)
+    // Pulled left at the end of the strip, so it always fits.
     const lx = Math.min(stripX + stripW - label.length, x + 1)
-    if (lx + label.length <= stripX + stripW) {
-      c.text(lx, 0, label, AXIS)
-      for (let i = 0; i < label.length; i++) labelled.add(lx + i)
-    }
+    c.text(lx, 0, label, AXIS)
+    for (let i = 0; i < label.length; i++) labelled.add(lx + i)
   }
 
   lanes.forEach((lane, i) => {
@@ -180,7 +178,8 @@ export function paint(turn: BbTurn, now: number, cols: number, maxLanes: number,
       const b = botC.get(x)
       if (t && b) c.set(x, y, '▀', t, b)
       else if (t) c.set(x, y, '▀', t)
-      else if (b) c.set(x, y, '▄', b)
+      // The cell is a key of one of the maps: no top means a bottom.
+      else c.set(x, y, '▄', b)
     }
   })
 

@@ -52,7 +52,7 @@ export function crossings(
     const had = next[l.kind] ?? 0
     const top = THRESHOLDS.filter(t => l.percentUsed >= t).pop() ?? 0
     if (top > had) alerts.push({ kind: l.kind, threshold: top, percent: l.percentUsed })
-    next[l.kind] = l.percentUsed < (THRESHOLDS[0] ?? 80) ? 0 : Math.max(had, top)
+    next[l.kind] = l.percentUsed < THRESHOLDS[0] ? 0 : Math.max(had, top)
   }
   return { alerts, seen: next }
 }

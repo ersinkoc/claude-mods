@@ -54,7 +54,7 @@ const EIGHTHS = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']
 export function blocks(cells: number): string {
   const c = Math.max(0, cells)
   const full = Math.floor(c)
-  const part = EIGHTHS[Math.round((c - full) * 8) % 8] ?? ''
+  const part = EIGHTHS[Math.round((c - full) * 8) % 8]! // an index of 0..7
   return '█'.repeat(full) + part
 }
 

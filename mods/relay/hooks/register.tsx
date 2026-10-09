@@ -13,26 +13,21 @@ const TITLE = 'KOZMOS · Relay'
 const RECENT = 12
 const snapAtom = atom({ plugin: 'relay', key: 'snap' } as const, null)
 
+// Module state, published to $.state after each change (session start, a
+// recorded request: every publish follows one).
 let live: RelaySnap = emptySnap()
 let isSeeded = false
-let lastPublished = ''
 const agentNames = new Map<string, string>()
 
+/** After a hot reload: carry on from what the last module published. */
 async function seed($: EngineInterface): Promise<void> {
   if (isSeeded) return
   isSeeded = true
-  try {
-    const kept = await read($, snapAtom)
-    if (kept) live = structuredClone(kept)
-  } catch {
-    // Nothing kept: start empty.
-  }
+  const kept = await read($, snapAtom)
+  if (kept) live = structuredClone(kept)
 }
 
 async function publish($: EngineInterface): Promise<void> {
-  const key = JSON.stringify(live)
-  if (key === lastPublished) return
-  lastPublished = key
   const next = structuredClone(live)
   await update($, snapAtom, () => next)
 }
@@ -92,7 +87,6 @@ export const register: Register = (on, options) => {
     const started = await next(e)
     live = emptySnap()
     isSeeded = true
-    lastPublished = ''
     agentNames.clear()
     await $.command.register({ name: 'relay', description: 'KOZMOS: toggle the Relay API-latency sidebar (/relay stats prints the numbers)', argumentHint: '[stats]', immediate: true })
     await publish($).catch(() => undefined)
@@ -155,10 +149,10 @@ export const register: Register = (on, options) => {
     const cols = Math.max(30, e.props.bodyColumns || 44)
     const cell = Math.max(2, Math.min(6, Math.floor((cols - 2) / st.hist.length)))
     const bars = vbars(st.hist, 4)
-    const answered = snap.reqs.filter(r => r.tps !== undefined)
+    const tps = snap.reqs.map(r => r.tps).filter((v): v is number => v !== undefined)
     const graphW = Math.max(10, cols - 2)
-    const graph = brailleGraph(answered.map(r => r.tps ?? 0), graphW, 3)
-    const tpsTop = Math.max(0, ...answered.map(r => r.tps ?? 0))
+    const graph = brailleGraph(tps, graphW, 3)
+    const tpsTop = Math.max(0, ...tps)
     const mixW = Math.max(10, cols - 2)
     const section = (key: string, label: string, right = '') => (
       <Box key={key} flexDirection="row" justifyContent="space-between" marginTop={1}>
@@ -200,8 +194,8 @@ export const register: Register = (on, options) => {
         ))}
         <Text dimColor>{BUCKET_LABELS.map(l => padEnd(l, cell)).join('')}</Text>
 
-        {section('s-tps', 'TOKENS / SEC', answered.length ? `max ${fmtTps(tpsTop)}` : '')}
-        {answered.length
+        {section('s-tps', 'TOKENS / SEC', tps.length ? `max ${fmtTps(tpsTop)}` : '')}
+        {tps.length
           ? graph.map((line, i) => <Text key={`tp${i}`} color={KZ.cyan}>{line}</Text>)
           : <Text dimColor>no streamed output yet</Text>}
 

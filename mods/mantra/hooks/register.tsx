@@ -61,17 +61,22 @@ async function publish($: EngineInterface): Promise<void> {
   await update($, liveAtom, () => snap)
 }
 
+/** Publishes in the background: a failed publish only skips one redraw. */
+function kick($: EngineInterface): void {
+  void publish($).catch(() => undefined)
+}
+
 /** What the tail calls a tool: the command for a shell, the file or pattern otherwise. */
 function toolLabel(tool: string, input: unknown): string {
-  const e = (input ?? {}) as Record<string, unknown>
-  if ((tool === 'Bash' || tool === 'PowerShell') && typeof e.command === 'string') return clip(e.command.split('\n')[0] ?? '', 28)
+  const e = input as Record<string, unknown>
+  if ((tool === 'Bash' || tool === 'PowerShell') && typeof e.command === 'string') return clip(e.command.replace(/\n[\s\S]*/, ''), 28)
   return clip(toolDetail(tool, input) || toolName(tool), 28)
 }
 
 /** The pack's word for this spinner now: deterministic per turn, instance and 4 s slot. */
 function wordAt(words: readonly string[], requestId: string, seed: number, now: number): string {
   const start = hash(`${requestId}:${seed}`) % words.length
-  return words[(start + Math.floor(now / ROTATE_MS)) % words.length] ?? words[0] ?? 'Working'
+  return words[(start + Math.floor(now / ROTATE_MS)) % words.length] as string
 }
 
 async function setPack($: EngineInterface, pack: string): Promise<void> {
@@ -85,7 +90,8 @@ async function setOn($: EngineInterface, isOn: boolean): Promise<void> {
 }
 
 export const register: Register = (on, options) => {
-  const defaultPack = typeof options.pack === 'string' && PACKS[options.pack] ? options.pack : 'cosmic'
+  // The engine holds `pack` to the manifest's options (default cosmic).
+  const defaultPack = String(options.pack)
 
   on('session.start', async ($, e, next) => {
     const started = await next(e)
@@ -105,7 +111,9 @@ export const register: Register = (on, options) => {
     } catch {
       // Defaults stand.
     }
-    $.clock.every(1000, () => void (live.isWorking || Object.keys(live.tools).length ? publish($) : Promise.resolve()).catch(() => undefined))
+    $.clock.every(1000, () => {
+      if (live.isWorking || Object.keys(live.tools).length) kick($)
+    })
     return started
   })
 
@@ -115,10 +123,11 @@ export const register: Register = (on, options) => {
       await setOn($, arg === 'on')
       return { text: arg === 'on' ? 'Mantra on.' : 'Mantra off: the spinner is the engine’s again.' }
     }
-    if (PACKS[arg]) {
+    const pick = PACKS[arg]
+    if (pick) {
       await setPack($, arg)
       await setOn($, true)
-      const sample = (PACKS[arg] ?? []).slice(0, 3).join(', ')
+      const sample = pick.slice(0, 3).join(', ')
       return { text: `Mantra pack: ${arg} (${sample}, …)` }
     }
     if (arg) return { text: `Unknown pack "${arg}". Packs: ${PACK_NAMES.join(', ')}; or on, off.` }
@@ -132,14 +141,14 @@ export const register: Register = (on, options) => {
     live.isWorking = true
     live.turnSeed = hash(e.turnId)
     live.tools = {}
-    void publish($).catch(() => undefined)
+    kick($)
     return next(e)
   }).catch(($, e, next) => next(e))
 
   on('turn.step', async function* ($, e, next) {
     if (e.agentId === undefined && e.effort !== undefined && String(e.effort) !== live.effort) {
       live.effort = String(e.effort)
-      void publish($).catch(() => undefined)
+      kick($)
     }
     return yield* next(e)
   })
@@ -148,7 +157,7 @@ export const register: Register = (on, options) => {
     if (e.agentId === undefined) {
       live.isWorking = false
       live.tools = {}
-      void publish($).catch(() => undefined)
+      kick($)
     }
     return next(e)
   }).catch(($, e, next) => next(e))
@@ -159,20 +168,20 @@ export const register: Register = (on, options) => {
     const mine: MantraTool = { name: tool, label: toolLabel(tool, e), startedAt: await $.clock.now() }
     live.tools[loop] = mine
     if (e.agentId !== undefined && !live.agents.includes(e.agentId)) live.agents = [...live.agents, e.agentId].slice(-50)
-    void publish($).catch(() => undefined)
+    kick($)
     try {
       return await next(e)
     } finally {
       if (live.tools[loop] === mine) delete live.tools[loop]
-      void publish($).catch(() => undefined)
+      kick($)
     }
   }).catch(($, e, next) => next(e))
 
   on('ui.render', { component: 'Spinner' }, async ($, e, next) => {
     if (!(await read($, onAtom))) return next(e)
-    const words = PACKS[(await read($, packAtom)) || defaultPack] ?? PACKS.cosmic ?? []
+    // The pack atom only ever holds a known pack (checked on load and on /mantra).
+    const words = PACKS[(await read($, packAtom)) || defaultPack] as readonly string[]
     const state = await read($, liveAtom)
-    if (!words.length) return next(e)
 
     const isOwnLoop = state.agents.includes(e.requestId)
     const tool = state.tools[e.requestId] ?? (isOwnLoop ? undefined : state.tools.main)

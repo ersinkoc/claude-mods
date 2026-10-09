@@ -30,7 +30,7 @@ export function splitUrl(url: string): { domain: string; path: string } {
     const u = new URL(url)
     const domain = u.hostname.replace(/^www\./i, '').toLowerCase() || u.protocol.replace(/:$/, '')
     const path = `${u.pathname}${u.search}` || '/'
-    return { domain, path: path === '' ? '/' : path }
+    return { domain, path }
   } catch {
     const m = /^(?:[a-z]+:\/\/)?(?:www\.)?([^/?#\s]+)(.*)$/i.exec(url)
     return { domain: (m?.[1] ?? url).toLowerCase(), path: m?.[2] || '/' }
@@ -83,8 +83,8 @@ export function monogram(domain: string): string {
   const parts = domain.split('.').filter(Boolean)
   let main = parts[0] ?? domain
   if (parts.length >= 2) {
-    main = parts[parts.length - 2] ?? main
-    if (parts.length >= 3 && /^(co|com|org|net|ac|gov|edu|ne|or)$/.test(main)) main = parts[parts.length - 3] ?? main
+    main = parts[parts.length - 2] as string
+    if (parts.length >= 3 && /^(co|com|org|net|ac|gov|edu|ne|or)$/.test(main)) main = parts[parts.length - 3] as string
   }
   const letters = main.replace(/[^a-z0-9]/gi, '')
   return (letters.charAt(0).toUpperCase() + letters.charAt(1).toLowerCase()) || '·'
@@ -147,8 +147,9 @@ export function statusLabel(c: Crumb): string {
 
 /** One row's text: `14:09 · 200 · 12 kB · /path`. */
 export function rowLabel(c: Crumb): string {
-  if (c.kind === 'search') return `⌕ “${c.query ?? ''}”${c.results !== undefined ? ` · ${c.results} results` : ''}`
-  return [statusLabel(c), fmtBytes(c.bytes), c.path ?? c.url ?? ''].filter(Boolean).join(' · ')
+  // A search always has its query; a visit always has its URL's path.
+  if (c.kind === 'search') return `⌕ “${c.query}”${c.results !== undefined ? ` · ${c.results} results` : ''}`
+  return [statusLabel(c), fmtBytes(c.bytes), c.path].filter(Boolean).join(' · ')
 }
 
 /** The whole trail as a nested Markdown list, grouped by domain. */
@@ -158,11 +159,12 @@ export function toMarkdown(snap: BreadcrumbsSnap): string {
     lines.push(`- **${g.domain === SEARCH ? 'Web search' : g.domain}**`)
     for (const c of [...g.crumbs].reverse()) {
       if (c.kind === 'search') {
-        lines.push(`  - 🔎 "${c.query ?? ''}"${c.results !== undefined ? ` (${c.results} results)` : ''}`)
+        lines.push(`  - 🔎 "${c.query}"${c.results !== undefined ? ` (${c.results} results)` : ''}`)
         for (const h of c.hits ?? []) lines.push(`    - [${h.title.replace(/[[\]]/g, '')}](${h.url})`)
-      } else if (c.url) {
+      } else {
+        // A visit always has its URL and that URL's path.
         const bits = [c.status !== undefined ? String(c.status) : c.isError ? 'error' : '', fmtBytes(c.bytes)].filter(Boolean).join(', ')
-        lines.push(`  - [${(c.path ?? c.url).replace(/[[\]]/g, '')}](${c.url})${bits ? ` — ${bits}` : ''}`)
+        lines.push(`  - [${(c.path as string).replace(/[[\]]/g, '')}](${c.url})${bits ? ` — ${bits}` : ''}`)
       }
     }
   }

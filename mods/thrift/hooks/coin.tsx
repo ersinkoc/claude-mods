@@ -22,7 +22,8 @@ const Coin: ClientModule<CoinProps, CoinState> = (props, surface) => {
     surface.every(125, () => surface.setState({ f: ((surface.state?.f ?? 0) + 1) % FRAMES.length }))
   }
   const { Text } = surface.elements
-  const [ch, color] = FRAMES[surface.state?.f ?? 0] ?? FRAMES[0] ?? ['●', '#facc15']
+  // `f` stays within FRAMES: the timer wraps it.
+  const [ch, color] = FRAMES[surface.state?.f ?? 0]!
   return <Text bold color={props.isOn ? color : '#9ca3af'}>{ch}</Text>
 }
 

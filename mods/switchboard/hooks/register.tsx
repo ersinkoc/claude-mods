@@ -25,8 +25,9 @@ async function publish($: EngineInterface): Promise<void> {
   // Ages move every tick; round the clock so an idle pane redraws twice a minute.
   const key = JSON.stringify({ ...snap, now: Math.floor(now / 30_000) })
   if (key === publishedKey) return
-  publishedKey = key
   await update($, snapAtom, () => snap)
+  // Noted once written, so a refused write is tried again on the next tick.
+  publishedKey = key
 }
 
 async function readTools($: EngineInterface): Promise<void> {
@@ -61,7 +62,8 @@ async function reconnect($: EngineInterface, server: string): Promise<void> {
     else if (r.reason === 'unlisted') $.ui.toast(`⬡ ${server}: a plugin cannot redial this server — reconnect it from /mcp`, { timeoutMs: 7000 })
     else $.ui.toast(`⬡ ${server}: ${r.message}`, { timeoutMs: 7000 })
   } catch (err) {
-    $.ui.toast(`⬡ ${server}: ${err instanceof Error ? err.message : String(err)} — try /mcp`, { timeoutMs: 7000 })
+    // A refusal from beneath always arrives as an Error (a hook that throws is skipped).
+    $.ui.toast(`⬡ ${server}: ${(err as Error).message} — try /mcp`, { timeoutMs: 7000 })
   }
   await readTools($)
 }
@@ -114,7 +116,7 @@ export const register: Register = (on, options) => {
       return ran
     } catch (err) {
       const end = await $.clock.now()
-      board.finish(name, end, end - at, true, err instanceof Error ? err.message : String(err))
+      board.finish(name, end, end - at, true, (err as Error).message)
       void publish($).catch(() => undefined)
       throw err
     }

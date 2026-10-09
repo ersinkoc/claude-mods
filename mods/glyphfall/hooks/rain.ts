@@ -26,8 +26,9 @@ export function wordOf(t: Pick<Tool, 'name' | 'detail'>, max: number): string {
 /** A glyph that changes now and then, per cell. */
 export function glyphAt(x: number, y: number, now: number, salt = 0): string {
   const rate = 260 + Math.floor(noise(x, y + salt) * 900)
+  // noise is below 1, so the index stays inside GLYPHS.
   const i = Math.floor(noise(x * 7 + salt, y * 13 + Math.floor(now / rate)) * GLYPHS.length)
-  return GLYPHS.charAt(i) || 'ｱ'
+  return GLYPHS.charAt(i)
 }
 
 /** Where a word's letter `j` hangs at `now`: rows from the top, -Infinity before it starts. */
@@ -100,9 +101,7 @@ export function rainFrame(tools: readonly Tool[], now: number, cols: number, row
     for (let y = 0; y < H; y++) {
       const d = head - y
       if (d < 0 || d >= len) continue
-      const line = grid[y]
-      if (!line) continue
-      line[x] = d < 1
+      grid[y]![x] = d < 1
         ? { ch: glyphAt(x, y, now), c: mix(tint, '#e5fff0', 0.25), b: true }
         : { ch: glyphAt(x, y, now, 3), c: mix(quiet, FADE, (d / len) * 0.8) }
     }
@@ -112,10 +111,11 @@ export function rainFrame(tools: readonly Tool[], now: number, cols: number, row
   // mid-band (as long as the tool runs), then drops out.
   const mid = Math.floor((H - 1) / 2)
   const maxLen = Math.min(28, W - 2)
+  // Every tool has its place.
   const places = placeWords(tools, W, maxLen)
   for (const t of tools) {
     const word = wordOf(t, maxLen)
-    const x0 = places.get(t.id) ?? 0
+    const x0 = places.get(t.id)!
     const color = t.isError ? KZ.red : t.color
     for (let j = 0; j < word.length; j++) {
       const ch = word.charAt(j)
@@ -152,7 +152,7 @@ export function chipLine(tools: readonly Tool[], now: number, cols: number): Seg
   let used = 0
   for (const t of [...tools].reverse().slice(0, 5)) {
     const name = toolName(t.name)
-    const mark = t.isError ? '✖' : t.end === null ? (['◐', '◓', '◑', '◒'][Math.floor(now / 150) % 4] ?? '◐') : toolGlyph(t.name)
+    const mark = t.isError ? '✖' : t.end === null ? '◐◓◑◒'.charAt(Math.floor(now / 150) % 4) : toolGlyph(t.name)
     const chip = ` ${mark} ${name} `
     const detail = t.detail ? ` ${clip(t.detail, 18)}` : ''
     if (used + chip.length + 1 > cols) break
@@ -215,13 +215,14 @@ export function rainSvg(tools: readonly Tool[], now: number, W: number, H: numbe
   parts.push(`<defs>${grads.map((c, i) => `<linearGradient id="gfT${i}" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="${c}" stop-opacity="0"/><stop offset=".8" stop-color="${c}" stop-opacity=".28"/><stop offset="1" stop-color="${c}" stop-opacity=".05"/></linearGradient>`).join('')}</defs>`)
   for (const t of recent) {
     const word = wordOf(t, maxLen)
-    const x0 = 6 + (places.get(t.id) ?? 0) * CH
+    const x0 = 6 + places.get(t.id)! * CH
     const color = t.isError ? KZ.red : t.color
+    const end = t.end
     for (let j = 0; j < word.length; j++) {
       const ch = word.charAt(j)
       if (ch === ' ') continue
-      const isOut = t.end !== null && now - t.at > IN_MS + HOLD_MS
-      const delay = isOut ? (j * STAGGER_MS - Math.max(0, now - Math.max(t.end ?? now, t.at + IN_MS + HOLD_MS))) / 1000 : (j * STAGGER_MS - (now - t.at)) / 1000
+      const isOut = end !== null && now - t.at > IN_MS + HOLD_MS
+      const delay = isOut ? (j * STAGGER_MS - Math.max(0, now - Math.max(end, t.at + IN_MS + HOLD_MS))) / 1000 : (j * STAGGER_MS - (now - t.at)) / 1000
       const x = x0 + j * CH
       parts.push(`<g class="${isOut ? 'gfout' : 'gfin'}" style="animation-delay:${delay.toFixed(2)}s">`,
         `<rect x="${x - 1}" y="${midY - 46}" width="${CH - 2}" height="50" rx="2" fill="url(#gfT${grads.indexOf(color)})"/>`,

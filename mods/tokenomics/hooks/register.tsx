@@ -65,8 +65,9 @@ const totalNow = (): number => live.costUsd ?? ledgerUsd(live.ledger)
 async function publish($: EngineInterface): Promise<void> {
   const key = JSON.stringify({ ...live, now: live.isWorking ? live.now : 0 })
   if (key === lastPublished) return
-  lastPublished = key
   await update($, snapAtom, () => JSON.parse(JSON.stringify(live)) as TokSnap)
+  // Noted once written, so a refused write is tried again on the next sample.
+  lastPublished = key
 }
 
 async function readDays($: EngineInterface): Promise<Days> {
@@ -196,11 +197,9 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const s = (await read($, snapAtom)) ?? blank(await $.clock.now())
-    const ui = $.ui.resolve(e)
-    const { Box, Text } = ui
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Box, Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns, 44)
       const cards = [headerCard(s, W), modelCard(s, W), typeCard(s, W), dayCard(s, W)]
       return (
@@ -213,6 +212,7 @@ export const register: Register = (on, options) => {
     }
 
     // ---- terminal ----
+    const { Box, Text, Raster } = $.ui.resolve(e)
     const cols = Math.max(28, e.props.bodyColumns || 40)
     const est = ledgerUsd(s.ledger)
     const total = s.costUsd ?? est
@@ -278,7 +278,7 @@ export const register: Register = (on, options) => {
         </Text>
         {avgTurn !== undefined && <Text dimColor>avg {fmtUsd(avgTurn)} · max {fmtUsd(Math.max(...s.turnCosts))}</Text>}
         {rule('14 days')}
-        {'Raster' in ui ? <ui.Raster key="days" columns={cols} rows={5} cells={dayRaster(s, cols).encode()} /> : null}
+        <Raster key="days" columns={cols} rows={5} cells={dayRaster(s, cols).encode()} />
         <Text wrap="truncate-end">
           <Text color={KZ.violet}>today {fmtUsd(s.todayUsd)}</Text>
           <Text dimColor> · 7d {fmtUsd(s.weekUsd)} · 14d {fmtUsd(totalOf(s.days))}</Text>
@@ -290,11 +290,11 @@ export const register: Register = (on, options) => {
 
 /** An eighth-block bar with a custom empty glyph. */
 function barOf(ratio: number, width: number, empty = ' '): string {
-  const EIGHTHS = ['', '▏', '▎', '▍', '▌', '▋', '▊', '▉']
   const w = Math.max(1, Math.floor(width))
   const exact = clamp01(ratio) * w
   const full = Math.floor(exact)
-  const part = EIGHTHS[Math.floor((exact - full) * 8)] ?? ''
+  // No glyph for a remainder under an eighth: charAt(-1) is ''.
+  const part = '▏▎▍▌▋▊▉'.charAt(Math.floor((exact - full) * 8) - 1)
   return '█'.repeat(full) + part + empty.repeat(Math.max(0, w - full - (part ? 1 : 0)))
 }
 
@@ -316,7 +316,7 @@ function dayRaster(s: TokSnap, cols: number): Canvas {
     for (let row = 0; row < 4; row++) {
       const fromBottom = 3 - row
       const fill = Math.max(0, Math.min(8, h - fromBottom * 8))
-      const ch = h === 0 && fromBottom === 0 ? '▁' : (V[fill] ?? ' ')
+      const ch = h === 0 && fromBottom === 0 ? '▁' : V.charAt(fill)
       for (let k = 0; k < bw; k++) c.set(x + k, row, ch, h === 0 ? '#3f3f46' : color)
     }
     const wd = weekday(d.date).charAt(0)
@@ -356,7 +356,7 @@ function headerCard(s: TokSnap, W: number): Card {
     const pts = vals.map((v, i) => `${(gx + i * step).toFixed(1)},${(gy + gh - (v / max) * gh).toFixed(1)}`)
     p.push(`<path d="M${pts.join('L')}L${gx + gw},${gy + gh}L${gx},${gy + gh}Z" fill="url(#tkG)"/>`)
     p.push(`<path d="M${pts.join('L')}" stroke="${KZ.yellow}" stroke-width="1.6" fill="none" stroke-linejoin="round"/>`)
-    const last = pts[pts.length - 1]?.split(',') ?? ['0', '0']
+    const last = pts[pts.length - 1]!.split(',')
     p.push(`<circle cx="${last[0]}" cy="${last[1]}" r="3" fill="${KZ.yellow}" class="pulse"/>`)
     p.push(svgText(gx, gy + 8, `per turn · max ${fmtUsd(max)}`, { cls: 'm', size: 9 }))
   } else {
@@ -397,7 +397,7 @@ function modelCard(s: TokSnap, W: number): Card {
   if (rows.length === 0) p.push(svgText(lx, cy + 4, 'no request priced yet', { cls: 'm', size: 11 }))
   rows.forEach((m, i) => {
     const y = 44 + i * 20
-    const c = MODEL_COLORS[i % MODEL_COLORS.length] ?? KZ.violet
+    const c = MODEL_COLORS[i % MODEL_COLORS.length]
     p.push(`<rect x="${lx}" y="${y - 9}" width="10" height="10" rx="3" fill="${c}"/>`)
     p.push(svgText(lx + 16, y, fitText(modelName(m.model), 12, W - lx - 120), { size: 12, weight: 600 }))
     p.push(svgText(W - pad - 40, y, fmtUsd(m.usd), { size: 12, anchor: 'end' }))

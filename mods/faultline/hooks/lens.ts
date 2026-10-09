@@ -77,7 +77,7 @@ export function buckets(hits: readonly number[], now: number): number[] {
     const age = now - t
     if (age < 0 || age >= WINDOW_MS) continue
     const i = BUCKETS - 1 - Math.floor(age / BUCKET_MS)
-    out[i] = (out[i] ?? 0) + 1
+    out[i] = out[i]! + 1 // 0 ≤ age < WINDOW_MS puts i in the strip
   }
   return out
 }

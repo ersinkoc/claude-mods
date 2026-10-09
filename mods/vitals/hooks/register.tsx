@@ -2,10 +2,10 @@ import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, RenderChildren } from 'claude-code'
 
 import type { VitalsSnap } from '../types'
-import { KZ, bar, clamp01, fitText, fmtClock, fmtPct, heat, mix, pxOf, sparkline, svg, svgBar, svgText } from './lib/kz.ts'
+import { KZ, bar, clamp01, fitText, fmtClock, fmtPct, heat, mix, pxOf, svg, svgBar, svgText } from './lib/kz.ts'
 import { MAC_MEMSIZE, MAC_TOP, NVIDIA_SMI, WIN_SYS, fmtBytes, parseMacTop, parseMeminfo, parseNvidia, parseProcStat, parseWinSys, platformFrom } from './lib/probe.ts'
 import type { CpuTicks, Platform, SysSnap } from './lib/probe.ts'
-import { DF_ROOT, HISTORY, PS_PIDS, avg, brailleCanvas, chartPoints, countLines, parseDf, pushHist, smoothPaths, tempRatio } from './meter.ts'
+import { DF_ROOT, HISTORY, PS_PIDS, avg, brailleCanvas, chartPoints, countLines, parseDf, pushHist, ratioOf, smoothPaths, tempRatio } from './meter.ts'
 
 const PANE = 'kz-vitals'
 const TITLE = 'KOZMOS · Vitals'
@@ -22,7 +22,6 @@ let platform: Platform | undefined
 let cpuTicks: CpuTicks | undefined
 let hasGpu: boolean | undefined
 let isBusy = false
-let lastPublished = ''
 
 async function isOpen($: EngineInterface): Promise<boolean> {
   return (await $.ui.panes()).some(p => p.id === PANE)
@@ -50,11 +49,16 @@ async function sh($: EngineInterface, argv: readonly string[], timeoutMs: number
   }
 }
 
-async function readSys($: EngineInterface): Promise<SysSnap> {
+/** The host's platform, probed once per module load. */
+async function detectPlatform($: EngineInterface): Promise<Platform> {
   if (platform === undefined) {
     const os = await $.env.get('OS')
     platform = platformFrom(os, os ? '' : await sh($, ['uname', '-s'], 2000))
   }
+  return platform
+}
+
+async function readSys($: EngineInterface, platform: Platform): Promise<SysSnap> {
   let snap: SysSnap = {}
   if (platform === 'win') {
     snap = parseWinSys((await sh($, WIN_SYS, 8000)) ?? '')
@@ -101,9 +105,10 @@ async function sample($: EngineInterface): Promise<void> {
   if (isBusy) return
   isBusy = true
   try {
-    const s = await readSys($)
+    const host = await detectPlatform($)
+    const s = await readSys($, host)
     await readClaude($)
-    live.platform = platform ?? 'linux'
+    live.platform = host
     live.diskLabel = live.platform === 'win' ? 'C:' : '/'
     live.cpu = s.cpu
     live.cpuHist = pushHist(live.cpuHist, s.cpu)
@@ -122,11 +127,9 @@ async function sample($: EngineInterface): Promise<void> {
   }
 }
 
+// Each sample counts itself, so every publish carries a new picture.
 async function publish($: EngineInterface): Promise<void> {
   live.now = await $.clock.now()
-  const key = JSON.stringify(live)
-  if (key === lastPublished) return
-  lastPublished = key
   const snap: VitalsSnap = { ...live, cpuHist: [...live.cpuHist], memHist: [...live.memHist], gpuHist: [...live.gpuHist] }
   await update($, snapAtom, () => snap)
 }
@@ -143,7 +146,6 @@ export const register: Register = (on, options) => {
     live = blank(await $.clock.now())
     cpuTicks = undefined
     isBusy = false
-    lastPublished = ''
     await $.command.register({ name: 'vitals', description: 'KOZMOS: toggle the Vitals machine monitor sidebar', immediate: true })
     $.clock.every(SAMPLE_MS, () => void tick($).catch(() => undefined))
     if (options.autoOpen === true) void $.ui.open({ id: PANE, title: TITLE })
@@ -161,12 +163,11 @@ export const register: Register = (on, options) => {
 
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const snap = (await read($, snapAtom)) ?? blank(await $.clock.now())
-    const ui = $.ui.resolve(e)
-    const { Box, Text } = ui
     const cols = Math.max(28, e.props.bodyColumns || 40)
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    // Every surface but the terminal draws Svg cards; the terminal draws Raster graphs.
+    if (e.surface !== 'terminal') {
+      const { Box, Svg } = $.ui.resolve(e)
       const W = pxOf(cols, 44)
       const cards = desktopCards(snap, W)
       return (
@@ -176,15 +177,14 @@ export const register: Register = (on, options) => {
       )
     }
 
-    const label = (key: string, name: string, value: RenderChildren, right: RenderChildren = '') => (
+    const { Box, Text, Raster } = $.ui.resolve(e)
+    const label = (key: string, name: string, value: RenderChildren, right: RenderChildren) => (
       <Box key={key} flexDirection="row" justifyContent="space-between" marginTop={1}>
         <Text wrap="truncate-end"><Text bold color={KZ.violet}>{name}</Text> {value}</Text>
         <Box flexShrink={0} marginLeft={1}><Text dimColor>{right}</Text></Box>
       </Box>
     )
     const graph = (key: string, values: readonly number[], rows: number, tint?: (l: number) => string) => {
-      if (!('Raster' in ui)) return <Text key={key} color={heat((values[values.length - 1] ?? 0) / 100)}>{sparkline(values, cols, 100)}</Text>
-      const { Raster } = ui
       const c = brailleCanvas(values, cols, rows, 100, tint)
       return <Raster key={key} columns={c.cols} rows={c.rows} cells={c.encode()} />
     }
@@ -199,8 +199,8 @@ export const register: Register = (on, options) => {
 
     const cpuAvg = avg(snap.cpuHist.slice(-30))
     const cpuPeak = Math.max(0, ...snap.cpuHist)
-    const memRatio = snap.memTotal ? (snap.memUsed ?? 0) / snap.memTotal : 0
-    const diskRatio = snap.diskTotal ? (snap.diskUsed ?? 0) / snap.diskTotal : 0
+    const memRatio = ratioOf(snap.memUsed, snap.memTotal)
+    const diskRatio = ratioOf(snap.diskUsed, snap.diskTotal)
     const elapsed = snap.now - snap.sessionStart
     const memTint = (l: number) => mix(KZ.teal, KZ.violet, l)
     const gpuTint = (l: number) => mix(KZ.green, KZ.magenta, l)
@@ -307,7 +307,7 @@ function desktopCards(s: VitalsSnap, W: number): Card[] {
   // RAM.
   {
     const H = 122
-    const r = s.memTotal ? (s.memUsed ?? 0) / s.memTotal : 0
+    const r = ratioOf(s.memUsed, s.memTotal)
     const body = `<rect class="p" x="0" y="0" width="${W}" height="${H}" rx="14"/>` +
       header(W, 'MEMORY', fmtPct(s.memTotal ? r * 100 : undefined), mix(KZ.teal, KZ.violet, r), `${fmtBytes(s.memUsed)} / ${fmtBytes(s.memTotal)}`, pad) +
       svgBar(W / 2, 38, inner / 2 - 0, 8, r, mix(KZ.teal, KZ.violet, r)) +
@@ -318,7 +318,7 @@ function desktopCards(s: VitalsSnap, W: number): Card[] {
   // Disk: a ring gauge.
   {
     const H = 84
-    const r = s.diskTotal ? (s.diskUsed ?? 0) / s.diskTotal : 0
+    const r = ratioOf(s.diskUsed, s.diskTotal)
     const R = 26
     const C = 2 * Math.PI * R
     const cx = pad + R + 2
@@ -330,7 +330,7 @@ function desktopCards(s: VitalsSnap, W: number): Card[] {
       svgText(cx, cy + 4, s.diskTotal ? fmtPct(r * 100) : '—', { size: 12, weight: 700, anchor: 'middle' }) +
       svgText(cx + R + 18, cy - 6, `DISK ${s.diskLabel}`, { cls: 's', size: 10.5, weight: 700 }) +
       svgText(cx + R + 18, cy + 13, s.diskTotal ? `${fmtBytes(s.diskUsed)} used of ${fmtBytes(s.diskTotal)}` : 'not measured', { size: 12, weight: 600 }) +
-      (s.diskTotal ? svgText(W - pad, cy + 13, `${fmtBytes(s.diskTotal - (s.diskUsed ?? 0))} free`, { cls: 'm', size: 10.5, anchor: 'end' }) : '')
+      (s.diskTotal ? svgText(W - pad, cy + 13, `${fmtBytes(s.diskTotal * (1 - r))} free`, { cls: 'm', size: 10.5, anchor: 'end' }) : '')
     cards.push({ key: 'disk', source: svg(W, H, body, CSS), alt: `Disk ${s.diskLabel} ${s.diskTotal ? fmtPct(r * 100) : 'unknown'}`, height: H })
   }
 

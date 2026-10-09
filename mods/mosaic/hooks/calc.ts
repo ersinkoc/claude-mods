@@ -19,7 +19,7 @@ export function dayKey(ms: number): string {
 /** Noon of a day key, so DST shifts never cross midnight. */
 export function noonOf(key: string): Date {
   const [y, m, d] = key.split('-').map(Number)
-  return new Date(y ?? 1970, (m ?? 1) - 1, d ?? 1, 12)
+  return new Date(y!, (m ?? 1) - 1, d ?? 1, 12) // a split has at least one part
 }
 
 export function addDays(key: string, n: number): string {
@@ -84,11 +84,14 @@ export function calendar(today: string, weeks = WEEKS): (string | null)[][] {
 export function cutPoints(values: readonly number[]): [number, number, number] {
   const nz = values.filter(v => v > 0).sort((a, b) => a - b)
   if (nz.length === 0) return [0, 0, 0]
-  const q = (p: number) => nz[Math.min(nz.length - 1, Math.floor(p * nz.length))] ?? 0
+  const q = (p: number) => nz[Math.min(nz.length - 1, Math.floor(p * nz.length))]! // nz is not empty
   return [q(0.25), q(0.5), q(0.75)]
 }
 
-export function levelOf(v: number, cuts: readonly [number, number, number]): number {
+/** A cell's shade: 0 is empty, 1..4 above zero. */
+export type Level = 0 | 1 | 2 | 3 | 4
+
+export function levelOf(v: number, cuts: readonly [number, number, number]): Level {
   if (v <= 0) return 0
   if (v <= cuts[0]) return 1
   if (v <= cuts[1]) return 2

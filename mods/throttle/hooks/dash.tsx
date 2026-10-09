@@ -35,7 +35,7 @@ const fuelTint = (f: number): string => (f < 0.35 ? mix('#f87171', '#fb923c', f 
 const tempTint = (f: number): string => (f < 0.5 ? mix('#60a5fa', '#4ade80', f * 2) : f < 0.8 ? mix('#4ade80', '#fb923c', (f - 0.5) / 0.3) : mix('#fb923c', '#f87171', (f - 0.8) / 0.2))
 
 /** A semicircular gauge in braille: two rows of seven cells. */
-export function dialCells(v: number, tint: (f: number) => string): Run[][] {
+export function dialCells(v: number, tint: (f: number) => string): [Run[], Run[]] {
   const cols = 7
   const rows = 2
   const bits: number[][] = Array.from({ length: rows }, () => Array.from({ length: cols }, () => 0))
@@ -45,22 +45,17 @@ export function dialCells(v: number, tint: (f: number) => string): Run[][] {
   const cx = 6.5
   const cy = 7.4
   const r = 6.6
+  // The arc spans x -0.1..13.1 and y 0.8..7.4, the needle less: every dot
+  // rounds into the 14 × 8 grid, so the cells below always exist.
   const dot = (x: number, y: number, isNeedle: boolean, f: number) => {
     const dx = Math.round(x)
     const dy = Math.round(y)
-    if (dx < 0 || dy < 0 || dx >= cols * 2 || dy >= rows * 4) return
     const cell = Math.floor(dx / 2)
     const row = Math.floor(dy / 4)
-    const line = bits[row]
-    if (!line) return
-    line[cell] = (line[cell] ?? 0) | ((dx % 2 ? RIGHT : LEFT)[dy % 4] ?? 0)
-    if (isNeedle) {
-      const n = needle[row]
-      if (n) n[cell] = true
-    } else if (f <= k + 1e-6) {
-      const l = lit[row]
-      if (l) l[cell] = Math.max(l[cell] ?? -1, f)
-    }
+    const line = bits[row]!
+    line[cell] = line[cell]! | (dx % 2 ? RIGHT : LEFT)[dy % 4]!
+    if (isNeedle) needle[row]![cell] = true
+    else if (f <= k + 1e-6) lit[row]![cell] = Math.max(lit[row]![cell]!, f)
   }
   for (let i = 0; i <= 48; i++) {
     const f = i / 48
@@ -69,12 +64,12 @@ export function dialCells(v: number, tint: (f: number) => string): Run[][] {
   }
   const a = Math.PI * (1 - k)
   for (let t = 0; t <= 1.0001; t += 0.07) dot(cx + t * (r - 1.6) * Math.cos(a), cy - t * (r - 1.6) * Math.sin(a), true, 0)
-  return bits.map((line, y) =>
-    line.map((b, x) => ({
-      text: b ? String.fromCharCode(0x2800 + b) : ' ',
-      color: needle[y]?.[x] ? NEEDLE : (lit[y]?.[x] ?? -1) >= 0 ? tint(lit[y]?.[x] ?? 0) : DIM_ARC,
-    })),
-  )
+  const row = (y: number): Run[] =>
+    bits[y]!.map((b, x) => {
+      const f = lit[y]![x]!
+      return { text: b ? String.fromCharCode(0x2800 + b) : ' ', color: needle[y]![x] ? NEEDLE : f >= 0 ? tint(f) : DIM_ARC }
+    })
+  return [row(0), row(1)]
 }
 
 function clock(sec: number): string {
@@ -126,7 +121,7 @@ const Dash: ClientModule<DashProps, DashState> = (props, surface) => {
   }
   const pad = (s: string, n: number) => (s.length >= n ? s.slice(0, n) : s + ' '.repeat(n - s.length))
   const gauge = (v: number, tint: (f: number) => string, value: string, valueColor: string, label: string): void => {
-    const [r1 = [], r2 = []] = dialCells(v, tint)
+    const [r1, r2] = dialCells(v, tint)
     add(15, [...r1, { text: ' ' }, { text: pad(value, 6), color: valueColor, bold: true }, { text: ' ' }], [...r2, { text: ' ' }, { text: pad(label, 6), dim: true }, { text: ' ' }])
   }
 
@@ -147,8 +142,9 @@ const Dash: ClientModule<DashProps, DashState> = (props, surface) => {
   const lamp = (label: string, on: boolean, color: string, flash: boolean): Run =>
     on && (!flash || blink) ? { text: ` ${label} `, color: '#111111', bg: color, bold: true } : { text: ` ${label} `, color: on ? color : '#6b7280', dim: !on }
   const lamps = [lamp('ENG', props.engine, '#fb923c', false), lamp('FUEL', props.fuelLow, '#fb923c', true), lamp('HOT', props.heat, '#f87171', true)]
+  // The status sits under the lamps, 17 cells: `◈ 12 on the road` fits, the desktop's longer words would not.
   const status: Run = props.working
-    ? { text: props.agents > 0 ? `◈ ${props.agents} agent${props.agents === 1 ? '' : 's'} on the road` : '● engine running', color: '#4ade80' }
+    ? { text: props.agents > 0 ? `◈ ${props.agents} on the road` : '● engine running', color: '#4ade80' }
     : { text: `○ coasting ${clock(props.idleSec)}`, dim: true }
   add(17, [...lamps, { text: ' ' }], [{ ...status, text: pad(status.text, 17) }])
 

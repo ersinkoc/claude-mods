@@ -7,7 +7,7 @@ import {
   METRICS, WEEKS, addDays, addTo, bestDay, calendar, cutPoints, dayKey, isEmptyDelta, levelOf, minuteOf, monthOf, streaks, totals,
   valueOf, zeroDay,
 } from './calc.ts'
-import type { Days } from './calc.ts'
+import type { Days, Level } from './calc.ts'
 
 const PANE = 'kz-mosaic'
 const TITLE = 'KOZMOS · Mosaic'
@@ -22,6 +22,9 @@ const METRIC_KEY = 'metric'
 const METRIC_COLOR: Record<MoMetric, string> = { turns: KZ.green, tools: KZ.blue, tokens: KZ.violet, usd: KZ.yellow }
 const METRIC_LABEL: Record<MoMetric, string> = { turns: 'turns', tools: 'tools', tokens: 'tokens', usd: '$' }
 const EMPTY_TERM = '#30363d'
+const LEVELS = [0, 1, 2, 3, 4] as const
+const SHADE_MIX = [0, 0.35, 0.58, 0.8, 1] as const
+const OPACITY = [0, 0.32, 0.55, 0.78, 1] as const
 
 const blank = (now: number): MoSnap => ({ now, today: dayKey(now), days: {}, isWorking: false })
 
@@ -36,8 +39,8 @@ function fmtMinutes(m: number): string {
   return `${Math.floor(m / 60)}h${String(m % 60).padStart(2, '0')}m`
 }
 
-const shade = (metric: MoMetric, level: number): string =>
-  level <= 0 ? EMPTY_TERM : mix('#1f2a24', METRIC_COLOR[metric], [0, 0.35, 0.58, 0.8, 1][level] ?? 1)
+const shade = (metric: MoMetric, level: Level): string =>
+  level <= 0 ? EMPTY_TERM : mix('#1f2a24', METRIC_COLOR[metric], SHADE_MIX[level])
 
 function niceDate(key: string): string {
   return `${monthOf(key)} ${Number(key.slice(8))}`
@@ -69,12 +72,13 @@ let lastMinute = -1
 let live: MoSnap = blank(0)
 let lastPublished = ''
 
-function bump(now: number, delta: Partial<MoDay>): void {
-  const key = dayKey(now)
+function addPending(key: string, delta: Partial<MoDay>): void {
   const d = pending[key] ?? {}
-  for (const k of Object.keys(delta) as (keyof MoDay)[]) d[k] = (d[k] ?? 0) + (delta[k] ?? 0)
+  for (const [k, v] of Object.entries(delta) as [keyof MoDay, number][]) d[k] = (d[k] ?? 0) + v
   pending[key] = d
 }
+
+const bump = (now: number, delta: Partial<MoDay>): void => addPending(dayKey(now), delta)
 
 /** Counts the current minute once as active. */
 async function touch($: EngineInterface): Promise<void> {
@@ -98,12 +102,34 @@ async function getObj<T>($: EngineInterface, key: string, fallback: T): Promise<
 async function publish($: EngineInterface): Promise<void> {
   const key = JSON.stringify({ ...live, now: 0 })
   if (key === lastPublished) return
-  lastPublished = key
   await update($, snapAtom, () => JSON.parse(JSON.stringify(live)) as MoSnap)
+  // Noted once written, so a refused write is tried again on the next flush.
+  lastPublished = key
 }
 
 /** Books the session's new spend, writes the pending counts, and republishes. */
+let isFlushing = false
+let isFlushAgain = false
+
+/** One flush at a time: a flush asked for while one runs waits and runs once
+ * after it, so two never read the stored days and write over each other. */
 async function flush($: EngineInterface): Promise<void> {
+  if (isFlushing) {
+    isFlushAgain = true
+    return
+  }
+  isFlushing = true
+  try {
+    do {
+      isFlushAgain = false
+      await flushOnce($)
+    } while (isFlushAgain)
+  } finally {
+    isFlushing = false
+  }
+}
+
+async function flushOnce($: EngineInterface): Promise<void> {
   const now = await $.clock.now()
   if (live.isWorking) await touch($)
   try {
@@ -114,23 +140,31 @@ async function flush($: EngineInterface): Promise<void> {
       const prev = seen[id]?.usd
       const delta = prev === undefined || u.cost.usd < prev ? u.cost.usd : u.cost.usd - prev
       if (delta > 0) {
-        bump(now, { u: delta })
         const kept: Record<string, { usd: number; at: number }> = {}
         for (const [k, v] of Object.entries(seen)) if (v && v.at >= now - 3 * 86_400_000) kept[k] = v
         kept[id] = { usd: u.cost.usd, at: now }
         await $.store.set(SEEN_KEY, kept)
+        // Booked once the store remembers it, so a refused write is not counted twice.
+        bump(now, { u: delta })
       }
     }
   } catch {
     // No cost this time.
   }
-  let days = await getObj<Days>($, DAYS_KEY, {})
+  let stored: Days | undefined
+  try {
+    const v = await $.store.get(DAYS_KEY)
+    stored = v && typeof v === 'object' ? (v as Days) : {}
+  } catch {
+    // Unread: nothing is written over the history this time.
+  }
   const toWrite = Object.entries(pending).filter(([, d]) => !isEmptyDelta(d))
   pending = {}
-  if (toWrite.length) {
-    for (const [k, d] of toWrite) days = addTo(days, k, d)
-    await $.store.set(DAYS_KEY, days)
-  }
+  let days = stored ?? {}
+  for (const [k, d] of toWrite) days = addTo(days, k, d)
+  const isWritten = stored !== undefined && (toWrite.length === 0 || (await $.store.set(DAYS_KEY, days).then(() => true, () => false)))
+  // Counts not written wait for the next flush.
+  if (!isWritten) for (const [k, d] of toWrite) addPending(k, d)
   const today = dayKey(now)
   const first = addDays(today, -(WEEKS * 7 + 7))
   const shown: Days = {}
@@ -216,8 +250,7 @@ export const register: Register = (on, options) => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const s = (await read($, snapAtom)) ?? blank(await $.clock.now())
     const metric = await read($, metricAtom)
-    const ui = $.ui.resolve(e)
-    const { Box, Text, Button } = ui
+    const { Box, Button } = $.ui.resolve(e)
 
     const weeksAll = calendar(s.today, WEEKS)
     const keys = weeksAll.flat().filter((k): k is string => k !== null)
@@ -242,8 +275,8 @@ export const register: Register = (on, options) => {
       </Box>
     )
 
-    if ('Svg' in ui && e.surface !== 'terminal') {
-      const { Svg } = ui
+    if (e.surface !== 'terminal') {
+      const { Svg } = $.ui.resolve(e)
       const W = pxOf(e.props.bodyColumns, 44)
       const cards = [
         calendarCard(s, weeksAll, metric, cuts, st.current, W),
@@ -259,6 +292,7 @@ export const register: Register = (on, options) => {
     }
 
     // ---- terminal ----
+    const { Text, Raster } = $.ui.resolve(e)
     const cols = Math.max(28, e.props.bodyColumns || 40)
     const cell = 2 + WEEKS * 2 <= cols ? 2 : 1
     const weeks = Math.min(WEEKS, Math.floor((cols - 2) / cell))
@@ -271,10 +305,10 @@ export const register: Register = (on, options) => {
           <Text color={st.current ? KZ.amber : KZ.mist}>{st.current ? `▲ ${st.current}-day streak` : 'no streak'}</Text>
         </Box>
         {buttons}
-        {'Raster' in ui ? <ui.Raster key="cal" columns={Math.min(cols, 2 + weeks * cell)} rows={8} cells={calendarRaster(s, shownWeeks, metric, cuts, cell, Math.min(cols, 2 + weeks * cell)).encode()} /> : null}
+        <Raster key="cal" columns={Math.min(cols, 2 + weeks * cell)} rows={8} cells={calendarRaster(s, shownWeeks, metric, cuts, cell, Math.min(cols, 2 + weeks * cell)).encode()} />
         <Text wrap="truncate-end">
           <Text dimColor>less </Text>
-          {[0, 1, 2, 3, 4].map(l => <Text key={`l${l}`} color={shade(metric, l)}>■</Text>)}
+          {LEVELS.map(l => <Text key={`l${l}`} color={shade(metric, l)}>■</Text>)}
           <Text dimColor> more · {weeks} weeks</Text>
         </Text>
         <Text wrap="truncate-end">
@@ -303,9 +337,8 @@ function calendarRaster(s: MoSnap, weeks: (string | null)[][], metric: MoMetric,
   let lastMonth = ''
   weeks.forEach((week, w) => {
     const x = 2 + w * cell
-    const first = week.find((k): k is string => k !== null)
-    const mon = first ? monthOf(first) : ''
-    if (mon && mon !== lastMonth) {
+    const mon = monthOf(week[0]!) // a week's Sunday is never after today
+    if (mon !== lastMonth) {
       if (x > labelEnd && x + 3 <= cols) {
         c.text(x, 0, mon, KZ.mist)
         labelEnd = x + 3
@@ -356,9 +389,8 @@ function calendarCard(s: MoSnap, weeks: (string | null)[][], metric: MoMetric, c
   let labelEnd = -1
   weeks.forEach((week, w) => {
     const x = gx + w * (sq + gap)
-    const first = week.find((k): k is string => k !== null)
-    const mon = first ? monthOf(first) : ''
-    if (mon && mon !== lastMonth) {
+    const mon = monthOf(week[0]!) // a week's Sunday is never after today
+    if (mon !== lastMonth) {
       if (x > labelEnd) {
         p.push(svgText(x, gy - 8, mon, { cls: 'm', size: 9.5 }))
         labelEnd = x + 26
@@ -374,7 +406,7 @@ function calendarCard(s: MoSnap, weeks: (string | null)[][], metric: MoMetric, c
       const r = Math.min(3, sq / 4).toFixed(1)
       if (lvl === 0) p.push(`<rect class="k" x="${x}" y="${y}" width="${sq}" height="${sq}" rx="${r}">${tip}</rect>`)
       else {
-        const op = [0, 0.32, 0.55, 0.78, 1][lvl] ?? 1
+        const op = OPACITY[lvl]
         const delay = ((w * 7 + d) % 11) * 0.29
         p.push(`<rect x="${x}" y="${y}" width="${sq}" height="${sq}" rx="${r}" fill="${base}" fill-opacity="${op}" ${lvl === 4 ? `class="mo4" style="animation-delay:${delay.toFixed(2)}s"` : ''}>${tip}</rect>`)
       }
@@ -386,7 +418,7 @@ function calendarCard(s: MoSnap, weeks: (string | null)[][], metric: MoMetric, c
   let lx = W - pad - 5 * (10 + 3) - 30
   p.push(svgText(lx - 6, ly, 'less', { cls: 'm', size: 9, anchor: 'end' }))
   for (let l = 0; l <= 4; l++) {
-    p.push(l === 0 ? `<rect class="k" x="${lx}" y="${ly - 9}" width="10" height="10" rx="2.5"/>` : `<rect x="${lx}" y="${ly - 9}" width="10" height="10" rx="2.5" fill="${base}" fill-opacity="${[0, 0.32, 0.55, 0.78, 1][l]}"/>`)
+    p.push(l === 0 ? `<rect class="k" x="${lx}" y="${ly - 9}" width="10" height="10" rx="2.5"/>` : `<rect x="${lx}" y="${ly - 9}" width="10" height="10" rx="2.5" fill="${base}" fill-opacity="${OPACITY[l]}"/>`)
     lx += 13
   }
   p.push(svgText(lx + 3, ly, 'more', { cls: 'm', size: 9 }))

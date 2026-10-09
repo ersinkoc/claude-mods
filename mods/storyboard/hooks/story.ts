@@ -108,10 +108,10 @@ function railMarkup(phase: StoryPhase, x0: number, x1: number, cy: number, label
   parts.push(`<defs><linearGradient id="trail${uid}" x1="0" y1="0" x2="1" y2="0">${stops}</linearGradient>
 <filter id="glow${uid}" x="-1" y="-1" width="3" height="3"><feGaussianBlur stdDeviation="3.2" result="b"/><feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
 <radialGradient id="tail${uid}" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#fff"/><stop offset="1" stop-color="${PHASE_COLOR[phase]}" stop-opacity="0"/></radialGradient></defs>`)
-  const ax = xs[active] ?? x0
+  const ax = xs[active]!
   if (active > 0) parts.push(`<line x1="${x0}" y1="${cy}" x2="${ax}" y2="${cy}" stroke="url(#trail${uid})" stroke-width="3" stroke-linecap="round"/>`)
   PHASES.forEach((p, i) => {
-    const x = xs[i] ?? x0
+    const x = xs[i]!
     const c = PHASE_COLOR[p]
     if (i < active) {
       parts.push(`<circle cx="${x}" cy="${cy}" r="5.5" fill="${c}"/>`)
