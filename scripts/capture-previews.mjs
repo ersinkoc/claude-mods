@@ -15,7 +15,10 @@ const tmpl = readFileSync(join(root, 'scripts', 'preview', 'kz-preview.test.tsx.
 const out = join(root, 'docs', 'previews', '_work')
 mkdirSync(out, { recursive: true })
 
-const only = process.argv.slice(2)
+const args = process.argv.slice(2)
+const fi = args.indexOf('--frames')
+const FRAMES = fi >= 0 ? Number(args.splice(fi, 2)[1]) : 0
+const only = args
 const mods = readdirSync(join(root, 'mods')).filter(m => existsSync(join(root, 'mods', m, '.claude-plugin', 'plugin.json')) && (!only.length || only.includes(m)))
 
 for (const mod of mods) {
@@ -32,10 +35,16 @@ for (const mod of mods) {
   }
   const file = join(root, 'mods', mod, 'tests', 'zz-kz-preview.test.tsx')
   mkdirSync(dirname(file), { recursive: true })
-  writeFileSync(file, tmpl.replace('__MOD__', mod).replace('__SITES__', JSON.stringify(sites)))
+  writeFileSync(file, tmpl.replace('__MOD__', mod).replace('__FRAMES__', String(FRAMES)).replace('__SITES__', JSON.stringify(FRAMES ? sites.filter(s => s.component === 'AbovePrompt') : sites)))
   try {
     const t = spawnSync('claude', ['plugin', 'test', `mods/${mod}`], { cwd: root, encoding: 'utf8', shell: isWin, maxBuffer: 256 * 1024 * 1024 })
     const all = `${t.stdout}${t.stderr}`
+    if (FRAMES) {
+      const frames = all.split('\n').filter(l => l.startsWith('KZFRAME ')).map(l => JSON.parse(l.slice(8)))
+      writeFileSync(join(out, `${mod}.frames.json`), JSON.stringify(frames))
+      console.log(`${mod}: ${frames.length} animation frames${frames.length ? '' : '\n' + all.split('\n').slice(-12).join('\n')}`)
+      continue
+    }
     const shots = all.split('\n').filter(l => l.startsWith('KZPREVIEW ')).map(l => JSON.parse(l.slice(10)))
     writeFileSync(join(out, `${mod}.json`), JSON.stringify(shots))
     const bad = shots.filter(s => s.error)

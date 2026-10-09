@@ -4,6 +4,7 @@
 import { mock, test } from 'claude-code/testing'
 
 const MOD = '__MOD__'
+const FRAMES = Number('__FRAMES__') || 0
 const SITES: { component: string; requestId?: string }[] = __SITES__
 
 const NOW = Date.parse('2026-10-09T14:32:00+03:00')
@@ -246,6 +247,25 @@ test('kz preview', async ($, on) => {
           tree = swap(tree) as Node
         }
         console.log('KZPREVIEW ' + JSON.stringify({ mod: MOD, component: site.component, requestId: site.requestId, surface, tree }))
+        // An animation strip: the Client frames one tick apart, for the video.
+        if (FRAMES && clients.length && surface === 'terminal') {
+          const swapNow = async (): Promise<Node> => {
+            const frames: Record<string, unknown> = {}
+            for (const key of clients) frames[key] = await ui.drawn({ in: key }).catch(() => null)
+            const sw = (n: unknown): unknown => {
+              if (Array.isArray(n)) return n.map(sw)
+              if (!n || typeof n !== 'object') return n
+              const node = n as Node
+              if (node.type === 'Client' && typeof node.props?.key === 'string') return { type: 'ClientFrame', props: node.props, children: frames[node.props.key] ?? null }
+              return { ...node, children: sw(node.children) }
+            }
+            return sw(await ui.drawn()) as Node
+          }
+          for (let i = 0; i < FRAMES; i++) {
+            await ui.advance(33).catch(() => undefined)
+            console.log('KZFRAME ' + JSON.stringify({ mod: MOD, component: site.component, surface, i, tree: await swapNow() }))
+          }
+        }
         await ui.unmount()
       } catch (err) {
         console.log('KZPREVIEW ' + JSON.stringify({ mod: MOD, component: site.component, requestId: site.requestId, surface, error: String(err).slice(0, 300) }))

@@ -5,4 +5,7 @@ mods/*/.claude-plugin/types/
 docs/previews/_work/
 mods/*/tsconfig.json
 
-.playwright-mcp/.kozmos/
+.kozmos/
+
+.dfmt/
+video/

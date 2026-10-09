@@ -190,9 +190,32 @@ function page(shot) {
   return `<div id="shot" class="desk" style="width:${width}px">${head}<div class="body">${inner}${tail}</div></div>`
 }
 
-const only = process.argv.slice(2)
-const files = readdirSync(work).filter(f => f.endsWith('.json') && (!only.length || only.includes(f.replace(/\.json$/, ''))))
+const argv = process.argv.slice(2)
+const isFrames = argv[0] === '--frames'
+const only = isFrames ? argv.slice(1) : argv
 const browser = await chromium.launch({ channel: 'chrome' })
+
+// --frames: each <mod>.frames.json strip becomes video/frames/<mod>/NNNN.png.
+if (isFrames) {
+  const strips = readdirSync(work).filter(f => f.endsWith('.frames.json') && (!only.length || only.includes(f.replace(/\.frames\.json$/, ''))))
+  const ctx = await browser.newContext({ deviceScaleFactor: 2, colorScheme: 'dark', viewport: { width: 1500, height: 1200 } })
+  const pg = await ctx.newPage()
+  for (const f of strips) {
+    const mod = f.replace(/\.frames\.json$/, '')
+    const dir = join(root, 'video', 'frames', mod)
+    mkdirSync(dir, { recursive: true })
+    const frames = JSON.parse(readFileSync(join(work, f), 'utf8'))
+    for (const fr of frames) {
+      await pg.setContent(`<!doctype html><meta charset="utf-8"><style>${CSS}</style><body class="dark">${page(fr)}</body>`)
+      await pg.locator('#shot').screenshot({ path: join(dir, `${String(fr.i).padStart(4, '0')}.png`), omitBackground: true })
+    }
+    console.log(`${mod}: ${frames.length} frames`)
+  }
+  await browser.close()
+  process.exit(0)
+}
+
+const files = readdirSync(work).filter(f => f.endsWith('.json') && !f.endsWith('.frames.json') && (!only.length || only.includes(f.replace(/\.json$/, ''))))
 const made = []
 for (const f of files) {
   const shots = JSON.parse(readFileSync(join(work, f), 'utf8')).filter(s => !s.error && s.tree)
