@@ -8,8 +8,8 @@ the 5-hour and weekly limits, what your subagents are up to, how full the contex
 is, the state of your git tree and the heat of your machine.
 
 <p align="center">
-  <a href="docs/media/kozmos-promo.mp4"><img src="docs/media/kozmos-promo-poster.jpg" alt="KOZMOS: the 2:30 promo film. Click to watch." width="860"></a>
-  <br><sub>▶ <a href="docs/media/kozmos-promo.mp4">Watch the 2:30 film</a> (1080p, with sound)</sub>
+  <a href="docs/media/kozmos-promo.mp4"><img src="docs/media/kozmos-promo-poster.jpg" alt="KOZMOS: the 2:48 promo film. Click to watch." width="860"></a>
+  <br><sub>▶ <a href="docs/media/kozmos-promo.mp4">Watch the 2:48 film</a> (1080p, with sound)</sub>
 </p>
 
 <p align="center">
@@ -71,6 +71,52 @@ tab. A folder marketplace is read from the folder itself: after `git pull`,
 - **essentials** — kozmos, bridge, halo, questline, marquee, hivemind, hourglass, compass, stamp, warden, ballast
 - **showtime** — essentials + heartline, orrery, glyphfall, aurora, throttle, clawdling, skies, laurels, warpdrive, tidewater, storyboard, mantra, verdict
 - **all** — everything
+
+---
+
+## ⚡ Sponsored by WrongStack
+
+<div align="center">
+
+### _Built on the wrong stack. Shipped anyway._
+
+**Want way more than Claude Code?** **[WrongStack](https://wrongstack.com)** is a free, [open-source](https://github.com/WrongStack/WrongStack) AI coding agent with a Brain, a Memory, and a full toolbox. It reads your code, edits files, runs commands, and coordinates specialist agents — across six surfaces, from a plain terminal REPL to a cross-machine HQ dashboard. No subscription required, and you keep your hand on every permission.
+
+[![Website](https://img.shields.io/badge/%F0%9F%8C%90_Website-wrongstack.com-6E56CF?style=for-the-badge)](https://wrongstack.com)
+&nbsp;
+[![GitHub](https://img.shields.io/badge/GitHub-WrongStack%2FWrongStack-181717?style=for-the-badge&logo=github)](https://github.com/WrongStack/WrongStack)
+&nbsp;
+[![Stars](https://img.shields.io/github/stars/WrongStack/WrongStack?style=for-the-badge&color=e3b341&logo=github)](https://github.com/WrongStack/WrongStack/stargazers)
+
+```bash
+curl -fsSL https://wrongstack.com/install.sh | sh   # macOS / Linux — self-contained binary
+```
+
+```powershell
+irm https://wrongstack.com/install.ps1 | iex        # Windows (PowerShell) — no Node.js needed
+```
+
+</div>
+
+| | What you get |
+|---|---|
+| 🌐 **[200+ LLM providers](https://wrongstack.com)** | Catalog pulled live from models.dev — Anthropic, OpenAI, Google, plus OAuth sign-in for Claude Pro/Max, ChatGPT and Copilot, and any OpenAI-compatible endpoint (Ollama, vLLM, LM Studio) |
+| 🛠️ **[67 built-in tools](https://github.com/WrongStack/WrongStack)** | Edits, lint/typecheck/test, execution, git, web, browser/E2E and a SQLite codebase index — every call gated by per-tool permissions |
+| 🧠 **[SAGE memory](https://github.com/WrongStack/WrongStack/blob/main/docs/sage/ARCHITECTURE.md)** | Project-wide long-term memory in SQLite/FTS5, anchored to files, symbols and commits — it gets better at *your* codebase over time |
+| 🖥️ **[Six surfaces](https://wrongstack.com)** | Readline REPL · Ink/React TUI (`--tui`) · WebUI · SimpleUI · Desktop · cross-machine HQ (`--hq`) |
+| 🤖 **[Fleet orchestration](https://github.com/WrongStack/WrongStack/blob/main/docs/director-architecture.md)** | A Director fans out specialist subagents over a project mailbox; `eternal` & `parallel` goal loops run until the contract verifies |
+| 🔍 **[Chimera & Kanban](https://wrongstack.com)** | Auto-review agents that critique your diffs with severity-ranked findings, plus durable Kanban boards with atomic verification |
+| 🔐 **[Secure by default](https://github.com/WrongStack/WrongStack/blob/main/SECURITY.md)** | Encrypted secrets at rest, project-root containment, opt-in YOLO mode — MIT licensed, TypeScript-strict |
+
+> **📊 The perfect pairing:** KOZMOS's **hourglass**, **bridge** and **throttle** tell you exactly where your Claude limits stand — and **WrongStack** keeps you moving when they close in. It reads plan windows for Claude, ChatGPT, Copilot, Z.AI and more right in its own statusline and quota page, and when one provider runs dry, **fallback chains** rotate you onto the next model automatically. Watch the gauges, dodge the wall.
+
+<div align="center">
+
+🔗 **[wrongstack.com](https://wrongstack.com)** &nbsp;·&nbsp; **[github.com/WrongStack/WrongStack](https://github.com/WrongStack/WrongStack)** &nbsp;·&nbsp; ⭐ **[Star it on GitHub](https://github.com/WrongStack/WrongStack/stargazers)**
+
+</div>
+
+---
 
 ## The mods
 
