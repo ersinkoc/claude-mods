@@ -120,6 +120,17 @@ test('kz preview', async ($, on) => {
   on('turn.start', ($, e) => ({ turnId: e.turnId }))
   on('turn.complete', ($, e) => ({ text: e.answer, usage: e.usage }))
   on('prompt.submit', ($, e) => ({ text: e.text }) as never)
+  // What the engine itself would draw at each site, beneath the mod.
+  on('ui.render', ($, e) => {
+    const { Text } = $.ui.resolve(e as never) as never as { Text: (p: Record<string, unknown>) => never }
+    const p = (e as unknown as { props: Record<string, unknown> }).props ?? {}
+    switch ((e as unknown as { component: string }).component) {
+      case 'Spinner': return Text({ color: '#d77757', children: `✻ ${String(p.word ?? 'Thinking')}…${String(p.suffix ?? '')}${p.message ? ' ' + String(p.message) : ''}` })
+      case 'TurnDuration': return Text({ dimColor: true, children: `✻ ${String(p.word ?? 'Cooked')} for ${Math.round(Number(p.durationMs ?? 0) / 1000)}s` })
+      case 'PromptHint': return Text({ dimColor: true, children: `${String(p.hint ?? '')}${p.tail ? '  ' + String(p.tail) : ''}` })
+      default: return Text({ children: '' })
+    }
+  })
 
   const step = async (fn: () => Promise<unknown>) => {
     try {
@@ -204,16 +215,23 @@ test('kz preview', async ($, on) => {
         let tree = (await ui.drawn()) as unknown as Node
         // A Client draws in the surface: put its frame (after some animation) in its place.
         const clients: string[] = []
+        const sizes: Record<string, { columns: number; rows: number }> = {}
+        const span = (v: unknown, whole: number) => (typeof v === 'number' ? v : typeof v === 'string' && v.endsWith('%') ? Math.round((parseFloat(v) / 100) * whole) : undefined)
         const walk = (n: unknown): void => {
           if (!n || typeof n !== 'object') return
           const node = n as Node
-          if (node.type === 'Client' && typeof node.props?.key === 'string') clients.push(node.props.key)
+          if (node.type === 'Client' && typeof node.props?.key === 'string') {
+            clients.push(node.props.key)
+            const p = node.props
+            sizes[node.props.key] = { columns: span(p.width, 104) ?? 104, rows: span(p.height, 6) ?? 3 }
+          }
           const kids = node.children
           if (Array.isArray(kids)) kids.forEach(walk)
           else walk(kids)
         }
         walk(tree)
         if (clients.length) {
+          for (const key of clients) await ui.resize({ in: key, ...(sizes[key] ?? { columns: 104, rows: 3 }) }).catch(() => undefined)
           await ui.advance(2_400).catch(() => undefined)
           const frames: Record<string, unknown> = {}
           for (const key of clients) frames[key] = await ui.drawn({ in: key }).catch(() => null)
