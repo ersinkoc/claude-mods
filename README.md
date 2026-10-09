@@ -227,9 +227,9 @@ a flight recorder above the prompt. A live Gantt of the current turn: the main l
 
 <img src="docs/previews/blackbox-aboveprompt-terminal.png" alt="blackbox in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/blackbox-aboveprompt-desktop-dark.png"><img src="docs/previews/blackbox-aboveprompt-desktop-light.png" alt="blackbox in the desktop app" width="820"></picture>
+<img src="docs/previews/blackbox-aboveprompt-desktop.svg" alt="blackbox in the desktop app, animated" width="820">
 
 </details>
 
@@ -239,9 +239,9 @@ matrix rain of tool activity above the prompt while Claude works. Every tool cal
 
 <img src="docs/previews/glyphfall-aboveprompt-terminal.png" alt="glyphfall in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/glyphfall-aboveprompt-desktop-dark.png"><img src="docs/previews/glyphfall-aboveprompt-desktop-light.png" alt="glyphfall in the desktop app" width="820"></picture>
+<img src="docs/previews/glyphfall-aboveprompt-desktop.svg" alt="glyphfall in the desktop app, animated" width="820">
 
 </details>
 
@@ -251,9 +251,9 @@ a one-row mood line above the prompt whose color and motion tell what Claude is 
 
 <img src="docs/previews/halo-aboveprompt-terminal.png" alt="halo in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/halo-aboveprompt-desktop-dark.png"><img src="docs/previews/halo-aboveprompt-desktop-light.png" alt="halo in the desktop app" width="820"></picture>
+<img src="docs/previews/halo-aboveprompt-desktop.svg" alt="halo in the desktop app, animated" width="820">
 
 </details>
 
@@ -263,9 +263,9 @@ a neon EKG of the session drawn above the prompt. Every tool call is a spike col
 
 <img src="docs/previews/heartline-aboveprompt-terminal.png" alt="heartline in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/heartline-aboveprompt-desktop-dark.png"><img src="docs/previews/heartline-aboveprompt-desktop-light.png" alt="heartline in the desktop app" width="820"></picture>
+<img src="docs/previews/heartline-aboveprompt-desktop.svg" alt="heartline in the desktop app, animated" width="820">
 
 </details>
 
@@ -275,9 +275,9 @@ subagents as planets circling a central sun above the prompt. Running agents orb
 
 <img src="docs/previews/orrery-aboveprompt-terminal.png" alt="orrery in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/orrery-aboveprompt-desktop-dark.png"><img src="docs/previews/orrery-aboveprompt-desktop-light.png" alt="orrery in the desktop app" width="820"></picture>
+<img src="docs/previews/orrery-aboveprompt-desktop.svg" alt="orrery in the desktop app, animated" width="820">
 
 </details>
 
@@ -287,9 +287,9 @@ task progress above the prompt. One segmented bar for the session's todos and ta
 
 <img src="docs/previews/questline-aboveprompt-terminal.png" alt="questline in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/questline-aboveprompt-desktop-dark.png"><img src="docs/previews/questline-aboveprompt-desktop-light.png" alt="questline in the desktop app" width="820"></picture>
+<img src="docs/previews/questline-aboveprompt-desktop.svg" alt="questline in the desktop app, animated" width="820">
 
 </details>
 
@@ -299,9 +299,9 @@ the session's weather above the prompt. Tool failures, context and rate-limit pr
 
 <img src="docs/previews/skies-aboveprompt-terminal.png" alt="skies in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/skies-aboveprompt-desktop-dark.png"><img src="docs/previews/skies-aboveprompt-desktop-light.png" alt="skies in the desktop app" width="820"></picture>
+<img src="docs/previews/skies-aboveprompt-desktop.svg" alt="skies in the desktop app, animated" width="820">
 
 </details>
 
@@ -323,9 +323,9 @@ a car dashboard above the prompt. Speedometer of output tokens per second, fuel 
 
 <img src="docs/previews/throttle-aboveprompt-terminal.png" alt="throttle in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/throttle-aboveprompt-desktop-dark.png"><img src="docs/previews/throttle-aboveprompt-desktop-light.png" alt="throttle in the desktop app" width="820"></picture>
+<img src="docs/previews/throttle-aboveprompt-desktop.svg" alt="throttle in the desktop app, animated" width="820">
 
 </details>
 
@@ -335,9 +335,9 @@ the live diff of the current turn as tides above the prompt. Every file Claude e
 
 <img src="docs/previews/tidewater-aboveprompt-terminal.png" alt="tidewater in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/tidewater-aboveprompt-desktop-dark.png"><img src="docs/previews/tidewater-aboveprompt-desktop-light.png" alt="tidewater in the desktop app" width="820"></picture>
+<img src="docs/previews/tidewater-aboveprompt-desktop.svg" alt="tidewater in the desktop app, animated" width="820">
 
 </details>
 
@@ -347,9 +347,9 @@ test, build and lint results above the prompt. Spots the test runners, type chec
 
 <img src="docs/previews/verdict-pane-terminal.png" alt="verdict in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/verdict-pane-desktop-dark.png"><img src="docs/previews/verdict-pane-desktop-light.png" alt="verdict in the desktop app" width="820"></picture>
+<img src="docs/previews/verdict-aboveprompt-desktop.svg" alt="verdict in the desktop app, animated" width="820">
 
 </details>
 
@@ -359,9 +359,9 @@ a starfield at warp above the prompt. Stars stream out of the center at the spee
 
 <img src="docs/previews/warpdrive-aboveprompt-terminal.png" alt="warpdrive in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/warpdrive-aboveprompt-desktop-dark.png"><img src="docs/previews/warpdrive-aboveprompt-desktop-light.png" alt="warpdrive in the desktop app" width="820"></picture>
+<img src="docs/previews/warpdrive-aboveprompt-desktop.svg" alt="warpdrive in the desktop app, animated" width="820">
 
 </details>
 
@@ -429,9 +429,9 @@ a pixel crab companion that lives above the prompt. It blinks and sways, scuttle
 
 <img src="docs/previews/clawdling-aboveprompt-terminal.png" alt="clawdling in the terminal" width="820">
 
-<details><summary>Desktop app</summary>
+<details><summary>Desktop app (animated)</summary>
 
-<picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/clawdling-aboveprompt-desktop-dark.png"><img src="docs/previews/clawdling-aboveprompt-desktop-light.png" alt="clawdling in the desktop app" width="820"></picture>
+<img src="docs/previews/clawdling-aboveprompt-desktop.svg" alt="clawdling in the desktop app, animated" width="820">
 
 </details>
 

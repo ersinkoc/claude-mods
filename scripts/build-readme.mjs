@@ -67,8 +67,11 @@ for (const [cat, heading, intro] of SECTIONS) {
       } else {
         // Bands: wide, one under the other.
         if (s.term) out += `${img(s.term, `${m.name} in the terminal`, 820)}\n\n`
-        const d = desktop(s, `${m.name} in the desktop app`, 820)
-        if (d) out += `<details><summary>Desktop app</summary>\n\n${d}\n\n</details>\n\n`
+        // The desktop's own animated SVG when there is one: it moves on GitHub too.
+        const live = `${m.name}-aboveprompt-desktop.svg`
+        const isLive = existsSync(join(prev, live))
+        const d = isLive ? img(live, `${m.name} in the desktop app, animated`, 820) : desktop(s, `${m.name} in the desktop app`, 820)
+        if (d) out += `<details><summary>Desktop app${isLive ? ' (animated)' : ''}</summary>\n\n${d}\n\n</details>\n\n`
       }
     }
   }
