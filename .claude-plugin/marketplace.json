@@ -1,0 +1,26 @@
+{
+  "name": "kozmos",
+  "owner": {
+    "name": "Ersin Koç",
+    "url": "https://github.com/ersinkoc"
+  },
+  "metadata": {
+    "description": "KOZMOS: a bundle of live, visual Claude Code mods — bands above the prompt, sidebars, a status ticker, companions and sound."
+  },
+  "plugins": [
+    {
+      "name": "kozmos",
+      "source": "./mods/kozmos",
+      "description": "KOZMOS Hub: the launcher for the whole bundle. /kozmos opens a starfield sidebar listing every KOZMOS mod by where it draws, which ones are installed in this session, and a button that runs each mod's own command.",
+      "version": "0.1.0",
+      "category": "hub"
+    },
+    {
+      "name": "bridge",
+      "source": "./mods/bridge",
+      "description": "KOZMOS Bridge: a mission-control sidebar. Model and effort, context fill, 5-hour and weekly limits with reset countdowns, session cost and burn rate, git branch and tree state, CPU/RAM/GPU, live subagents and the tool running now. /bridge toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    }
+  ]
+}

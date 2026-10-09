@@ -1,0 +1,16 @@
+{
+  "name": "bridge",
+  "version": "0.1.0",
+  "description": "KOZMOS Bridge: a mission-control sidebar. Model and effort, context fill, 5-hour and weekly limits with reset countdowns, session cost and burn rate, git branch and tree state, CPU/RAM/GPU, live subagents and the tool running now. /bridge toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Bridge sidebar when a session starts (where the layout docks panes).",
+      "required": false,
+      "default": true
+    }
+  }
+}

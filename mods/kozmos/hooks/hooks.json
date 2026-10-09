@@ -1,0 +1,1 @@
+{ "description": "KOZMOS hub: /kozmos and its Pane, listing the bundle catalog against the commands this session has", "modules": ["./register.tsx"] }

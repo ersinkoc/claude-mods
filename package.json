@@ -1,0 +1,13 @@
+{
+  "name": "kozmos-mods",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "sync": "node scripts/sync-shared.mjs",
+    "typecheck": "node scripts/sync-shared.mjs && tsc -p tsconfig.json",
+    "validate": "node scripts/validate-all.mjs"
+  },
+  "devDependencies": {
+    "typescript": "~5.9.3"
+  }
+}

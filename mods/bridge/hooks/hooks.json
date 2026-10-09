@@ -1,0 +1,1 @@
+{ "description": "Bridge sidebar: a ticker that reads $.session.usage, git and the machine, tool.call and turn hooks for live activity, a Pane drawing for terminal and desktop, and /bridge", "modules": ["./register.tsx"] }

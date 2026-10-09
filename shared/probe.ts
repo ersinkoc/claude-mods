@@ -1,0 +1,200 @@
+// KOZMOS shared probes: git and the machine, as argv lists and pure parsers.
+// Source of truth: shared/probe.ts; synced into each mod as hooks/lib/probe.ts.
+//
+// The engine only lets `$` flow into functions declared in the hooks file
+// itself, never across an import. So this file never touches `$`: a mod runs
+// the argv with `$.process.run` (or reads the path with `$.fs.read`) in a
+// top-level function of its own and hands the text to a parser here:
+//
+//   async function readGit($: EngineInterface, cwd: string): Promise<GitSnap> {
+//     const st = await $.process.run(GIT_STATUS, { cwd, timeoutMs: 5000 }).catch(() => undefined)
+//     if (!st || st.exitCode !== 0) return NO_GIT
+//     const head = await $.process.run(GIT_HEAD, { cwd, timeoutMs: 3000 }).catch(() => undefined)
+//     return parseGitStatus(st.stdout, head?.exitCode === 0 ? head.stdout : '')
+//   }
+
+export type Platform = 'win' | 'mac' | 'linux'
+
+/** From `$.env.get('OS')` and, off Windows, `uname -s`. */
+export function platformFrom(osEnv: string | undefined, uname: string | undefined): Platform {
+  if (/windows/i.test(osEnv ?? '')) return 'win'
+  return /darwin/i.test(uname ?? '') ? 'mac' : 'linux'
+}
+
+// ---------------------------------------------------------------------------
+// Git.
+
+export const GIT_STATUS = ['git', 'status', '--porcelain=v2', '--branch', '--show-stash'] as const
+export const GIT_HEAD = ['git', 'log', '-1', '--format=%h%x09%s%x09%cr'] as const
+export const gitLogArgv = (n: number): string[] => ['git', 'log', `-${n}`, '--format=%h%x09%s%x09%cr%x09%an%x09%ct']
+export const GIT_NUMSTAT = ['git', 'diff', '--numstat', 'HEAD'] as const
+
+export type GitSnap = {
+  isRepo: boolean
+  branch: string
+  isDetached: boolean
+  upstream?: string
+  ahead: number
+  behind: number
+  staged: number
+  unstaged: number
+  untracked: number
+  conflicts: number
+  head?: { sha: string; subject: string; when: string }
+  stash: number
+}
+
+export const NO_GIT: GitSnap = { isRepo: false, branch: '', isDetached: false, ahead: 0, behind: 0, staged: 0, unstaged: 0, untracked: 0, conflicts: 0, stash: 0 }
+
+/** Parses `GIT_STATUS` output, and `GIT_HEAD` output when given. */
+export function parseGitStatus(status: string, headLine = ''): GitSnap {
+  const snap: GitSnap = { ...NO_GIT, isRepo: true }
+  for (const line of status.split('\n')) {
+    if (line.startsWith('# branch.head ')) {
+      const b = line.slice(14).trim()
+      snap.isDetached = b === '(detached)'
+      snap.branch = b
+    } else if (line.startsWith('# branch.upstream ')) snap.upstream = line.slice(18).trim()
+    else if (line.startsWith('# branch.ab ')) {
+      const m = /\+(\d+) -(\d+)/.exec(line)
+      snap.ahead = Number(m?.[1] ?? 0)
+      snap.behind = Number(m?.[2] ?? 0)
+    } else if (line.startsWith('# stash ')) snap.stash = Number(line.slice(8)) || 0
+    else if (line.startsWith('1 ') || line.startsWith('2 ')) {
+      const xy = line.slice(2, 4)
+      if (xy[0] !== '.') snap.staged++
+      if (xy[1] !== '.') snap.unstaged++
+    } else if (line.startsWith('u ')) snap.conflicts++
+    else if (line.startsWith('? ')) snap.untracked++
+  }
+  const h = headLine.trim()
+  if (h) {
+    const [sha = '', subject = '', when = ''] = h.split('\t')
+    snap.head = { sha, subject, when }
+  }
+  if (snap.isDetached && snap.head) snap.branch = snap.head.sha
+  return snap
+}
+
+export type GitCommit = { sha: string; subject: string; when: string; author: string; at: number }
+
+/** Parses `gitLogArgv(n)` output. `at` is the commit time in ms. */
+export function parseGitLog(out: string): GitCommit[] {
+  return out
+    .split('\n')
+    .filter(Boolean)
+    .map(l => {
+      const [sha = '', subject = '', when = '', author = '', ct = '0'] = l.split('\t')
+      return { sha, subject, when, author, at: Number(ct) * 1000 }
+    })
+}
+
+export type GitFileStat = { path: string; added: number; removed: number }
+
+/** Parses `GIT_NUMSTAT` output (binary files count as 0/0). */
+export function parseNumstat(out: string): GitFileStat[] {
+  return out
+    .split('\n')
+    .filter(Boolean)
+    .map(l => {
+      const [a = '0', d = '0', ...rest] = l.split('\t')
+      return { path: rest.join('\t'), added: Number(a) || 0, removed: Number(d) || 0 }
+    })
+}
+
+// ---------------------------------------------------------------------------
+// The machine.
+
+export type SysSnap = {
+  cpu?: number // percent, all cores
+  memUsed?: number // bytes
+  memTotal?: number // bytes
+  diskUsed?: number
+  diskTotal?: number
+  procs?: number
+  gpu?: GpuSnap
+}
+
+export type GpuSnap = { util: number; memUsed: number; memTotal: number; temp: number; name: string }
+
+/** Windows: one PowerShell call answering CPU, memory, C: and process count as JSON. */
+export const WIN_SYS = [
+  'powershell', '-NoProfile', '-NonInteractive', '-Command',
+  '$o=Get-CimInstance Win32_OperatingSystem;' +
+    '$c=(Get-CimInstance Win32_Processor | Measure-Object -Property LoadPercentage -Average).Average;' +
+    "$d=Get-CimInstance Win32_LogicalDisk -Filter \"DeviceID='C:'\";" +
+    '$p=(Get-Process).Count;' +
+    '[pscustomobject]@{cpu=$c;free=$o.FreePhysicalMemory;total=$o.TotalVisibleMemorySize;dfree=$d.FreeSpace;dsize=$d.Size;procs=$p} | ConvertTo-Json -Compress',
+] as const
+
+export function parseWinSys(out: string): SysSnap {
+  const snap: SysSnap = {}
+  try {
+    const j = JSON.parse(out || '{}') as Record<string, number | null>
+    if (typeof j.cpu === 'number') snap.cpu = j.cpu
+    if (typeof j.total === 'number' && typeof j.free === 'number') {
+      snap.memTotal = j.total * 1024
+      snap.memUsed = (j.total - j.free) * 1024
+    }
+    if (typeof j.dsize === 'number' && typeof j.dfree === 'number') {
+      snap.diskTotal = j.dsize
+      snap.diskUsed = j.dsize - j.dfree
+    }
+    if (typeof j.procs === 'number') snap.procs = j.procs
+  } catch {
+    // Leave the fields out.
+  }
+  return snap
+}
+
+export type CpuTicks = { idle: number; total: number }
+
+/** Linux: `/proc/stat`'s first line, against the previous reading. */
+export function parseProcStat(stat: string, prev: CpuTicks | undefined): { cpu?: number; ticks: CpuTicks } {
+  const nums = (stat.split('\n')[0] ?? '').trim().split(/\s+/).slice(1).map(Number)
+  const idle = (nums[3] ?? 0) + (nums[4] ?? 0)
+  const total = nums.reduce((a, b) => a + (Number.isFinite(b) ? b : 0), 0)
+  const ticks = { idle, total }
+  if (!prev || total <= prev.total) return { ticks }
+  return { cpu: 100 * (1 - (idle - prev.idle) / (total - prev.total)), ticks }
+}
+
+/** Linux: `/proc/meminfo`. */
+export function parseMeminfo(mem: string): Pick<SysSnap, 'memUsed' | 'memTotal'> {
+  const kb = (k: string) => Number(new RegExp(`${k}:\\s+(\\d+)`).exec(mem)?.[1] ?? 0) * 1024
+  const memTotal = kb('MemTotal')
+  return memTotal ? { memTotal, memUsed: memTotal - kb('MemAvailable') } : {}
+}
+
+/** macOS: `top -l 1 -n 0` and `sysctl -n hw.memsize`. */
+export const MAC_TOP = ['top', '-l', '1', '-n', '0'] as const
+export const MAC_MEMSIZE = ['sysctl', '-n', 'hw.memsize'] as const
+
+export function parseMacTop(top: string, memsize: string): SysSnap {
+  const snap: SysSnap = {}
+  const m = /CPU usage: ([\d.]+)% user, ([\d.]+)% sys/.exec(top)
+  if (m) snap.cpu = Number(m[1]) + Number(m[2])
+  const pm = /PhysMem: ([\d.]+)([GM]) used/.exec(top)
+  if (pm) snap.memUsed = Number(pm[1]) * (pm[2] === 'G' ? 1024 ** 3 : 1024 ** 2)
+  const total = Number(memsize.trim())
+  if (total) snap.memTotal = total
+  return snap
+}
+
+/** NVIDIA GPUs, any platform. */
+export const NVIDIA_SMI = ['nvidia-smi', '--query-gpu=utilization.gpu,memory.used,memory.total,temperature.gpu,name', '--format=csv,noheader,nounits'] as const
+
+export function parseNvidia(out: string): GpuSnap | undefined {
+  const line = out.split('\n')[0]
+  if (!line?.trim()) return undefined
+  const [util = '0', used = '0', total = '0', temp = '0', name = 'GPU'] = line.split(',').map(s => s.trim())
+  return { util: Number(util), memUsed: Number(used) * 1024 ** 2, memTotal: Number(total) * 1024 ** 2, temp: Number(temp), name }
+}
+
+export function fmtBytes(n: number | undefined): string {
+  if (n === undefined || !Number.isFinite(n)) return '—'
+  if (n >= 1024 ** 4) return `${(n / 1024 ** 4).toFixed(1)}T`
+  if (n >= 1024 ** 3) return `${(n / 1024 ** 3).toFixed(1)}G`
+  if (n >= 1024 ** 2) return `${Math.round(n / 1024 ** 2)}M`
+  return `${Math.round(n / 1024)}K`
+}

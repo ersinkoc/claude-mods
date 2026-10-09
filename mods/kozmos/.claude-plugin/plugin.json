@@ -1,0 +1,7 @@
+{
+  "name": "kozmos",
+  "version": "0.1.0",
+  "description": "KOZMOS Hub: the launcher for the whole bundle. /kozmos opens a starfield sidebar listing every KOZMOS mod by where it draws, which ones are installed in this session, and a button that runs each mod's own command.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

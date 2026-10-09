@@ -1,0 +1,6 @@
+node_modules/
+.claude-plugin/types/
+mods/*/.claude-plugin/types/
+.playwright-mcp/
+docs/previews/_work/
+mods/*/tsconfig.json
