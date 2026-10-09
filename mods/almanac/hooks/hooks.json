@@ -1,0 +1,1 @@
+{ "description": "Almanac: tallies command.run, Skill and mcp__ tool calls, agent.spawn and turn.step models with first-use times, reads $.command.list and $.session.version, draws the pane for terminal and desktop, and /almanac", "modules": ["./register.tsx"] }

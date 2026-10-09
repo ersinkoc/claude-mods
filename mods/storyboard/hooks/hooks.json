@@ -1,0 +1,1 @@
+{ "description": "Storyboard: registers the chapter tool and serves its calls, adds one short prompt.compose section, draws the chapter band above the prompt and the chapter-log pane, and /storyboard", "modules": ["./register.tsx"] }

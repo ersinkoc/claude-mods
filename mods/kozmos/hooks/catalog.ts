@@ -4,6 +4,7 @@ export type Category = 'pane' | 'band' | 'transcript' | 'companion' | 'status' |
 export type CatalogEntry = { name: string; title: string; category: Category; blurb: string }
 
 export const CATALOG: readonly CatalogEntry[] = [
+  { name: "almanac", title: "Almanac", category: "pane", blurb: "what this session is made of." },
   { name: "breadcrumbs", title: "Breadcrumbs", category: "pane", blurb: "the session's web trail in a sidebar." },
   { name: "bridge", title: "Bridge", category: "pane", blurb: "a mission-control sidebar." },
   { name: "chronicle", title: "Chronicle", category: "pane", blurb: "the session as a timeline." },
@@ -12,6 +13,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "gitscope", title: "Gitscope", category: "pane", blurb: "a git radar sidebar." },
   { name: "hivemind", title: "Hivemind", category: "pane", blurb: "the agent swarm as a live tree." },
   { name: "hourglass", title: "Hourglass", category: "pane", blurb: "the limit oracle." },
+  { name: "launchpad", title: "Launchpad", category: "pane", blurb: "a pane of big launch buttons." },
   { name: "mosaic", title: "Mosaic", category: "pane", blurb: "a GitHub-style activity calendar across sessions." },
   { name: "relay", title: "Relay", category: "pane", blurb: "the API latency lab in a sidebar." },
   { name: "spectra", title: "Spectra", category: "pane", blurb: "the context X-ray." },
@@ -25,6 +27,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "glyphfall", title: "Glyphfall", category: "band", blurb: "matrix rain of tool activity above the prompt while Claude works." },
   { name: "heartline", title: "Heartline", category: "band", blurb: "a neon EKG of the session drawn above the prompt." },
   { name: "orrery", title: "Orrery", category: "band", blurb: "subagents as planets circling a central sun above the prompt." },
+  { name: "storyboard", title: "Storyboard", category: "band", blurb: "Claude narrates its own progress." },
   { name: "compass", title: "Compass", category: "transcript", blurb: "the single most useful hint under the prompt." },
   { name: "mantra", title: "Mantra", category: "transcript", blurb: "a themed spinner." },
   { name: "stamp", title: "Stamp", category: "transcript", blurb: "a receipt on every finished turn." },
@@ -33,4 +36,5 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "ballast", title: "Ballast", category: "guard", blurb: "a context coach." },
   { name: "thrift", title: "Thrift", category: "guard", blurb: "a frugal mode." },
   { name: "warden", title: "Warden", category: "guard", blurb: "a guard for destructive shell commands." },
+  { name: "polaroid", title: "Polaroid", category: "tool", blurb: "/polaroid snapshots the session as a self-contained dark-neon HTML report in .kozmos/reports: model, duration, cost, tokens, context peak, rate limits, tool calls by family, a timeline of turns, subagents, files touched and commands run, all collected live." },
 ]

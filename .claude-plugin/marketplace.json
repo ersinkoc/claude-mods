@@ -16,6 +16,13 @@
       "category": "hub"
     },
     {
+      "name": "almanac",
+      "source": "./mods/almanac",
+      "description": "KOZMOS Almanac: what this session is made of. Slash commands run, skills invoked, subagent types spawned, MCP servers used, models seen, plugins whose tools were called and tool families, each with counts and first-use time, as ranked bars and tag clouds; plus the engine version and how many installed commands went unused. /almanac toggles it.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
       "name": "breadcrumbs",
       "source": "./mods/breadcrumbs",
       "description": "KOZMOS Breadcrumbs: the session's web trail in a sidebar. WebSearch queries with result counts and top hits, WebFetch URLs with status and size, and browser-like MCP visits, grouped by domain with a monogram badge, clickable links and a copy-all-as-Markdown button. /breadcrumbs toggles it.",
@@ -68,6 +75,13 @@
       "name": "hourglass",
       "source": "./mods/hourglass",
       "description": "KOZMOS Hourglass: the limit oracle. For the 5-hour, weekly and spend windows: percent used, reset countdown, a burn rate learned across sessions, the time to 100 % and a verdict on whether the reset comes first. Toasts at 80 % and 95 %, an optional status line. /hourglass toggles the sidebar.",
+      "version": "0.1.0",
+      "category": "pane"
+    },
+    {
+      "name": "launchpad",
+      "source": "./mods/launchpad",
+      "description": "KOZMOS Launchpad: a pane of big launch buttons. It learns your most-used slash commands as you run them, keeps pinned favorites and saved prompts, and runs a command or fills the prompt box in one press. /launchpad toggles it; save <text>, rm <n>, pin <cmd>, unpin <cmd>, list.",
       "version": "0.1.0",
       "category": "pane"
     },
@@ -163,6 +177,13 @@
       "category": "band"
     },
     {
+      "name": "storyboard",
+      "source": "./mods/storyboard",
+      "description": "KOZMOS Storyboard: Claude narrates its own progress. A chapter tool the model calls at each phase change drives a band above the prompt: the chapter title, a five-stage rail (explore, plan, build, verify, ship) with the active stage glowing, step 3/5 and a note. /storyboard toggles the band, /storyboard log opens the chapter history.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
       "name": "compass",
       "source": "./mods/compass",
       "description": "KOZMOS Compass: the single most useful hint under the prompt. In order: the 5-hour limit near its end with its reset, a context window near full, agents still working, uncommitted changes after edits, a draft left waiting; otherwise the engine's own hint. /compass toggles it.",
@@ -217,6 +238,13 @@
       "description": "KOZMOS Warden: a guard for destructive shell commands. Before Claude or a subagent runs rm -rf on a broad path, git push --force, reset --hard, clean -fd, DROP TABLE, mkfs, format, curl | sh and their kin, warden asks you (Allow once / Deny) and refuses when no one can answer. A band flashes for 8 s after a block; /warden lists the rules and this session's log.",
       "version": "0.1.0",
       "category": "guard"
+    },
+    {
+      "name": "polaroid",
+      "source": "./mods/polaroid",
+      "description": "KOZMOS Polaroid: /polaroid snapshots the session as a self-contained dark-neon HTML report in .kozmos/reports: model, duration, cost, tokens, context peak, rate limits, tool calls by family, a timeline of turns, subagents, files touched and commands run, all collected live. It answers with the path and copies it. /polaroid md writes Markdown instead.",
+      "version": "0.1.0",
+      "category": "tool"
     }
   ]
 }

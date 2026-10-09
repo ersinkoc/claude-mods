@@ -1,0 +1,16 @@
+{
+  "name": "almanac",
+  "version": "0.1.0",
+  "description": "KOZMOS Almanac: what this session is made of. Slash commands run, skills invoked, subagent types spawned, MCP servers used, models seen, plugins whose tools were called and tool families, each with counts and first-use time, as ranked bars and tag clouds; plus the engine version and how many installed commands went unused. /almanac toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Almanac pane when a session starts.",
+      "required": false,
+      "default": false
+    }
+  }
+}

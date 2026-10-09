@@ -1,0 +1,16 @@
+{
+  "name": "launchpad",
+  "version": "0.1.0",
+  "description": "KOZMOS Launchpad: a pane of big launch buttons. It learns your most-used slash commands as you run them, keeps pinned favorites and saved prompts, and runs a command or fills the prompt box in one press. /launchpad toggles it; save <text>, rm <n>, pin <cmd>, unpin <cmd>, list.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open on start",
+      "description": "Open the Launchpad pane when a session starts.",
+      "required": false,
+      "default": false
+    }
+  }
+}

@@ -5,4 +5,4 @@ mods/*/.claude-plugin/types/
 docs/previews/_work/
 mods/*/tsconfig.json
 
-.playwright-mcp/
+.playwright-mcp/.kozmos/

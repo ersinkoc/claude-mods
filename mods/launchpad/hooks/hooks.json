@@ -1,0 +1,1 @@
+{ "description": "Launchpad: learns slash commands the person runs (command.run from the composer, counts in $.store), keeps pins and saved prompts, draws the launch pane for terminal and desktop, and /launchpad", "modules": ["./register.tsx"] }

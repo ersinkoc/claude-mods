@@ -1,0 +1,6 @@
+{
+  "name": "polaroid",
+  "version": "0.1.0",
+  "description": "KOZMOS Polaroid: /polaroid snapshots the session as a self-contained dark-neon HTML report in .kozmos/reports: model, duration, cost, tokens, context peak, rate limits, tool calls by family, a timeline of turns, subagents, files touched and commands run, all collected live. It answers with the path and copies it. /polaroid md writes Markdown instead.",
+  "author": { "name": "KOZMOS" }
+}

@@ -1,0 +1,1 @@
+{ "description": "Polaroid: collects the session live (turn.start/step/complete, tool.call, agent.spawn, command.run, session.measure) and /polaroid writes it as a self-contained HTML or Markdown report with $.fs.write", "modules": ["./register.tsx"] }

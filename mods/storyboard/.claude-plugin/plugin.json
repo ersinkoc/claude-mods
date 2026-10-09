@@ -1,0 +1,23 @@
+{
+  "name": "storyboard",
+  "version": "0.1.0",
+  "description": "KOZMOS Storyboard: Claude narrates its own progress. A chapter tool the model calls at each phase change drives a band above the prompt: the chapter title, a five-stage rail (explore, plan, build, verify, ship) with the active stage glowing, step 3/5 and a note. /storyboard toggles the band, /storyboard log opens the chapter history.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "nudge": {
+      "type": "boolean",
+      "title": "Nudge the model",
+      "description": "Add one short system-prompt line asking Claude to call the chapter tool at phase changes on multi-step tasks.",
+      "required": false,
+      "default": true
+    },
+    "autoOpen": {
+      "type": "boolean",
+      "title": "Open the log on start",
+      "description": "Open the chapter-history pane when a session starts.",
+      "required": false,
+      "default": false
+    }
+  }
+}
