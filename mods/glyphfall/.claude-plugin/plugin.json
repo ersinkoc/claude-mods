@@ -1,0 +1,7 @@
+{
+  "name": "glyphfall",
+  "version": "0.1.0",
+  "description": "KOZMOS Glyphfall: matrix rain of tool activity above the prompt while Claude works. Every tool call drops its name and detail as a wave of letters, colored by tool family, with bright heads and fading tails, over a sparse rain of katakana; the last five tools sit below as colored chips. /glyphfall toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

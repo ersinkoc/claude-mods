@@ -100,6 +100,34 @@
       "category": "pane"
     },
     {
+      "name": "aurora",
+      "source": "./mods/aurora",
+      "description": "KOZMOS Aurora: northern lights above the prompt while the model thinks. Shifting curtains whose intensity and speed follow the effort level (low is gentle, max is wild), a calmer single wave while it responds, and a label like 'thinking · xhigh · 12s'. /aurora toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "glyphfall",
+      "source": "./mods/glyphfall",
+      "description": "KOZMOS Glyphfall: matrix rain of tool activity above the prompt while Claude works. Every tool call drops its name and detail as a wave of letters, colored by tool family, with bright heads and fading tails, over a sparse rain of katakana; the last five tools sit below as colored chips. /glyphfall toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "heartline",
+      "source": "./mods/heartline",
+      "description": "KOZMOS Heartline: a neon EKG of the session drawn above the prompt. Every tool call is a spike colored by its family, every model request a blip, a failed tool a red inverted spike; the trace drifts green to red with context fill, with a live bpm (tool calls per minute) and ctx readout. /heartline toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
+      "name": "orrery",
+      "source": "./mods/orrery",
+      "description": "KOZMOS Orrery: subagents as planets circling a central sun above the prompt. Running agents orbit at a speed set by their tokens per second, finished ones settle into a faint outer ring, failed ones flash a red cross; a legend names up to four with type and elapsed time. /orrery toggles it.",
+      "version": "0.1.0",
+      "category": "band"
+    },
+    {
       "name": "compass",
       "source": "./mods/compass",
       "description": "KOZMOS Compass: the single most useful hint under the prompt. In order: the 5-hour limit near its end with its reset, a context window near full, agents still working, uncommitted changes after edits, a draft left waiting; otherwise the engine's own hint. /compass toggles it.",

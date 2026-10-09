@@ -1,0 +1,7 @@
+{
+  "name": "aurora",
+  "version": "0.1.0",
+  "description": "KOZMOS Aurora: northern lights above the prompt while the model thinks. Shifting curtains whose intensity and speed follow the effort level (low is gentle, max is wild), a calmer single wave while it responds, and a label like 'thinking · xhigh · 12s'. /aurora toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

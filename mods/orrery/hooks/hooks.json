@@ -1,0 +1,1 @@
+{ "description": "Orrery band: agent.spawn, turn.step usage and turn.complete track every subagent, $.agent.list reconciles their status; an AbovePrompt band draws the orbits (terminal Client at 30 fps, desktop SVG with CSS orbits); /orrery", "modules": ["./register.tsx"] }

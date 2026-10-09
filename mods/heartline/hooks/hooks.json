@@ -1,0 +1,1 @@
+{ "description": "Heartline band: tool.call, turn.step and session.measure feed a ring buffer of beats; an AbovePrompt band draws it as a scrolling braille EKG (terminal Client) or a glowing SVG trace (desktop); /heartline", "modules": ["./register.tsx"] }

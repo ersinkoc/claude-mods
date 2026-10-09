@@ -1,0 +1,1 @@
+{ "description": "Aurora band: turn.step's streamed chunks (thinking, text, tool) and the Spinner's mode, read without writing, tell what the model is doing; an AbovePrompt band draws curtains of light while it thinks or responds (terminal Client at 30 fps, desktop SVG with blurred CSS curtains); /aurora", "modules": ["./register.tsx"] }

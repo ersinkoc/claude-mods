@@ -1,0 +1,7 @@
+{
+  "name": "orrery",
+  "version": "0.1.0",
+  "description": "KOZMOS Orrery: subagents as planets circling a central sun above the prompt. Running agents orbit at a speed set by their tokens per second, finished ones settle into a faint outer ring, failed ones flash a red cross; a legend names up to four with type and elapsed time. /orrery toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

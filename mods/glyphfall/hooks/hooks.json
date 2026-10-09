@@ -1,0 +1,1 @@
+{ "description": "Glyphfall band: tool.call feeds the recent tools; while a turn runs an AbovePrompt band rains them as letters (terminal Client at 30 fps, desktop SVG columns animated with CSS) above a row of tool chips; /glyphfall", "modules": ["./register.tsx"] }

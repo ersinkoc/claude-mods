@@ -1,0 +1,7 @@
+{
+  "name": "heartline",
+  "version": "0.1.0",
+  "description": "KOZMOS Heartline: a neon EKG of the session drawn above the prompt. Every tool call is a spike colored by its family, every model request a blip, a failed tool a red inverted spike; the trace drifts green to red with context fill, with a live bpm (tool calls per minute) and ctx readout. /heartline toggles it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}
