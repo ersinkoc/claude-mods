@@ -1,0 +1,1 @@
+{ "description": "Clawdling companion: tool.call, turn and session.measure observers drive a mood and XP (persisted in $.store); a band above the prompt draws the pixel crab (terminal Client half-block animation, desktop SVG flipbook) and /clawdling", "modules": ["./register.tsx"] }

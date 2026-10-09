@@ -1,0 +1,1 @@
+{ "description": "Laurels achievements: tool.call, turn, agent.spawn and session.measure observers feeding pure badge checks, unlocks persisted in $.store, a celebration band (terminal Client, desktop SVG) and a /laurels gallery Pane", "modules": ["./register.tsx"] }

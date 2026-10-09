@@ -1,0 +1,23 @@
+{
+  "name": "resonance",
+  "version": "0.1.0",
+  "description": "KOZMOS Resonance: a synthesized soundscape for the session. A soft tick per tool, a bonk on failures, a gong after long turns, a bell when a subagent finishes, an alarm when a rate-limit window crosses 80% or 95%, a chime on the first turn. /resonance mutes.",
+  "author": { "name": "KOZMOS" },
+  "userConfig": {
+    "profile": {
+      "type": "string",
+      "title": "Sound profile",
+      "description": "subtle: no per-tool ticks; arcade: every sound; silent: nothing plays.",
+      "options": ["subtle", "arcade", "silent"],
+      "required": false,
+      "default": "subtle"
+    },
+    "volume": {
+      "type": "number",
+      "title": "Volume",
+      "description": "Playback volume from 0 to 100.",
+      "required": false,
+      "default": 70
+    }
+  }
+}

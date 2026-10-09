@@ -1,0 +1,1 @@
+{ "description": "Epilogue: turn.start/turn.step/tool.call/agent.spawn collectors that build a recap at turn.complete, a band above the prompt until the next prompt, a Pane of the last 20 recaps and /epilogue", "modules": ["./register.tsx"] }

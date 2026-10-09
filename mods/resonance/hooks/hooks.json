@@ -1,0 +1,1 @@
+{ "description": "Resonance soundscape: tool.call, turn.complete and session.measure observers that play the mod's own synthesized WAV clips through $.audio.play, and /resonance", "modules": ["./register.tsx"] }

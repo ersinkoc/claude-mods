@@ -1,0 +1,16 @@
+{
+  "name": "tempo",
+  "version": "0.1.0",
+  "description": "KOZMOS Tempo: a Pomodoro focus timer above the prompt. A tomato, the phase, a ring (desktop) or a sizzling bar (terminal) and the time left; long breaks every fourth round, a toast at each phase end and a tally of focus rounds per day. /tempo start [work] [break], stop, skip.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "speak": {
+      "type": "boolean",
+      "title": "Speak phase changes",
+      "description": "Also announce the end of each phase with the system voice.",
+      "required": false,
+      "default": false
+    }
+  }
+}

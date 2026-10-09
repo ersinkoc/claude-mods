@@ -1,0 +1,16 @@
+{
+  "name": "epilogue",
+  "version": "0.1.0",
+  "description": "KOZMOS Epilogue: a recap band after every turn. Duration, tool families as colored chips, files written, subagents spawned, tokens and estimated cost, the session cost delta and failed tools, with an optional AI one-liner. /epilogue opens the last 20 recaps.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "aiSummary": {
+      "type": "boolean",
+      "title": "AI one-liner",
+      "description": "Ask a small model (claude-haiku-5-5) to sum up each turn's answer in at most 15 words. Costs a fraction of a cent per turn.",
+      "required": false,
+      "default": false
+    }
+  }
+}

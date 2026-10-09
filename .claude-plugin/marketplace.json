@@ -247,11 +247,46 @@
       "category": "transcript"
     },
     {
+      "name": "clawdling",
+      "source": "./mods/clawdling",
+      "description": "KOZMOS Clawdling: a pixel crab companion that lives above the prompt. It blinks and sways, scuttles while tools run, thinks in bubbles, sweats past 80% context, dozes near the 5-hour limit and dances on a five-turn streak. It earns XP from tools and turns, levels up into a party hat, sunglasses, a scarf and a crown, and quips about what it sees. /clawdling toggles it, /clawdling feed treats it.",
+      "version": "0.1.0",
+      "category": "companion"
+    },
+    {
+      "name": "epilogue",
+      "source": "./mods/epilogue",
+      "description": "KOZMOS Epilogue: a recap band after every turn. Duration, tool families as colored chips, files written, subagents spawned, tokens and estimated cost, the session cost delta and failed tools, with an optional AI one-liner. /epilogue opens the last 20 recaps.",
+      "version": "0.1.0",
+      "category": "companion"
+    },
+    {
+      "name": "laurels",
+      "source": "./mods/laurels",
+      "description": "KOZMOS Laurels: 32 achievements earned from what the session does (Hydra, Night Owl, Cache Wizard, Bug Squasher, Polyglot, Centurion, Committed and more), kept across sessions with their unlock dates. A toast and a six-second celebration band on each unlock; /laurels opens the medal gallery with progress toward the locked ones.",
+      "version": "0.1.0",
+      "category": "companion"
+    },
+    {
+      "name": "tempo",
+      "source": "./mods/tempo",
+      "description": "KOZMOS Tempo: a Pomodoro focus timer above the prompt. A tomato, the phase, a ring (desktop) or a sizzling bar (terminal) and the time left; long breaks every fourth round, a toast at each phase end and a tally of focus rounds per day. /tempo start [work] [break], stop, skip.",
+      "version": "0.1.0",
+      "category": "companion"
+    },
+    {
       "name": "marquee",
       "source": "./mods/marquee",
       "description": "KOZMOS Marquee: a status-line ticker. Model and effort, context fill, 5-hour and weekly limits with the reset countdown, session cost, git branch with ahead and dirty counts, and the tool running now, refreshed every second; it scrolls like a marquee when longer than its width. /marquee toggles it.",
       "version": "0.1.0",
       "category": "status"
+    },
+    {
+      "name": "resonance",
+      "source": "./mods/resonance",
+      "description": "KOZMOS Resonance: a synthesized soundscape for the session. A soft tick per tool, a bonk on failures, a gong after long turns, a bell when a subagent finishes, an alarm when a rate-limit window crosses 80% or 95%, a chime on the first turn. /resonance mutes.",
+      "version": "0.1.0",
+      "category": "sound"
     },
     {
       "name": "ballast",

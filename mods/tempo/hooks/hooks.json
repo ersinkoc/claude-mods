@@ -1,0 +1,1 @@
+{ "description": "Tempo focus timer: a 1 s clock that moves the phases, persisted in $.store, a band above the prompt (terminal Client animation, desktop SVG ring) and /tempo", "modules": ["./register.tsx"] }

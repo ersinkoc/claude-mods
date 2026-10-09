@@ -1,0 +1,7 @@
+{
+  "name": "laurels",
+  "version": "0.1.0",
+  "description": "KOZMOS Laurels: 32 achievements earned from what the session does (Hydra, Night Owl, Cache Wizard, Bug Squasher, Polyglot, Centurion, Committed and more), kept across sessions with their unlock dates. A toast and a six-second celebration band on each unlock; /laurels opens the medal gallery with progress toward the locked ones.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts"
+}

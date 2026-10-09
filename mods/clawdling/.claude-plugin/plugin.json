@@ -1,0 +1,16 @@
+{
+  "name": "clawdling",
+  "version": "0.1.0",
+  "description": "KOZMOS Clawdling: a pixel crab companion that lives above the prompt. It blinks and sways, scuttles while tools run, thinks in bubbles, sweats past 80% context, dozes near the 5-hour limit and dances on a five-turn streak. It earns XP from tools and turns, levels up into a party hat, sunglasses, a scarf and a crown, and quips about what it sees. /clawdling toggles it, /clawdling feed treats it.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "name": {
+      "type": "string",
+      "title": "Crab name",
+      "description": "What your crab is called.",
+      "required": false,
+      "default": "Pinchy"
+    }
+  }
+}
