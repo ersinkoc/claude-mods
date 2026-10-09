@@ -8,8 +8,8 @@ the 5-hour and weekly limits, what your subagents are up to, how full the contex
 is, the state of your git tree and the heat of your machine.
 
 <p align="center">
-  <a href="docs/media/kozmos-promo.mp4"><img src="docs/media/kozmos-promo-poster.jpg" alt="KOZMOS: the 2:48 promo film. Click to watch." width="860"></a>
-  <br><sub>▶ <a href="docs/media/kozmos-promo.mp4">Watch the 2:48 film</a> (1080p, with sound)</sub>
+  <a href="https://www.youtube.com/watch?v=Eabw9kr9nVc"><img src="docs/media/kozmos-promo-poster.jpg" alt="KOZMOS: the 2:48 promo film on YouTube. Click to watch." width="860"></a>
+  <br><sub>▶ <a href="https://www.youtube.com/watch?v=Eabw9kr9nVc">Watch the 2:48 film on YouTube</a> (1080p, with sound)</sub>
 </p>
 
 <p align="center">
