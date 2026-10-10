@@ -183,6 +183,16 @@ describe('the Markdown', () => {
     for (const line of ['_No turns yet._', '_No subagents were spawned._', '_No files were read or changed._', '_No slash commands were run._']) expect(md).toContain(line)
   })
 
+  test('a newline in the project root or a command name cannot leave its code span', () => {
+    const d = emptyReport(0)
+    d.root = '/work/p\n# Forged heading\n[click](javascript:alert(1))'
+    d.commands = [{ name: 'run\r\n# Also forged', args: '', at: 0 }]
+    const md = buildMarkdown(d, 0)
+    expect(md.split('\n').filter(l => l.startsWith('#'))).toEqual(['# Session Polaroid: A Claude Code session', '## Timeline of turns', '## Subagents', '## Files touched', '## Commands run'])
+    expect(md).toContain('- **Project:** `/work/p # Forged heading [click](javascript:alert(1))`\n')
+    expect(md).toContain("- 0:00 `/run # Also forged`\n")
+  })
+
   test('a full session', () => {
     const d = rich()
     const md = buildMarkdown(d, 0)

@@ -95,8 +95,12 @@ function milestone(key: string, percent: number | undefined, at: number, announc
 }
 
 function commitMessage(cmd: string): string {
-  const m = /-m\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/.exec(cmd)
-  const raw = m?.[1] ?? m?.[2] ?? m?.[3] ?? ''
+  // A HEREDOC body is the message (Claude Code's own form): its first line is the subject.
+  const doc = /<<-?\s*(['"]?)(\w+)\1[^\n]*\n([\s\S]*?)\n[ \t]*\2\b/.exec(cmd)
+  const subject = doc?.[3]?.split('\n').find(l => l.trim())
+  // -m, a cluster ending in m (-am), --message, with a space, "=" or nothing before the text.
+  const m = /\s(?:-[a-zA-Z]*m|--message)(?:\s+|=)?(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/.exec(cmd)
+  const raw = subject ?? m?.[1] ?? m?.[2] ?? m?.[3] ?? ''
   return clip(raw.replace(/\\n/g, ' '), 72)
 }
 

@@ -38,6 +38,8 @@ describe('board edges', () => {
     expect(fmtMs(null)).toBe('—')
     expect(fmtMs(250.4)).toBe('250ms')
     expect(fmtMs(1500)).toBe('1.5s')
+    expect(fmtMs(999.4)).toBe('999ms')
+    expect(fmtMs(999.5)).toBe('1.0s')
     expect(fmtMs(12_400)).toBe('12s')
     expect(avgOf([])).toBeNull()
     expect(avgOf([1, 2])).toBe(2)

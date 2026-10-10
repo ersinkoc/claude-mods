@@ -117,6 +117,25 @@ describe('program and path helpers', () => {
     expect(baseProg('rm')).toBe('rm')
   })
 
+  test('programOf skips the separate value of a wrapper flag, so the real command is judged', async () => {
+    expect(programOf(['nice', '-n', '10', 'rm', '-rf', '/'])).toEqual({ prog: 'rm', args: ['-rf', '/'] })
+    expect(programOf(['ionice', '-c', '3', 'rm', 'x'])).toEqual({ prog: 'rm', args: ['x'] })
+    expect(programOf(['timeout', '-s', 'KILL', '5', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    expect(programOf(['timeout', '--signal', 'KILL', '5', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    expect(programOf(['env', '-u', 'FOO', 'FOO=1', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    expect(programOf(['stdbuf', '-o', 'L', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    expect(programOf(['watch', '-n', '5', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    // Joined values and a wrapper with nothing to run stay as they were.
+    expect(programOf(['nice', '-n10', 'rm'])).toEqual({ prog: 'rm', args: [] })
+    expect(programOf(['nice', '-n'])).toEqual({ prog: '', args: [] })
+    for (const c of ['nice -n 10 rm -rf /', 'ionice -c 3 rm -rf /', 'timeout -k 2 5 rm -rf /', 'env -C /tmp rm -rf /', 'watch -n 5 rm -rf /']) {
+      expect(worst(c), c).toEqual(['rm -rf /', 'critical'])
+    }
+    expect(worst('nice -n 19 git push --force')?.[0]).toBe('git push --force')
+    expect(worst('nice -n 10 rm -rf node_modules')).toBeNull()
+    expect(worst('timeout -s KILL 5 npm test')).toBeNull()
+  })
+
   test('programOf looks past assignments, sudo/doas and their valued flags, xargs, timeout, & and .', async () => {
     expect(programOf(['FOO=1', 'BAR=2', 'rm', '-rf', '/'])).toEqual({ prog: 'rm', args: ['-rf', '/'] })
     expect(programOf(['sudo', '-u', 'root', '-E', 'rm', '/'])).toEqual({ prog: 'rm', args: ['/'] })
@@ -260,6 +279,16 @@ describe('rules: git', () => {
       expect(worst(c), c).toEqual(['git branch -D', 'medium'])
     }
     for (const c of ['git branch -d x', 'git branch --delete x', 'git branch --force x', 'git branch']) expect(worst(c), c).toBeNull()
+  })
+
+  test('branch: -D joined with other short flags is still a forced delete', async () => {
+    for (const c of ['git branch -Df x', 'git branch -rD origin/x', 'git branch -vD x']) expect(worst(c), c).toEqual(['git branch -D', 'medium'])
+    for (const c of ['git branch -dr origin/x', 'git branch -vv', 'git branch -M old new']) expect(worst(c), c).toBeNull()
+  })
+
+  test('restore: -S is --staged, so it only unstages', async () => {
+    for (const c of ['git restore -S .', 'git restore -S :/', 'git restore --staged .']) expect(worst(c), c).toBeNull()
+    for (const c of ['git restore -SW .', 'git restore -S -W .', 'git restore -W .']) expect(worst(c)?.[0], c).toBe('git restore .')
   })
 
   test('stash: clear and drop are medium, the rest is fine', async () => {

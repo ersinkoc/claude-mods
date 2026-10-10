@@ -110,8 +110,9 @@ export function mixColor(stats: Stats, model: string): string {
 /** 420ms, 4.2s, 1m07s. */
 export function fmtMs(ms: number | undefined): string {
   if (ms === undefined) return '—'
-  if (ms < 1000) return `${Math.round(ms)}ms`
-  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
+  // Each unit ends where the next would round up to its own size.
+  if (ms < 999.5) return `${Math.round(ms)}ms`
+  if (ms < 59_500) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
   const s = Math.round(ms / 1000)
   return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`
 }

@@ -446,6 +446,9 @@ export function mdEsc(s: unknown): string {
   return String(s ?? '').replace(/\r?\n/g, ' ').replace(/([\\`*_[\]|<>#])/g, '\\$1')
 }
 
+/** Text for inside a `code span`: one line, no backticks. */
+const codeText = (s: string): string => s.replace(/\r?\n/g, ' ').replace(/`/g, "'")
+
 export function buildMarkdown(d: ReportData, generatedAt: number): string {
   const dur = Math.max(0, d.endedAt - d.startedAt)
   const toks = totalTokens(d.tokens)
@@ -456,7 +459,7 @@ export function buildMarkdown(d: ReportData, generatedAt: number): string {
   L.push(`- **Model:** ${mdEsc(modelName(d.model) || '—')}${d.models.length > 1 ? ` (also ${mdEsc(d.models.filter(m => m !== d.model).map(modelName).join(', '))})` : ''}`)
   L.push(`- **Claude Code:** ${mdEsc(d.version || '?')}`)
   L.push(`- **When:** ${stamp(d.startedAt)} to ${stamp(d.endedAt)} (${fmtClock(dur)})`)
-  if (d.root) L.push(`- **Project:** \`${d.root.replace(/`/g, "'")}\``)
+  if (d.root) L.push(`- **Project:** \`${codeText(d.root)}\``)
   L.push(`- **Cost:** ${fmtUsd(cost)}${d.costUsd === undefined ? ' (estimated)' : ''}`)
   L.push(`- **Tokens:** ${fmtTokens(toks)} over ${d.requests} requests (input ${fmtTokens(d.tokens.input)}, output ${fmtTokens(d.tokens.output)}, cache read ${fmtTokens(d.tokens.cacheRead)}, cache write ${fmtTokens(d.tokens.cacheWrite)})`)
   L.push(`- **Context peak:** ${d.ctxPeakPercent !== undefined ? `${Math.round(d.ctxPeakPercent)}%` : '—'}${d.ctxPeakTokens !== undefined ? ` (${fmtTokens(d.ctxPeakTokens)} of ${fmtTokens(d.ctxWindow ?? 0)})` : ''}`)
@@ -489,7 +492,7 @@ export function buildMarkdown(d: ReportData, generatedAt: number): string {
     for (const f of d.files) L.push(`| ${mdEsc(f.path)} | ${f.reads} | ${f.edits} | ${f.writes} |`)
   } else L.push('_No files were read or changed._')
   L.push('', '## Commands run', '')
-  if (d.commands.length) for (const c of d.commands) L.push(`- ${fmtClock(c.at - d.startedAt)} \`/${c.name.replace(/`/g, "'")}\`${c.args ? ` ${mdEsc(oneLine(c.args, 60))}` : ''}`)
+  if (d.commands.length) for (const c of d.commands) L.push(`- ${fmtClock(c.at - d.startedAt)} \`/${codeText(c.name)}\`${c.args ? ` ${mdEsc(oneLine(c.args, 60))}` : ''}`)
   else L.push('_No slash commands were run._')
   L.push('', `---`, `Shot by KOZMOS Polaroid · ${stamp(generatedAt)}`, '')
   return L.join('\n')

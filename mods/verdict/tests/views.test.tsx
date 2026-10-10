@@ -50,6 +50,9 @@ describe('view helpers', () => {
     expect(duration(420)).toBe('420ms')
     expect(duration(4_200)).toBe('4.2s')
     expect(duration(42_000)).toBe('42s')
+    expect(duration(999.5)).toBe('1.0s')
+    expect(duration(59_500)).toBe('1m00s')
+    expect(duration(3_599_999)).toBe('60m00s')
     expect(duration(125_000)).toBe('2m05s')
   })
 

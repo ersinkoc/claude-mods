@@ -218,6 +218,29 @@ describe('kz: numbers and text', () => {
     expect(padStart('abc', 0)).toBe('')
   })
 
+  test('clip, padEnd and padStart never cut an emoji in half', () => {
+    const E = '😀'
+    // String.prototype.isWellFormed is ES2024; the project's lib is es2023.
+    const isWellFormed = (s: string): boolean => !/[\ud800-\udbff](?![\udc00-\udfff])|(?<![\ud800-\udbff])[\udc00-\udfff]/.test(s)
+    expect(isWellFormed('a\ud83d')).toBe(false)
+    expect(isWellFormed(`a${E}`)).toBe(true)
+    expect(clip(`xxxxx${E}yyyyyyyyyyyy`, 7)).toBe('xxxxx…')
+    expect(clip(`xxxx${E}yy`, 7)).toBe(`xxxx${E}…`)
+    expect(clip(`${E}${E}`, 1)).toBe('…')
+    expect(clip(E, 5)).toBe(E)
+    expect(padEnd(`ab${E}cd`, 3)).toBe('ab ')
+    expect(padEnd(E, 2)).toBe(E)
+    expect(padEnd(E, 1)).toBe(' ')
+    expect(padStart(`ab${E}cd`, 3)).toBe(' cd')
+    expect(padStart(`ab${E}`, 3)).toBe(`b${E}`)
+    expect(padStart(E, 1)).toBe(' ')
+    for (let n = 0; n < 8; n++) {
+      for (const out of [clip(`a${E}b${E}c${E}d`, n), padEnd(`a${E}b${E}c`, n), padStart(`a${E}b${E}c`, n)]) expect(isWellFormed(out), `${n} ${JSON.stringify(out)}`).toBe(true)
+      expect(padEnd(`a${E}b${E}c`, n).length).toBe(n)
+      expect(padStart(`a${E}b${E}c`, n).length).toBe(n)
+    }
+  })
+
   test('modelName turns ids into family and version', () => {
     expect(modelName('claude-opus-5-5[1m]')).toBe('Opus 5.5')
     expect(modelName('claude-sonnet-4-20250514')).toBe('Sonnet 4')
@@ -606,6 +629,18 @@ describe('probe: git', () => {
     expect(parseGitLog('')).toEqual([])
   })
 
+  test('a tab inside a commit subject stays in the subject', () => {
+    expect(parseGitLog('abc1234\tfix:\tadd col\t2 days ago\tAda\t1700000000')).toEqual([
+      { sha: 'abc1234', subject: 'fix:\tadd col', when: '2 days ago', author: 'Ada', at: 1_700_000_000_000 },
+    ])
+    expect(parseGitLog('a1\ta\tb\tc\td\t1h ago\tAnn\t100\nb2\ttw\to\t2h ago\tBob\t200').map(c => [c.subject, c.when, c.author, c.at])).toEqual([
+      ['a\tb\tc\td', '1h ago', 'Ann', 100_000],
+      ['tw\to', '2h ago', 'Bob', 200_000],
+    ])
+    expect(parseGitStatus('# branch.head main', 'abc1234\tfix:\tadd col\t2 days ago').head).toEqual({ sha: 'abc1234', subject: 'fix:\tadd col', when: '2 days ago' })
+    expect(parseGitStatus('# branch.head main', 'abc1234\ta\tb\tc\t2 days ago').head).toEqual({ sha: 'abc1234', subject: 'a\tb\tc', when: '2 days ago' })
+  })
+
   test('parseNumstat reads counts, binaries and tabbed paths', () => {
     expect(parseNumstat('3\t1\tsrc/a.ts\n-\t-\timg.png\n5\n\n2\t0\tweird\tname\n')).toEqual([
       { path: 'src/a.ts', added: 3, removed: 1 },
@@ -665,6 +700,11 @@ describe('probe: the machine', () => {
     expect(parseNvidia(', 5')).toEqual({ util: 0, memUsed: 5_242_880, memTotal: 0, temp: 0, name: 'GPU' })
     expect(parseNvidia('')).toBeUndefined()
     expect(parseNvidia('  \nignored')).toBeUndefined()
+  })
+
+  test('parseNvidia reads fields the GPU does not report as 0, never NaN', () => {
+    expect(parseNvidia('12, [N/A], [N/A], [N/A], NVIDIA T500\r\n')).toEqual({ util: 12, memUsed: 0, memTotal: 0, temp: 0, name: 'NVIDIA T500' })
+    expect(parseNvidia('50, 100, 200, [Not Supported], GPU X')).toEqual({ util: 50, memUsed: 104_857_600, memTotal: 209_715_200, temp: 0, name: 'GPU X' })
   })
 
   test('fmtBytes scales to K, M, G and T without rolling over to 1024 of a unit', () => {

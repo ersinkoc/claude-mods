@@ -28,7 +28,11 @@ export function clean(text: string): string {
     .replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, '')
     .replace(/\u001b\][^\u0007]*\u0007/g, '')
     .split('\n')
-    .map(l => l.slice(l.lastIndexOf('\r') + 1))
+    .map(l => {
+      // A line's own CRLF ending is not an overprint: only text before it is dropped.
+      const t = l.replace(/\r+$/, '')
+      return t.slice(t.lastIndexOf('\r') + 1)
+    })
     .join('\n')
 }
 
@@ -85,9 +89,26 @@ const RULES: Rule[] = [
   { re: new RegExp(`${w(PM)} (?:run )?build(?![\\w.-])|${w('vite')} build|${w('next')} build|${w('webpack')}|${w('tsup')}|${w('esbuild')}`), runner: 'build', kind: 'build' },
 ]
 
+/** A command that names a runner without running it: installing, removing, searching or reading about it. */
+const NOT_A_RUN = new RegExp(
+  '^(?:\\w+=\\S* )*(?:sudo )?(?:' +
+    `${PM} (?:install|i|add|remove|rm|uninstall|un|update|up|upgrade|info|view|ls|list|why|outdated)` +
+    '|(?:pip3?|pipx|uv|conda|brew|apt|apt-get|choco|winget|scoop|gem|poetry) (?:install|uninstall|add|remove|show|search|list|info|upgrade|update)' +
+    '|(?:grep|egrep|fgrep|rg|ag|ack|cat|echo|printf|which|where|whereis|type|man|head|tail|less|more)' +
+    '|git (?:commit|log|show|diff|add|tag|blame|grep|status|stash|push|merge|branch)' +
+    ')(?![\\w.-])',
+  'i',
+)
+
 /** The runner a shell command invokes, or undefined when it runs none we know. */
 export function detect(command: string): { runner: string; kind: Kind } | undefined {
-  const cmd = command.replace(/\s+/g, ' ')
+  // Judge the parts that run something: a runner's name in an install or a grep is no run.
+  const cmd = command
+    .replace(/\\\n/g, ' ')
+    .split(/&&|\|\||[;&|\n]/)
+    .map(s => s.replace(/\s+/g, ' ').trim())
+    .filter(s => !NOT_A_RUN.test(s))
+    .join(' ; ')
   for (const r of RULES) if (r.re.test(cmd)) return { runner: r.runner, kind: r.kind }
   return undefined
 }

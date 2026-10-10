@@ -193,6 +193,38 @@ describe('what is recorded', () => {
     ])
   })
 
+  test('a commit entry shows its message in every common form, never the shell around it', async ($, on) => {
+    mock.clock(on, { now: 1_000_000 })
+    base(on)
+    await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/w' })
+    const heredoc = (...body: string[]) => ['git commit -m "$(cat <<\'EOF\'', ...body, 'EOF', ')"'].join('\n')
+    for (const command of [
+      heredoc('Fix the parser', '', 'Co-Authored-By: X'),
+      heredoc('', 'Blank first line'),
+      heredoc('   '),
+      "git commit -F - <<'EOF'\nFrom a file\n\nbody\nEOF",
+      'git commit -am "All tracked"',
+      'git commit -sm "Signed off"',
+      'git commit --message "Long form"',
+      'git commit --message="Equals form"',
+      'git commit -m"Glued"',
+      'git commit -m "Subject" -m "Body"',
+    ]) await $.tool.call({ tool: 'Bash', command })
+    const t = (await lines($, 'git')).slice(1).map(l => l.replace(/^\d\d:\d\d:\d\d /, '').trim())
+    expect(t).toEqual([
+      '◉ commit', '│ Subject',
+      '◉ commit', '│ Glued',
+      '◉ commit', '│ Equals form',
+      '◉ commit', '│ Long form',
+      '◉ commit', '│ Signed off',
+      '◉ commit', '│ All tracked',
+      '◉ commit', '│ From a file',
+      '◉ commit', "│ $(cat <<'EOF' EOF )",
+      '◉ commit', '│ Blank first line',
+      '◉ commit', 'Fix the parser',
+    ])
+  })
+
   test('compactions: skipped, precomputed, without figures, and a subagent’s', async ($, on) => {
     mock.clock(on, { now: 1_000_000 })
     base(on)

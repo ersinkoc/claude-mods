@@ -136,17 +136,28 @@ export function fmtPct(p: number | undefined): string {
   return p === undefined || !Number.isFinite(p) ? '—' : `${Math.round(p)}%`
 }
 
+// The cuts below count UTF-16 units; they must not land between the two halves of an emoji.
+const isHigh = (u: number): boolean => u >= 0xd800 && u <= 0xdbff
+const isLow = (u: number): boolean => u >= 0xdc00 && u <= 0xdfff
+
 export function clip(s: string, max: number): string {
   const one = s.replace(/\s+/g, ' ').trim()
-  return one.length > max ? one.slice(0, Math.max(1, max - 1)) + '…' : one
+  if (one.length <= max) return one
+  let cut = Math.max(1, max - 1)
+  if (isHigh(one.charCodeAt(cut - 1))) cut--
+  return one.slice(0, cut) + '…'
 }
 
 export function padEnd(s: string, n: number): string {
-  return s.length >= n ? s.slice(0, n) : s + ' '.repeat(n - s.length)
+  if (s.length < n) return s + ' '.repeat(n - s.length)
+  // A pair cut in half gives way to a space, so the result keeps its width.
+  return n > 0 && isHigh(s.charCodeAt(n - 1)) ? s.slice(0, n - 1) + ' ' : s.slice(0, n)
 }
 
 export function padStart(s: string, n: number): string {
-  return s.length >= n ? s.slice(s.length - n) : ' '.repeat(n - s.length) + s
+  if (s.length < n) return ' '.repeat(n - s.length) + s
+  const k = s.length - n
+  return k > 0 && isLow(s.charCodeAt(k)) ? ' ' + s.slice(k + 1) : s.slice(k)
 }
 
 /** `claude-opus-5-5[1m]` → `Opus 5.5`. */

@@ -167,7 +167,7 @@ function noteTool(tool: string, e: unknown, failed: boolean): void {
         if (failedCommands.has(cmd)) facts.flags.bugSquasher = true
         if (isGitCommit(cmd)) facts.flags.committed = true
         if (isGitPush(cmd)) facts.flags.pushed = true
-        if (isTestRun(cmd)) facts.flags.testPilot = true
+        if (isTestRun(str(e, 'command'))) facts.flags.testPilot = true
       }
     }
   }

@@ -123,13 +123,13 @@ export function groupsOf(crumbs: readonly Crumb[]): Group[] {
 export function fmtBytes(n: number | undefined): string {
   if (n === undefined) return ''
   if (n < 1000) return `${n} B`
-  if (n < 1e6) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)} kB`
+  if (n < 999_500) return `${(n / 1000).toFixed(n < 10_000 ? 1 : 0)} kB`
   return `${(n / 1e6).toFixed(1)} MB`
 }
 
 export function fmtMs(ms: number | undefined): string {
   if (ms === undefined) return '…'
-  return ms < 1000 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
+  return ms < 999.5 ? `${Math.round(ms)}ms` : `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
 }
 
 export function clockOf(at: number): string {

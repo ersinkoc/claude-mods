@@ -1,6 +1,6 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { chipText, clean, health, judge } from '../hooks/parse.ts'
+import { chipText, clean, detect, health, judge } from '../hooks/parse.ts'
 import type { Outcome } from '../hooks/parse.ts'
 
 const outcome = (o: Partial<Outcome>): Outcome => ({
@@ -14,6 +14,30 @@ describe('judge edges', () => {
 
   test('ANSI colours and carriage-return overprints go before parsing', () => {
     expect(clean('\u001b[32mok\u001b[0m\nload 10%\rload 100%\n\u001b]0;title\u0007done')).toBe('ok\nload 100%\ndone')
+  })
+
+  test('CRLF line endings keep their text: a failing run piped through tail is still a failure', () => {
+    const crlf = (s: string): string => s.replace(/\n/g, '\r\n')
+    expect(clean('a\r\nb\r\n')).toBe('a\nb\n')
+    expect(clean('a\r\r\nb')).toBe('a\nb')
+    expect(clean('load 10%\rload 100%\r\nx')).toBe('load 100%\nx')
+    const py = judge('pytest -q | tail -20', crlf('FAILED tests/test_a.py::test_x - assert 1 == 2\n===== 1 failed, 2 passed in 0.12s =====\n'), false)
+    expect(py).toMatchObject({ ok: false, fail: 1, pass: 2, parsed: true })
+    expect(chipText(py!)).toBe('✗ pytest 1 failed')
+    const vi = judge('npm test 2>&1 | tail -20', crlf(' FAIL  src/a.test.ts > adds\n      Tests  1 failed | 2 passed (3)\n'), false)
+    expect(vi).toMatchObject({ ok: false, fail: 1, pass: 2, failures: ['src/a.test.ts > adds'] })
+  })
+
+  test('installing, removing or searching for a runner is no run; real runs around it still are', () => {
+    for (const c of ['npm install -D vitest', 'pnpm add -D mocha', 'pip install pytest', 'npm uninstall jest', 'grep -rn jest src', 'cat package.json | grep vitest',
+      'git commit -m "add jest config"', 'which pytest', 'CI=1 npm install jest', 'sudo npm install -g jest', 'npm install \\\n  vitest', 'brew install maven']) {
+      expect(detect(c), c).toBeUndefined()
+    }
+    expect(judge('npm install -D vitest', 'added 1 package', false)).toBeUndefined()
+    for (const [c, runner] of [['npm install && npm test', 'test'], ['npm i vitest\nnpx vitest run', 'vitest'], ['npm i -D vitest; npx vitest run', 'vitest'],
+      ['git commit -m "x" && npm test', 'test'], ['grep foo x | npx jest', 'jest'], ['pip install -r r.txt && pytest', 'pytest'], ['git bisect run npm test', 'test']] as const) {
+      expect(detect(c)?.runner, c).toBe(runner)
+    }
   })
 
   test('an unknown test output: the runner is guessed from it, the failure lines kept', () => {
