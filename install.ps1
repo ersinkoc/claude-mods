@@ -27,6 +27,14 @@ $ErrorActionPreference = 'Stop'
 $Root = $PSScriptRoot
 $Market = 'kozmos'
 
+# Windows PowerShell 5.1 throws on a native command's stderr while the preference is Stop (2>&1 and
+# 2>$null alike). A failed `claude` call must be reported, not fatal, so native calls run under Continue.
+function Invoke-Native([scriptblock] $Block) {
+  $previous = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try { & $Block } finally { $ErrorActionPreference = $previous }
+}
+
 function Write-Banner {
   $c = 'Magenta', 'Cyan', 'Blue', 'Magenta', 'Cyan', 'Blue'
   $w = 'K', 'O', 'Z', 'M', 'O', 'S'
@@ -64,9 +72,9 @@ if ($List) {
 if ($Uninstall) {
   foreach ($p in $catalog) {
     Write-Host "  removing $($p.name)" -ForegroundColor DarkGray
-    & claude plugin uninstall "$($p.name)@$Market" -s $Scope 2>$null | Out-Null
+    Invoke-Native { & claude plugin uninstall "$($p.name)@$Market" -s $Scope 2>$null | Out-Null }
   }
-  & claude plugin marketplace remove $Market 2>$null | Out-Null
+  Invoke-Native { & claude plugin marketplace remove $Market 2>$null | Out-Null }
   Write-Host '  KOZMOS removed.' -ForegroundColor Green
   exit 0
 }
@@ -116,7 +124,7 @@ if ($unknown) { Write-Host "  Unknown mods: $($unknown -join ', ')" -ForegroundC
 if (-not $names) { Write-Host '  Nothing selected.' -ForegroundColor Yellow; exit 0 }
 
 # The marketplace: add it, or refresh it when it is already there.
-$have = (& claude plugin marketplace list 2>$null) -join "`n"
+$have = (Invoke-Native { & claude plugin marketplace list 2>$null }) -join "`n"
 if ($have -match "(?m)\b$Market\b") {
   & claude plugin marketplace update $Market | Out-Null
 } else {
@@ -127,7 +135,7 @@ if ($have -match "(?m)\b$Market\b") {
 $ok = 0
 foreach ($n in $names) {
   Write-Host ('  ◆ {0,-12}' -f $n) -ForegroundColor Magenta -NoNewline
-  $out = & claude plugin install "$n@$Market" -s $Scope -y 2>&1
+  $out = Invoke-Native { & claude plugin install "$n@$Market" -s $Scope -y 2>&1 }
   if ($LASTEXITCODE -eq 0) { Write-Host ' installed' -ForegroundColor Green; $ok++ }
   else { Write-Host " failed: $($out | Select-Object -Last 1)" -ForegroundColor Red }
 }

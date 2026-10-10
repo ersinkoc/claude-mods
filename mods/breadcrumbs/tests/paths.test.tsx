@@ -76,6 +76,12 @@ describe('trail helpers', () => {
     expect(fmtMs(250.4)).toBe('250ms')
     expect(fmtMs(1500)).toBe('1.5s')
     expect(fmtMs(12_000)).toBe('12s')
+    // A value that rounds up to a unit's own size moves to the next unit.
+    expect(fmtMs(999.4)).toBe('999ms')
+    expect(fmtMs(999.5)).toBe('1.0s')
+    expect(fmtBytes(999_499)).toBe('999 kB')
+    expect(fmtBytes(999_500)).toBe('1.0 MB')
+    expect(fmtBytes(999_999)).toBe('1.0 MB')
     expect(statusColor(crumb({ isRunning: true }))).toBe('#a78bfa')
     expect(statusColor(crumb({ isError: true }))).toBe('#f87171')
     expect(statusColor(crumb({ status: 404 }))).toBe('#f87171')

@@ -195,6 +195,15 @@ export function baseProg(w: string): string {
 
 const PREFIXES = new Set(['sudo', 'doas', 'nohup', 'time', 'env', 'command', 'exec', 'xargs', 'nice', 'ionice', 'builtin', 'then', 'do', 'else', '!', 'stdbuf', 'timeout', 'watch', 'call', 'start'])
 const SUDO_VALUED = new Set(['-u', '-g', '-h', '-p', '-C', '-U', '-r', '-t', '-D'])
+/** Flags of the other wrappers that take their value as the next word (`nice -n 10 rm`). */
+const WRAPPER_VALUED = new Map<string, RegExp>([
+  ['nice', /^-n$/],
+  ['ionice', /^-[cnpPu]$/],
+  ['timeout', /^(-[sk]|--(signal|kill-after))$/],
+  ['env', /^(-[uC]|--(unset|chdir))$/],
+  ['stdbuf', /^-[ioe]$/],
+  ['watch', /^-n$/],
+])
 
 /** The program a segment runs and its arguments, past `VAR=x`, `sudo` and kin. */
 export function programOf(words: readonly string[]): { prog: string; args: string[] } {
@@ -211,6 +220,7 @@ export function programOf(words: readonly string[]): { prog: string; args: strin
         i++
         if ((base === 'sudo' || base === 'doas') && SUDO_VALUED.has(flag)) i++
         if (base === 'xargs' && /^-[IdEsnLP]$/.test(flag)) i++
+        if (WRAPPER_VALUED.get(base)?.test(flag)) i++
       }
       if (base === 'timeout' && /^\d/.test(words[i] ?? '')) i++
       continue
@@ -395,12 +405,12 @@ function gitHits(args: readonly string[]): Hit[] {
       return []
     }
     case 'restore': {
-      const isStagedOnly = flags.includes('--staged') && !flags.includes('--worktree') && !short.includes('W')
+      const isStagedOnly = (flags.includes('--staged') || short.includes('S')) &&!flags.includes('--worktree') && !short.includes('W')
       if (!isStagedOnly && positional.some(p => p === '.' || p === ':/' || p === '*')) return [hit('git-restore-dot', 'git restore .', 'high', 'Discards every unstaged change in the tree.')]
       return []
     }
     case 'branch': {
-      const isForceDelete = flags.includes('-D') || ((flags.includes('--delete') || short.includes('d')) && (flags.includes('--force') || short.includes('f')))
+      const isForceDelete = short.includes('D') || ((flags.includes('--delete') || short.includes('d')) && (flags.includes('--force') || short.includes('f')))
       return isForceDelete ? [hit('git-branch-D', 'git branch -D', 'medium', 'Deletes a branch even when it is not merged; only the reflog remembers it.')] : []
     }
     case 'stash': {

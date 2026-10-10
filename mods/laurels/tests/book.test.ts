@@ -1,8 +1,17 @@
 import { describe, expect, test } from 'claude-code/testing'
 
-import { BADGES, badgeById, dayKey, emptyFacts, extOf, mcpServerOf, progressOf, sanitizeLife, todosDone, turnFlags } from '../hooks/badges.ts'
+import { BADGES, badgeById, dayKey, emptyFacts, extOf, isGitCommit, isGitPush, isTestRun, mcpServerOf, progressOf, sanitizeLife, todosDone, turnFlags } from '../hooks/badges.ts'
 
 describe('classifiers', () => {
+  test('installing, searching or a dry run earns nothing; the real command still does', () => {
+    for (const c of ['npm install -D vitest', 'pip install pytest', 'npm uninstall jest', 'grep -rn jest src', 'which pytest', 'git commit -m "add jest"', 'CI=1 npm install jest', 'sudo npm i -g mocha']) expect(isTestRun(c), c).toBe(false)
+    for (const c of ['npm test', 'npx vitest run', 'pytest -q', 'npm install && npm test', 'npm i vitest\nnpx vitest run', 'FOO=1 pytest', 'grep foo x | npx jest']) expect(isTestRun(c), c).toBe(true)
+    for (const c of ['git push --dry-run', 'git push -n origin main', 'git push -un origin main', 'echo git push']) expect(isGitPush(c), c).toBe(false)
+    for (const c of ['git push', 'git push -u origin x', 'git push --dry-run && git push', 'git status; git push']) expect(isGitPush(c), c).toBe(true)
+    for (const c of ['git commit --dry-run', 'git -C r commit --dry-run -a', 'echo "git commit"', 'git commit-tree abc', 'git push-notes']) expect(isGitCommit(c) || isGitPush(c), c).toBe(false)
+    for (const c of ['git commit -n -m x', 'git commit --dry-run && git commit -m x', 'git add . && git commit -m x']) expect(isGitCommit(c), c).toBe(true)
+  })
+
   test('file extensions, either slash, none for dotfiles or bare names', () => {
     expect(extOf('src/app.TSX')).toBe('.tsx')
     expect(extOf('C:\\work\\notes.md')).toBe('.md')

@@ -147,5 +147,5 @@ function serverRow(s: ServerLedger, now: number): SwitchServer {
 
 export function fmtMs(ms: number | null): string {
   if (ms === null) return '—'
-  return ms >= 10_000 ? `${(ms / 1000).toFixed(0)}s` : ms >= 1000 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`
+  return ms >= 10_000 ? `${(ms / 1000).toFixed(0)}s` : ms >= 999.5 ? `${(ms / 1000).toFixed(1)}s` : `${Math.round(ms)}ms`
 }

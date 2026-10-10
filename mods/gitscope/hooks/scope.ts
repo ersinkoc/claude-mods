@@ -7,7 +7,8 @@ export function normPath(p: string): string {
   const msys = /^\/([a-zA-Z])\//.exec(s)
   if (msys) s = `${msys[1]}:/${s.slice(3)}`
   s = s.replace(/\/+$/, '')
-  if (/^[a-zA-Z]:\//.test(s)) s = s.toLowerCase()
+  // `D:` (a drive root, its slash just stripped) folds like `D:/x`, or no file would sit under it.
+  if (/^[a-zA-Z]:(\/|$)/.test(s)) s = s.toLowerCase()
   return s
 }
 

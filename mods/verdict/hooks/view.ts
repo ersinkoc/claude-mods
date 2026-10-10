@@ -134,9 +134,11 @@ export function clock(at: number): string {
 }
 
 export function duration(ms: number): string {
-  if (ms < 1000) return `${Math.round(ms)}ms`
-  if (ms < 60_000) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
-  return `${Math.floor(ms / 60_000)}m${String(Math.round((ms % 60_000) / 1000)).padStart(2, '0')}s`
+  // Each unit ends where the next would round up to its own size.
+  if (ms < 999.5) return `${Math.round(ms)}ms`
+  if (ms < 59_500) return `${(ms / 1000).toFixed(ms < 10_000 ? 1 : 0)}s`
+  const s = Math.round(ms / 1000)
+  return `${Math.floor(s / 60)}m${String(s % 60).padStart(2, '0')}s`
 }
 
 /** One run in words, for the pane: `142 passed · 3 failed · 2 skipped`. */

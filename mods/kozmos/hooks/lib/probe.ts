@@ -70,7 +70,10 @@ export function parseGitStatus(status: string, headLine = ''): GitSnap {
   }
   const h = headLine.trim()
   if (h) {
-    const [sha, subject = '', when = ''] = h.split('\t') as [string, ...string[]]
+    const f = h.split('\t')
+    // A tab inside the subject adds fields; fold them back into it.
+    if (f.length > 3) f.splice(1, f.length - 2, f.slice(1, f.length - 1).join('\t'))
+    const [sha, subject = '', when = ''] = f as [string, ...string[]]
     snap.head = { sha, subject, when }
   }
   if (snap.isDetached && snap.head) snap.branch = snap.head.sha
@@ -85,7 +88,10 @@ export function parseGitLog(out: string): GitCommit[] {
     .split('\n')
     .filter(Boolean)
     .map(l => {
-      const [sha, subject = '', when = '', author = '', ct = '0'] = l.split('\t') as [string, ...string[]]
+      const f = l.split('\t')
+      // A tab inside the subject adds fields; fold them back into it.
+      if (f.length > 5) f.splice(1, f.length - 4, f.slice(1, f.length - 3).join('\t'))
+      const [sha, subject = '', when = '', author = '', ct = '0'] = f as [string, ...string[]]
       return { sha, subject, when, author, at: Number(ct) * 1000 }
     })
 }
@@ -189,7 +195,9 @@ export function parseNvidia(out: string): GpuSnap | undefined {
   const line = out.split('\n')[0]!
   if (!line.trim()) return undefined
   const [util, used = '0', total = '0', temp = '0', name = 'GPU'] = line.split(',').map(s => s.trim()) as [string, ...string[]]
-  return { util: Number(util), memUsed: Number(used) * 1024 ** 2, memTotal: Number(total) * 1024 ** 2, temp: Number(temp), name }
+  // A field the GPU does not report prints as "[N/A]": count it as 0, never NaN.
+  const n = (s: string): number => Number(s) || 0
+  return { util: n(util), memUsed: n(used) * 1024 ** 2, memTotal: n(total) * 1024 ** 2, temp: n(temp), name }
 }
 
 export function fmtBytes(n: number | undefined): string {

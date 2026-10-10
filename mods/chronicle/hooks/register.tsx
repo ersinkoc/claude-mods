@@ -94,9 +94,20 @@ function milestone(key: string, percent: number | undefined, at: number, announc
   if (level !== had) armed.set(key, level)
 }
 
+/** Whether some part of a command line (`a && b | c`) is `git [options] <verb>` that is not a dry run. */
+function runsGit(cmd: string, verb: 'commit' | 'push'): boolean {
+  const re = new RegExp(`^(\\w+=\\S* )*git(\\s+-\\S+(\\s+\\S+)?)*\\s+${verb}(?![\\w-])`)
+  const dry = verb === 'push' ? /\s(--dry-run|-[a-zA-Z]*n[a-zA-Z]*)(?=\s|$)/ : /\s--dry-run(?=\s|$)/
+  return cmd.split(/&&|\|\||[;&|\n]/).map(p => p.replace(/\s+/g, ' ').trim()).some(p => re.test(p) && !dry.test(p))
+}
+
 function commitMessage(cmd: string): string {
-  const m = /-m\s+(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/.exec(cmd)
-  const raw = m?.[1] ?? m?.[2] ?? m?.[3] ?? ''
+  // A HEREDOC body is the message (Claude Code's own form): its first line is the subject.
+  const doc = /<<-?\s*(['"]?)(\w+)\1[^\n]*\n([\s\S]*?)\n[ \t]*\2\b/.exec(cmd)
+  const subject = doc?.[3]?.split('\n').find(l => l.trim())
+  // -m, a cluster ending in m (-am), --message, with a space, "=" or nothing before the text.
+  const m = /\s(?:-[a-zA-Z]*m|--message)(?:\s+|=)?(?:"((?:[^"\\]|\\.)*)"|'([^']*)'|(\S+))/.exec(cmd)
+  const raw = subject ?? m?.[1] ?? m?.[2] ?? m?.[3] ?? ''
   return clip(raw.replace(/\\n/g, ' '), 72)
 }
 
@@ -204,13 +215,13 @@ export const register: Register = (on, options) => {
       const cmd = e.command
       const res = ran.result as { interrupted?: boolean; gitOperation?: { commit?: { sha?: string; kind?: string; branch?: string }; push?: { branch?: string } } } | undefined
       const op = res?.gitOperation
-      if (res?.interrupted !== true && (op?.commit || /\bgit\b[^|;&]*\bcommit\b/.test(cmd))) {
+      if (res?.interrupted !== true && (op?.commit || runsGit(cmd, 'commit'))) {
         const sha = op?.commit?.sha ? op.commit.sha.slice(0, 7) : ''
         const verb = op?.commit?.kind === 'amended' ? 'amend' : 'commit'
         record(at, 'commit', `${verb}${sha ? ` ${sha}` : ''}${op?.commit?.branch ? ` on ${op.commit.branch}` : ''}`, commitMessage(cmd) || undefined)
         await publish($)
       }
-      if (res?.interrupted !== true && (op?.push || /\bgit\b[^|;&]*\bpush\b/.test(cmd))) {
+      if (res?.interrupted !== true && (op?.push || runsGit(cmd, 'push'))) {
         record(at, 'push', `push${op?.push?.branch ? ` → ${op.push.branch}` : ''}`, clip(cmd, 72))
         await publish($)
       }

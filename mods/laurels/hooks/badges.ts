@@ -150,16 +150,30 @@ export function normCommand(cmd: string): string {
   return cmd.replace(/\s+/g, ' ').trim()
 }
 
+/** The parts of a command line that each run on their own (`a && b | c`). */
+const partsOf = (cmd: string): string[] => cmd.split(/&&|\|\||[;&|\n]/).map(normCommand)
+
+/** A `git <verb>` part that is not a dry run. */
+function gitVerb(cmd: string, verb: string, dry: RegExp): boolean {
+  const re = new RegExp(`^git(\\s+-\\S+(\\s+\\S+)?)*\\s+${verb}(?![\\w-])`)
+  return partsOf(cmd).some(p => re.test(p) && !dry.test(p))
+}
+
 export function isGitCommit(cmd: string): boolean {
-  return /(^|[;&|]\s*)git(\s+-\S+(\s+\S+)?)*\s+commit\b/.test(normCommand(cmd))
+  return gitVerb(cmd, 'commit', /\s--dry-run(?=\s|$)/)
 }
 
 export function isGitPush(cmd: string): boolean {
-  return /(^|[;&|]\s*)git(\s+-\S+(\s+\S+)?)*\s+push\b/.test(normCommand(cmd))
+  return gitVerb(cmd, 'push', /\s(--dry-run|-[a-zA-Z]*n[a-zA-Z]*)(?=\s|$)/)
 }
 
+const TEST_RUN = /\b(npm|pnpm|yarn|bun)\s+(run\s+)?test\b|\b(pytest|vitest|jest|mocha|rspec|phpunit)\b|\b(cargo|go|dotnet|mix|deno|bun)\s+test\b|\bclaude\s+plugin\s+test\b|\bmake\s+(test|check)\b|\bgradle\w*\s+test\b|\bmvn\s+test\b/
+
+/** A part that names a runner without running it: installing, removing, searching or reading about it. */
+const NOT_A_RUN = /^(?:\w+=\S* )*(?:sudo )?(?:(?:npm|pnpm|yarn|bun) (?:install|i|add|remove|rm|uninstall|un|update|up|upgrade|info|view|ls|list|why|outdated)|(?:pip3?|pipx|uv|conda|brew|apt|apt-get|choco|winget|scoop|gem|poetry) (?:install|uninstall|add|remove|show|search|list|info|upgrade|update)|(?:grep|egrep|fgrep|rg|ag|ack|cat|echo|printf|which|where|whereis|type|man|head|tail|less|more)|git (?:commit|log|show|diff|add|tag|blame|grep|status|stash|push|merge|branch))(?![\w.-])/i
+
 export function isTestRun(cmd: string): boolean {
-  return /\b(npm|pnpm|yarn|bun)\s+(run\s+)?test\b|\b(pytest|vitest|jest|mocha|rspec|phpunit)\b|\b(cargo|go|dotnet|mix|deno|bun)\s+test\b|\bclaude\s+plugin\s+test\b|\bmake\s+(test|check)\b|\bgradle\w*\s+test\b|\bmvn\s+test\b/.test(cmd)
+  return partsOf(cmd).some(p => !NOT_A_RUN.test(p) && TEST_RUN.test(p))
 }
 
 /** `.tsx` from `src/app.tsx`; '' for none (Makefile). */

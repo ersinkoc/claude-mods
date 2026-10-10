@@ -65,7 +65,7 @@ async function readScope($: EngineInterface, cwd: string, now: number): Promise<
   ])
   const g = parseGitStatus(status, head ?? '')
   const root = (top ?? cwd).trim()
-  const isWin = /^[a-zA-Z]:\//.test(normPath(root))
+  const isWin = /^[a-zA-Z]:(\/|$)/.test(normPath(root))
   const key = (p: string) => (isWin ? p.toLowerCase() : p)
 
   const touchedRel = new Set<string>()
