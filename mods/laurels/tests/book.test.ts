@@ -8,7 +8,7 @@ describe('classifiers', () => {
     for (const c of ['npm test', 'npx vitest run', 'pytest -q', 'npm install && npm test', 'npm i vitest\nnpx vitest run', 'FOO=1 pytest', 'grep foo x | npx jest']) expect(isTestRun(c), c).toBe(true)
     for (const c of ['git push --dry-run', 'git push -n origin main', 'git push -un origin main', 'echo git push']) expect(isGitPush(c), c).toBe(false)
     for (const c of ['git push', 'git push -u origin x', 'git push --dry-run && git push', 'git status; git push']) expect(isGitPush(c), c).toBe(true)
-    for (const c of ['git commit --dry-run', 'git -C r commit --dry-run -a', 'echo "git commit"']) expect(isGitCommit(c), c).toBe(false)
+    for (const c of ['git commit --dry-run', 'git -C r commit --dry-run -a', 'echo "git commit"', 'git commit-tree abc', 'git push-notes']) expect(isGitCommit(c) || isGitPush(c), c).toBe(false)
     for (const c of ['git commit -n -m x', 'git commit --dry-run && git commit -m x', 'git add . && git commit -m x']) expect(isGitCommit(c), c).toBe(true)
   })
 

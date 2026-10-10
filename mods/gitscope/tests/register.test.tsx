@@ -107,6 +107,11 @@ describe('gitscope', () => {
     expect(normPath('D:\\Code\\X\\')).toBe('d:/code/x')
     expect(normPath('/d/Code/x')).toBe('d:/code/x')
     expect(relTo('D:/Code', 'd:\\code\\src\\a.ts')).toBe('src/a.ts')
+    // A repository at a drive root folds its case like the files under it.
+    expect(normPath('D:/')).toBe('d:')
+    expect(relTo('D:/', 'D:/proj/a.ts')).toBe('proj/a.ts')
+    expect(relTo('D:\\', 'd:\\x.ts')).toBe('x.ts')
+    expect(relTo('D:/', 'E:/a.ts')).toBeUndefined()
     expect(relTo('/work', '/elsewhere/a.ts')).toBe(undefined)
     expect(untrackedOf('? a.txt\n1 .M x\n? "b c.txt"\n')).toEqual(['a.txt', 'b c.txt'])
     expect(fmtAgo(30_000)).toBe('now')

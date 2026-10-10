@@ -225,6 +225,22 @@ describe('what is recorded', () => {
     ])
   })
 
+  test('only a real commit or push leaves an entry: not a log, an echo, a dry run or commit-tree', async ($, on) => {
+    mock.clock(on, { now: 1_000_000 })
+    base(on)
+    await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/w' })
+    for (const command of [
+      'git log --grep=commit', 'echo git push', 'grep -rn "git commit" docs', 'git commit --dry-run', 'git push --dry-run origin main',
+      'git push -un origin main', 'git commit-tree abc', 'git status',
+    ]) await $.tool.call({ tool: 'Bash', command })
+    expect(await lines($, 'git')).toHaveLength(1)
+    for (const command of ['GIT_AUTHOR_NAME=x git commit -m y', 'git -C r push origin main', 'git add . && git commit -m z', 'git push --dry-run && git push']) {
+      await $.tool.call({ tool: 'Bash', command })
+    }
+    const t = (await lines($, 'git')).slice(1).map(l => l.replace(/^\d\d:\d\d:\d\d /, '').trim()).filter(l => l.startsWith('◉') || l.startsWith('⇡'))
+    expect(t).toEqual(['⇡ push', '◉ commit', '⇡ push', '◉ commit'])
+  })
+
   test('compactions: skipped, precomputed, without figures, and a subagent’s', async ($, on) => {
     mock.clock(on, { now: 1_000_000 })
     base(on)

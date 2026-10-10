@@ -155,7 +155,7 @@ const partsOf = (cmd: string): string[] => cmd.split(/&&|\|\||[;&|\n]/).map(norm
 
 /** A `git <verb>` part that is not a dry run. */
 function gitVerb(cmd: string, verb: string, dry: RegExp): boolean {
-  const re = new RegExp(`^git(\\s+-\\S+(\\s+\\S+)?)*\\s+${verb}\\b`)
+  const re = new RegExp(`^git(\\s+-\\S+(\\s+\\S+)?)*\\s+${verb}(?![\\w-])`)
   return partsOf(cmd).some(p => re.test(p) && !dry.test(p))
 }
 
