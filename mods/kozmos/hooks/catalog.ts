@@ -11,6 +11,7 @@ export const CATALOG: readonly CatalogEntry[] = [
   { name: "faultline", title: "Faultline", category: "pane", blurb: "the error lens in a sidebar." },
   { name: "gearbox", title: "Gearbox", category: "pane", blurb: "tool analytics for the session." },
   { name: "gitscope", title: "Gitscope", category: "pane", blurb: "a git radar sidebar." },
+  { name: "helm", title: "Helm", category: "pane", blurb: "one-press settings profiles in a sidebar." },
   { name: "hivemind", title: "Hivemind", category: "pane", blurb: "the agent swarm as a live tree." },
   { name: "hourglass", title: "Hourglass", category: "pane", blurb: "the limit oracle." },
   { name: "launchpad", title: "Launchpad", category: "pane", blurb: "a pane of big launch buttons." },
