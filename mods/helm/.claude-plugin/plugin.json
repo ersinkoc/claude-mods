@@ -1,0 +1,16 @@
+{
+  "name": "helm",
+  "version": "0.1.0",
+  "description": "KOZMOS Helm: one-press settings profiles in a sidebar. Seven built-in ways of working (Token saver, Fast flow, Max quality, Plan first, Guarded, Autopilot, Quiet focus) plus your own saved setups; each shows exactly what it changes, lets you leave any step out, applies /config rows the way the menu does, saves effort for the model in use at once, and every activation can be undone. /helm toggles it; <profile>, apply <profile>, save <name>, rm <name>, undo, list.",
+  "author": { "name": "KOZMOS" },
+  "types": "./types/index.d.ts",
+  "userConfig": {
+    "suggestAt": {
+      "type": "number",
+      "title": "Suggest Token saver at",
+      "description": "Percent of the 5-hour or weekly limit at which Helm marks Token saver as suggested (50-100; 100 turns it off).",
+      "required": false,
+      "default": 80
+    }
+  }
+}

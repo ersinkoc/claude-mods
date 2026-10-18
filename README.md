@@ -1,6 +1,6 @@
 # KOZMOS
 
-**48 live, visual mods for Claude Code — in the terminal and in the desktop app.**
+**49 live, visual mods for Claude Code — in the terminal and in the desktop app.**
 
 Above the chat input, in the sidebar, in the transcript, on the status line and in
 your speakers: what Claude is doing right now, what it costs, how close you are to
@@ -182,6 +182,10 @@ tool analytics for the session. Per tool its calls, errors and error rate, avera
 a git radar sidebar. Branch, upstream and ahead/behind, staged/changed/new/conflict counts and stashes, the last 8 commits on a graph rail, per-file +/- histograms from git diff, and a marker on every file this session edited. /gitscope toggles it.
 
 <table><tr><td valign="top"><img src="docs/previews/gitscope-pane-terminal.png" alt="gitscope in the terminal" width="520"></td><td valign="top"><picture><source media="(prefers-color-scheme: dark)" srcset="docs/previews/gitscope-pane-desktop-dark.png"><img src="docs/previews/gitscope-pane-desktop-light.png" alt="gitscope in the desktop app" width="300"></picture></td></tr></table>
+
+#### Helm · `/helm`
+
+one-press settings profiles in a sidebar. Seven built-in ways of working (Token saver, Fast flow, Max quality, Plan first, Guarded, Autopilot, Quiet focus) plus your own saved setups; each shows exactly what it changes, lets you leave any step out, applies /config rows the way the menu does, saves effort for the model in use at once, and every activation can be undone. /helm toggles it; <profile>, apply <profile>, save <name>, rm <name>, undo, list.
 
 #### Hivemind · `/hivemind`
 
@@ -634,7 +638,7 @@ All code in this repository was written for KOZMOS. MIT licensed.
 
 ## Türkçe
 
-**Claude Code için 48 canlı ve görsel mod: hem terminalde hem desktop uygulamasında.**
+**Claude Code için 49 canlı ve görsel mod: hem terminalde hem desktop uygulamasında.**
 
 Chat input'un üstünde, sidebar'da, transcript'te, status line'da ve hoparlörde
 gösterdikleri: Claude'un şu an ne yaptığı, ne kadar harcadığı, 5 saatlik ve haftalık
@@ -669,7 +673,7 @@ Kurulumdan sonra yeni bir oturum aç (ya da `/reload-plugins` çalıştır) ve
 
 ### Mod grupları
 
-- **Sidebar'lar:** bridge (görev kontrol merkezi), hivemind (agent ağacı), taskforge (kanban), chronicle (zaman çizelgesi), gearbox (tool analitiği), tokenomics (maliyet laboratuvarı), hourglass (limit kâhini), spectra (context röntgeni), mosaic (aktivite takvimi), gitscope (git radarı), vitals (sistem monitörü), thermal (dosya ısı haritası), terminus (shell geçmişi), breadcrumbs (web izi), faultline (hata merceği), relay (API gecikme laboratuvarı), almanac (oturum almanağı), launchpad (komut ve prompt düğmeleri), switchboard (MCP gözlemevi)
+- **Sidebar'lar:** bridge (görev kontrol merkezi), hivemind (agent ağacı), taskforge (kanban), chronicle (zaman çizelgesi), gearbox (tool analitiği), tokenomics (maliyet laboratuvarı), hourglass (limit kâhini), spectra (context röntgeni), mosaic (aktivite takvimi), gitscope (git radarı), vitals (sistem monitörü), thermal (dosya ısı haritası), terminus (shell geçmişi), breadcrumbs (web izi), faultline (hata merceği), relay (API gecikme laboratuvarı), almanac (oturum almanağı), launchpad (komut ve prompt düğmeleri), helm (tek dokunuşla ayar profilleri), switchboard (MCP gözlemevi)
 - **Prompt üstü bantlar:** heartline (EKG), orrery (agent gezegenleri), glyphfall (matrix yağmuru), aurora (düşünürken kuzey ışıkları), throttle (araba göstergesi), blackbox (uçuş kaydedici), questline (görev ilerlemesi), halo (durum çizgisi), skies (oturum hava durumu), warpdrive (token hızıyla warp), tidewater (diff dalgaları), verdict (test ve build sonuçları), storyboard (Claude'un anlattığı faz rayı)
 - **Transcript ve spinner:** stamp (turn fişi), mantra (temalı spinner kelimeleri, Türkçe paket dahil), toolmarks (tool satırı rozetleri), compass (prompt altı ipucu)
 - **Yoldaşlar:** clawdling (XP kazanan pixel yengeç), laurels (başarımlar), tempo (pomodoro), epilogue (turn özeti)

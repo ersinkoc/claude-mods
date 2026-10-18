@@ -54,6 +54,7 @@ export const META = {
   relay: ['pane', 'Relay'],
   almanac: ['pane', 'Almanac'],
   launchpad: ['pane', 'Launchpad'],
+  helm: ['pane', 'Helm'],
   polaroid: ['tool', 'Polaroid'],
   warden: ['guard', 'Warden'],
   ballast: ['guard', 'Ballast'],

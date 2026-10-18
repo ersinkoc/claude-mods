@@ -1,0 +1,1 @@
+{ "description": "Helm: settings profiles. /helm draws a pane of profiles (built-in and saved), applies one through $.config.set and ~/.claude/settings.json (reload-checked, backed up), keeps an undo history in $.store, saves effort per model (session.model, then turn.step), and redraws when /config changes", "modules": ["./register.tsx"] }
