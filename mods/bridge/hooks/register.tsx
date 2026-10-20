@@ -101,6 +101,7 @@ async function readSys($: EngineInterface): Promise<SysSnap> {
 let live: BridgeSnap = blank(0)
 let tick = 0
 let lastPublished = ''
+let isBusy = false
 
 async function publish($: EngineInterface): Promise<void> {
   live.now = await $.clock.now()
@@ -112,7 +113,19 @@ async function publish($: EngineInterface): Promise<void> {
   await update($, snapAtom, () => ({ ...live, cpuHistory: [...live.cpuHistory] }))
 }
 
+// One sample at a time, and none while the pane is shut: a probe slower than
+// the tick (WMI under load) must not start the next one beside it.
 async function sample($: EngineInterface): Promise<void> {
+  if (isBusy) return
+  isBusy = true
+  try {
+    if (await isOpen($)) await readAll($)
+  } finally {
+    isBusy = false
+  }
+}
+
+async function readAll($: EngineInterface): Promise<void> {
   tick++
   try {
     const usage = await $.session.usage()
