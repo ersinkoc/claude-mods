@@ -27,21 +27,39 @@ async function shows(ui: Pick<Mounted, 'findAll'>, text: string | RegExp): Promi
   expect(all.some(t => (typeof text === 'string' ? t.includes(text) : text.test(t))), `${String(text)} in ${JSON.stringify(all)}`).toBe(true)
 }
 
+type Answer = ReturnType<typeof ok> | typeof fail
+
 type World = {
   /** What each argv answers, by its first word (and the git verb). */
-  sh?: (argv: readonly string[]) => ReturnType<typeof ok> | typeof fail
+  sh?: (argv: readonly string[]) => Answer | Promise<Answer>
   usage?: boolean
   /** False: asking for the folder fails. */
   cwd?: boolean
   agents?: AgentStatus[]
   model?: string
   read?: (path: string) => string | undefined
+  /** False: the pane starts shut. */
+  open?: boolean
+  /** Each `open <id>` and `close <id>` bridge asks for. */
+  calls?: string[]
 }
 
-/** The session beneath bridge: usage, model, agents, a shell and a disk. */
+/** The session beneath bridge: usage, model, agents, a shell, a disk and the pane. */
 function world(on: On, w: World = {}) {
   on('session.start', ($, e) => ({ cwd: e.cwd }))
   on('command.register', ($, e) => ({ value: { command: e.name } }))
+  let open = w.open !== false
+  on('ui.panes', () => ({ value: open ? [{ id: 'kz-bridge', title: 'KOZMOS · Bridge', isShown: true, isFocused: false, isPlaced: true }] : [] }))
+  on('ui.open', ($, e) => {
+    w.calls?.push(`open ${e.id}`)
+    open = true
+    return { value: { isPlaced: true } }
+  })
+  on('ui.close', ($, e) => {
+    w.calls?.push(`close ${e.id}`)
+    open = false
+    return { value: undefined }
+  })
   if (w.usage !== false) {
     on('session.usage', () => ({
       value: {
@@ -361,21 +379,9 @@ describe('bridge follows the turn and its tools', () => {
 describe('bridge pane and command', () => {
   test('/bridge opens the pane when it is shut and closes it when open', { options: { autoOpen: false } }, async ($, on) => {
     mock.clock(on)
-    world(on)
-    mock.env(on, { OS: 'Windows_NT' })
-    let open = false
     const calls: string[] = []
-    on('ui.panes', () => ({ value: open ? [{ id: 'kz-bridge', title: 'KOZMOS · Bridge', isShown: true, isFocused: false, isPlaced: true }] : [] }))
-    on('ui.open', ($, e) => {
-      calls.push(`open ${e.id}`)
-      open = true
-      return { value: { isPlaced: true } }
-    })
-    on('ui.close', ($, e) => {
-      calls.push(`close ${e.id}`)
-      open = false
-      return { value: undefined }
-    })
+    world(on, { open: false, calls })
+    mock.env(on, { OS: 'Windows_NT' })
     await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
     expect(calls).toEqual([])
     expect((await $.command.run({ command: 'bridge', args: '', ...RUN })).text).toBe('Bridge open.')
@@ -386,15 +392,50 @@ describe('bridge pane and command', () => {
   test('the pane opens itself on start by default', async ($, on) => {
     const clock = mock.clock(on)
     mock.env(on, { OS: 'Windows_NT' })
-    world(on)
-    const opened: string[] = []
-    on('ui.open', ($, e) => {
-      opened.push(e.id)
-      return { value: { isPlaced: true } }
-    })
+    const calls: string[] = []
+    world(on, { open: false, calls })
     await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
     await clock.settle()
-    expect(opened).toEqual(['kz-bridge'])
+    expect(calls).toEqual(['open kz-bridge'])
+  })
+
+  test('a shut pane runs no probes; opening it starts them', { options: { autoOpen: false } }, async ($, on) => {
+    const clock = mock.clock(on)
+    mock.env(on, { OS: 'Windows_NT' })
+    const asked: string[] = []
+    world(on, { open: false, sh: argv => (asked.push(argv[0]!), fail) })
+    await $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+    await clock.advance(10_000)
+    expect(asked).toEqual([])
+    await $.command.run({ command: 'bridge', args: '', ...RUN })
+    await clock.advance(1000)
+    expect(asked).toContain('powershell')
+    expect(asked).toContain('git')
+  })
+
+  test('a probe slower than the tick is never run twice at once', { options: { autoOpen: false } }, async ($, on) => {
+    const clock = mock.clock(on)
+    mock.env(on, { OS: 'Windows_NT' })
+    let running = 0
+    let most = 0
+    let started = 0
+    // Each machine probe takes 30 s, far past the 1 s tick and the 4 s machine slot.
+    world(on, {
+      sh: async argv => {
+        if (argv[0] !== 'powershell') return fail
+        started++
+        most = Math.max(most, ++running)
+        await clock.sleep(30_000)
+        running--
+        return ok(WIN_JSON)
+      },
+    })
+    // The start's own sample waits on the first probe, so the clock runs beside it.
+    const start = $.session.start({ surface: 'terminal', isInteractive: true, cwd: '/work' })
+    await clock.advance(60_000)
+    await start
+    expect(most).toBe(1)
+    expect(started).toBeLessThanOrEqual(3)
   })
 
   test('a sample that fails publishes nothing; the samples between go on', { options: { autoOpen: false } }, async ($, on) => {
